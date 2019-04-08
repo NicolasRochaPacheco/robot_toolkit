@@ -1,0 +1,5 @@
+build/*
+devel/*
+*.kdev4/*
+*.kdev4
+.catkin_workspace
