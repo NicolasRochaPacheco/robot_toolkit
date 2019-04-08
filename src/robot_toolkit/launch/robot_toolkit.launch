@@ -1,0 +1,3 @@
+<launch>
+	<node name="robot_toolkit" pkg="robot_toolkit" type="robot_toolkit_node" output="screen" />
+</launch>
