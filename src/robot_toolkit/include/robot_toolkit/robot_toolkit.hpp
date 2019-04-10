@@ -17,43 +17,21 @@
 //                                                                      //
 //======================================================================//
 
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include <sstream>
+#ifndef ROBOT_TOOLKIT_HPP
+#define ROBOT_TOOLKIT_HPP
+
 #include <stdio.h>
 
-#include "include/robot_toolkit/robot_toolkit.hpp"
-
-
-int main(int argc, char **argv)
+class RobotToolkit
 {
-    RobotToolkit* a = new RobotToolkit();
-    boost::shared_ptr<RobotToolkit> bs = boost::make_shared<RobotToolkit>();
-    
-    ros::init(argc, argv, "talker");
-    ros::NodeHandle n;
+    public:
 
-    ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 10);
+	RobotToolkit();
+	~RobotToolkit();
+	
+    private:
 
-    ros::Rate loop_rate(100);
-    int count = 0;
-    while (ros::ok())
-    {
+};
 
-	std_msgs::String msg;
 
-	std::stringstream ss;
-	ss << "hello world" << count;
-	msg.data = ss.str();
-
-	//ROS_INFO("%s", msg.data.c_str());
-
-	chatter_pub.publish(msg);
-	ros::spinOnce();
-	loop_rate.sleep();
-
-	++count;
-    }
-    return 0;
-}
-
+#endif
