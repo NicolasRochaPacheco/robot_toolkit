@@ -10,10 +10,10 @@
 # Uso de `robot_toolkit.sh`
 
 Usando el bash `robot_toolkit.sh`  usted podra:
-
-1. Compilar el codigo fuente en la maquina virtual `virtual_nao`
-2. Instalar los binarios sobre el robot
-3. Ejecutar el robot_toolkit en el robot
-4. Detener el robot_toolkit en el robot
+1. sudo apt-get install sshpass
+2. Compilar el codigo fuente en la maquina virtual `virtual_nao`
+3. Instalar los binarios sobre el robot
+4. Ejecutar el robot_toolkit en el robot
+5. Detener el robot_toolkit en el robot
 
 Para mayor informacion ejecute `./robot_toolkit.sh --help`
