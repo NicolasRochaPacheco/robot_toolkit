@@ -18,21 +18,14 @@
 //======================================================================//
 
 
-//#include "ros/ros.h"
-
-#include <qi/applicationsession.hpp>
+#include <robot_toolkit/robot_toolkit.hpp>
 #include <qi/anymodule.hpp>
 
-#include "robot_toolkit/robot_toolkit.hpp"
-
-//#include "naoqi_env.hpp"
-
-#include <qi/os.hpp>
 
 
 
-int main(int argc, char **argv)
+void registerRobotToolkit(qi::ModuleBuilder* moduleBuilder) 
 {
-    printf("Hello world !\n");
+    moduleBuilder->advertiseFactory<RobotToolkit, qi::SessionPtr, std::string>("RobotToolkit");
 }
-
+QI_REGISTER_MODULE("robot_toolkit_module", &registerRobotToolkit);

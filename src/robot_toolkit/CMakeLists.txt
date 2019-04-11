@@ -1,56 +1,133 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robot_toolkit)
 
-set(CMAKE_AUTOMOC YES)
-set(CMAKE_INCLUDE_CURRENT_DIR YES)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+# define source files that can be used by qibuild or catkin
+set(
+  CONVERTERS_SRC
+  
+  )
+set(
+  TOOLS_SRC
+ 
+  )
 
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES robot_toolkit
-#  CATKIN_DEPENDS roscpp rospy std_msgs
-#  DEPENDS system_lib
+set(
+  PUBLISHER_SRC
+ 
+  )
+
+set(
+  SUBSCRIBER_SRC
+ 
+  )
+
+set(
+  SERVICES_SRC
+ 
+  )
+
+set(
+  RECORDER_SRC
+  
+  )
+
+set(
+  ROBOT_TOOLKIT_SRC
+  src/robot_toolkit.cpp
+  )
+  
+
+
+add_definitions( -DCATKIN_BUILD )
+
+# CMake file that uses catkin
+find_package(catkin COMPONENTS
+  cv_bridge
+  diagnostic_msgs
+  diagnostic_updater
+  geometry_msgs
+  image_transport
+  kdl_parser
+  naoqi_bridge_msgs
+  naoqi_libqi
+  naoqi_libqicore
+  robot_state_publisher
+  rosbag_storage
+  rosconsole
+  rosgraph_msgs
+  sensor_msgs
+  tf2_geometry_msgs
+  tf2_msgs
+  tf2_ros
 )
 
-set(libs)
+find_package(OpenCV)
+find_package(orocos_kdl)
 
-# Catkin
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs)
-include_directories(${catkin_INCLUDE_DIRS})
-list(APPEND libs ${catkin_LIBRARIES})
 
-include_directories(${PROJECT_SOURCE_DIR})
+add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 
-set(SOURCES
-    src/main.cpp
-    src/robot_toolkit.cpp
+catkin_package(LIBRARIES robot_toolkit_module robot_toolkit)
+
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=deprecated-declarations")
+endif()
+
+include_directories( include ${catkin_INCLUDE_DIRS})
+
+# create the different libraries
+add_library(
+  robot_toolkit_module
+  SHARED
+  src/autoload_registration.cpp
+  )
+target_link_libraries(robot_toolkit_module ${naoqi_libqi_LIBRARIES})
+install(TARGETS robot_toolkit_module DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+add_library(
+  robot_toolkit
+  SHARED
+  ${ROBOT_TOOLKIT_SRC}
+  ${CONVERTERS_SRC}
+  ${PUBLISHER_SRC}
+  ${SUBSCRIBER_SRC}
+  ${SERVICES_SRC}
+  ${RECORDER_SRC}
+  ${TOOLS_SRC}
+)
+target_link_libraries(
+  robot_toolkit
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${orocos_kdl_LIBRARIES}
+  )
+add_dependencies(robot_toolkit ${catkin_EXPORTED_TARGETS})
+install(TARGETS robot_toolkit DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+target_link_libraries(
+  robot_toolkit_module
+  robot_toolkit
 )
 
-set(HEADERS
-   include/robot_toolkit/robot_toolkit.hpp
+# create the binary of the bridge
+add_executable( robot_toolkit_node src/main.cpp)
+target_link_libraries(
+  robot_toolkit_node
+  robot_toolkit
+  ${catkin_LIBRARIES}
 )
+install(TARGETS robot_toolkit_node DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-set(srcs
-    ${SOURCES}
-    ${HEADERS}
-)
+# install the urdf for runtime loading
+#file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/share" DESTINATION "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/")
+#install(DIRECTORY share DESTINATION "${CATKIN_PACKAGE_SHARE_DESTINATION}")
 
-## Declare a C++ executable
-add_executable(${PROJECT_NAME}_node ${srcs})
+# install the launch files
+install(DIRECTORY launch DESTINATION "${CATKIN_PACKAGE_SHARE_DESTINATION}")
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node ${libs})
-
-## Add cmake target dependencies of the executable
-#add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_generate_messages_cpp)
-
-
-#############
-## Install ##
-#############
-
-install(TARGETS ${PROJECT_NAME}_node DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION} )
+# make sure there is a file describing a naoqi module
+file(WRITE ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/robot_toolkit_module.mod "cpp")
+install(FILES ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/robot_toolkit_module.mod DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/)
 
 
 

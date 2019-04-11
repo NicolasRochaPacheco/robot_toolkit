@@ -17,9 +17,11 @@
 //                                                                      //
 //======================================================================//
 
-#include "include/robot_toolkit/robot_toolkit.hpp"
 
-RobotToolkit::RobotToolkit()
+
+#include "robot_toolkit/robot_toolkit.hpp"
+
+RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
 {
     printf("En el constructor \n");
 }

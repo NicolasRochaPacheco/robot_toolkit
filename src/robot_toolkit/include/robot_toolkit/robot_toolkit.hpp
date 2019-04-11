@@ -20,18 +20,17 @@
 #ifndef ROBOT_TOOLKIT_HPP
 #define ROBOT_TOOLKIT_HPP
 
-#include <stdio.h>
+#include <qi/session.hpp>
 
 class RobotToolkit
 {
     public:
 
-	RobotToolkit();
+	RobotToolkit(qi::SessionPtr session, const std::string& prefix);
 	~RobotToolkit();
 	
     private:
 
 };
-
 
 #endif
