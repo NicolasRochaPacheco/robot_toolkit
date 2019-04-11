@@ -21,11 +21,8 @@
 #include <robot_toolkit/robot_toolkit.hpp>
 #include <qi/anymodule.hpp>
 
-
-
-
 void registerRobotToolkit(qi::ModuleBuilder* moduleBuilder) 
 {
-    moduleBuilder->advertiseFactory<RobotToolkit, qi::SessionPtr, std::string>("RobotToolkit");
+    moduleBuilder->advertiseFactory<Sinfonia::RobotToolkit, qi::SessionPtr, std::string>("robot_toolkit");
 }
 QI_REGISTER_MODULE("robot_toolkit_module", &registerRobotToolkit);

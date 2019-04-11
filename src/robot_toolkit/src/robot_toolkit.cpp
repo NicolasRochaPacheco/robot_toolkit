@@ -20,13 +20,18 @@
 
 
 #include "robot_toolkit/robot_toolkit.hpp"
-
-RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
+#include "robot_toolkit/ros_environment.hpp"
+namespace Sinfonia
 {
-    printf("En el constructor \n");
-}
+    RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
+    {
+	printf("En el constructor \n");
+    }
 
-RobotToolkit::~RobotToolkit()
-{
-    
+    RobotToolkit::~RobotToolkit()
+    {
+	
+    }
+
+    QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin);
 }

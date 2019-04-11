@@ -22,15 +22,23 @@
 
 #include <qi/session.hpp>
 
-class RobotToolkit
+#include "robot_toolkit/ros_environment.hpp"
+namespace Sinfonia
 {
-    public:
+    class RobotToolkit
+    {
+	public:
 
-	RobotToolkit(qi::SessionPtr session, const std::string& prefix);
-	~RobotToolkit();
-	
-    private:
+	    RobotToolkit(qi::SessionPtr session, const std::string& prefix);
+	    ~RobotToolkit();
+	    std::string _whoWillWin()
+	    {
+		return "SinfonIA SSPL Robocup Team";
+	    }
+	    
+	private:
 
-};
+    };
+}
 
 #endif
