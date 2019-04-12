@@ -10,7 +10,7 @@
 # Uso de `robot_toolkit.sh`
 
 Usando el bash `robot_toolkit.sh`  usted podra:
-1. sudo apt-get install sshpass
+1. Instalar sshpass: `sudo apt-get install sshpass`
 2. Compilar el codigo fuente en la maquina virtual `virtual_nao`
 3. Instalar los binarios sobre el robot
 4. Ejecutar el robot_toolkit en el robot
