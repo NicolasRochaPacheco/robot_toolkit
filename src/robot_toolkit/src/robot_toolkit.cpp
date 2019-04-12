@@ -39,7 +39,12 @@ namespace Sinfonia
 
     RobotToolkit::~RobotToolkit()
     {
-	
+	std::cout << "robot_toolkit is shutting down.." << std::endl;
+	if(nodeHandlerPtr)
+	{
+	    nodeHandlerPtr->shutdown();
+	    ros::shutdown();
+	}
     }
     
     std::string RobotToolkit::_whoWillWin()

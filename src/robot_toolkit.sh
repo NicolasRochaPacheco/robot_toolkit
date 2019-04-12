@@ -293,8 +293,10 @@ if [ ${MODE} = "run" ] || [ ${MODE} = "all" ]
 				exit	
 		fi
 		kill_process
+		echo "${GREEN}Launching robot_toolkit"
 		COMMAND="source /home/nao/ros/setup.bash && export ROS_MASTER_URI=http://localhost:11311 && export ROS_HOSTNAME=$ROBOTIP && export ROS_IP=$ROBOTIP && roslaunch robot_toolkit robot_toolkit.launch"
 		sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} ${COMMAND}
+
 		exit
 fi
 if [ ${MODE} = "kill" ]
