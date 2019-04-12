@@ -230,13 +230,7 @@ NC='\033[0m'
 clean_vn()
 {
 	echo "${YELLOW}Cleaning virtual nao... ${NC}"
-	OUTPUT="$(sshpass -p ${VNPASS} ssh nao@${VNIP} 'pwd')"
-	if [ -z ${OUTPUT} ]
-		then : 
-			echo "${RED}ERROR: Could not clean virtual nao, please check the password and IP${NC}"
-			exit
-	fi	
-	COMMAND="sudo rm -rf /home/nao/build_isolated/robot_toolkit && sudo rm -rf /home/nao/devel_isolated/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/lib/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/lib/pkgconfig/robot_toolkit.pc && sudo rm -rf /home/nao/ros_toolchain_install/share/robot_toolkit && sudo rm -r /home/nao/ros_toolchain_install/lib/librobot_toolkit_module.so && sudo rm -r /home/nao/ros_toolchain_install/lib/librobot_toolkit.so && sudo rm -rf /home/nao/src/robot_toolkit && sudo rm -r /home/nao/ros_toolchain_install/share/qi/module/robot_toolkit_module.mod"
+	COMMAND="sudo rm -rf /home/nao/build_isolated/robot_toolkit && sudo rm -rf /home/nao/devel_isolated/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/lib/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/lib/pkgconfig/robot_toolkit.pc && sudo rm -rf /home/nao/ros_toolchain_install/share/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/lib/librobot_toolkit_module.so && sudo rm -rf /home/nao/ros_toolchain_install/lib/librobot_toolkit.so && sudo rm -rf /home/nao/src/robot_toolkit && sudo rm -rf /home/nao/ros_toolchain_install/share/qi/module/robot_toolkit_module.mod"
 	sshpass -p ${VNPASS} ssh nao@${VNIP} ${COMMAND}
 	echo "Executing: ${COMMAND}"
 	echo "${GREEN}virtual nao cleaned successfully ${NC}"
@@ -244,17 +238,19 @@ clean_vn()
 
 clean_robot()
 {
-	echo "${YELLOW}Cleaning robot... ${NC}"
-	OUTPUT="$(sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} 'pwd')"
-	if [ -z ${OUTPUT} ]
-		then : 
-			echo "${RED}ERROR: Could not clean the robot, please check the password and IP${NC}"
-			exit
-	fi	
-	COMMAND="rm -rf /home/nao/ros/lib/robot_toolkit && rm -rf /home/nao/ros/lib/pkgconfig/robot_toolkit.pc && rm -rf /home/nao/ros/share/robot_toolkit && rm -r /home/nao/ros/lib/librobot_toolkit_module.so && rm -r /home/nao/ros/lib/librobot_toolkit.so && rm -r /home/nao/ros/share/qi/module/robot_toolkit_module.mod"
+	echo "${YELLOW}Cleaning robot... ${NC}"	
+	COMMAND="rm -rf /home/nao/ros/lib/robot_toolkit && rm -rf /home/nao/ros/lib/pkgconfig/robot_toolkit.pc && rm -rf /home/nao/ros/share/robot_toolkit && rm -rf /home/nao/ros/lib/librobot_toolkit_module.so && rm -rf /home/nao/ros/lib/librobot_toolkit.so && rm -rf /home/nao/ros/share/qi/module/robot_toolkit_module.mod"
 	sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} ${COMMAND}
 	echo "Executing: ${COMMAND}"
 	echo "${GREEN}robot cleaned successfully ${NC}"
+}
+
+kill_process()
+{
+	COMMAND="source /home/nao/ros/setup.bash && rosnode kill -a && killall -9 rosmaster && killall robot_toolkit_node"
+	sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} ${COMMAND}
+	echo ${COMMAND}
+	echo "${GREEN}robot_toolkit procceses killed successfully${NC}"
 }
 
 if [ ${MODE} = "compile" ] || [ ${MODE} = "install" ] || [ ${MODE} = "all" ]
@@ -296,6 +292,7 @@ if [ ${MODE} = "run" ] || [ ${MODE} = "all" ]
 				echo "${RED}ERROR: Could not run robot_toolkit, please check the password and IP${NC}"
 				exit	
 		fi
+		kill_process
 		COMMAND="source /home/nao/ros/setup.bash && export ROS_MASTER_URI=http://localhost:11311 && export ROS_HOSTNAME=$ROBOTIP && export ROS_IP=$ROBOTIP && roslaunch robot_toolkit robot_toolkit.launch"
 		sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} ${COMMAND}
 		exit
@@ -309,8 +306,7 @@ if [ ${MODE} = "kill" ]
 				echo "${RED}ERROR: Could not kill robot_toolkit, please check the password and IP${NC}"
 				exit	
 		fi
-		sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} "source /home/nao/ros/setup.bash && rosnode kill -a && killall -9 rosmaster"
-		echo "${GREEN}robot_toolkit procceses killed successfully${NC}"
+		kill_process
 fi
 if [ ${MODE} = "clean_vn" ] || [ ${MODE} = "clean_all" ]
 	then :

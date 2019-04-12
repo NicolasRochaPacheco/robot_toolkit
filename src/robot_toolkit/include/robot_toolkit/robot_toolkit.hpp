@@ -21,23 +21,35 @@
 #define ROBOT_TOOLKIT_HPP
 
 #include <qi/session.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "robot_toolkit/ros_environment.hpp"
+
 namespace Sinfonia
 {
     class RobotToolkit
     {
 	public:
-
 	    RobotToolkit(qi::SessionPtr session, const std::string& prefix);
 	    ~RobotToolkit();
-	    std::string _whoWillWin()
-	    {
-		return "SinfonIA SSPL Robocup Team";
-	    }
+	    
+	    std::string _whoWillWin();
+	    void init();
+	    void stopService();
+	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
+
 	    
 	private:
-
+	    boost::thread mainThread;
+	    //std::map< std::string, event::Event > eventMap;
+	    bool isRosLoopEnabled;
+	    boost::scoped_ptr<ros::NodeHandle> nodeHandlerPtr;
+	    boost::mutex mutexConvertersQueue;
+	    
+	    void rosLoop();
+	    void startRosLoop();
+	    void stopRosLoop();
+	   
     };
 }
 

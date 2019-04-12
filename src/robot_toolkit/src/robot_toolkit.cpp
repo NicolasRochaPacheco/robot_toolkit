@@ -25,13 +25,85 @@ namespace Sinfonia
 {
     RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
     {
-	printf("En el constructor \n");
+	if(prefix == "")
+	{
+	    std::cout << "Error driver prefix must not be empty" << std::endl;
+	    throw new ros::Exception("Error driver prefix must not be empty");
+	}
+	else
+	{
+	    Sinfonia::RosEnvironment::setPrefix(prefix);
+	}
+	isRosLoopEnabled = true;
     }
 
     RobotToolkit::~RobotToolkit()
     {
 	
     }
+    
+    std::string RobotToolkit::_whoWillWin()
+    {
+	return "SinfonIA SSPL Robocup Team";
+    }
+    
+    void RobotToolkit::init()
+    {
+	ros::Time::init();
+	startRosLoop();
+    }
+    
+    void RobotToolkit::rosLoop()
+    {
+	int counter = 0;
+	while(isRosLoopEnabled)
+	{
+	    printf("Hello world! %d times \n", counter);
+	    counter++;
+	    ros::Duration(1).sleep();
+	}
+    }
+    
+    void RobotToolkit::startRosLoop()
+    {
+	if (mainThread.get_id() ==  boost::thread::id())
+	    mainThread = boost::thread( &RobotToolkit::rosLoop, this );
+	/*
+	for(EventIter i = eventMap.begin(); i != eventMap.end(); i++)
+	{
+	    i->second.startProcess();
+	}*/
+	isRosLoopEnabled = true;
+    }
 
-    QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin);
+    void RobotToolkit::stopRosLoop()
+    {
+	isRosLoopEnabled = false;
+	if (mainThread.get_id() !=  boost::thread::id())
+	    mainThread.join();
+	/*for(EventIter i = eventMap.begin(); i != eventMap.end(); i++)
+	{
+	    i->second.stopProcess();
+	}*/	
+    }
+    
+    void RobotToolkit::setMasterURINet(const std::string& uri, const std::string& networkInterface)
+    {
+	boost::mutex::scoped_lock lock( mutexConvertersQueue );
+	{
+	    nodeHandlerPtr.reset();
+	    std::cout << "nodehandle reset " << std::endl;
+	    Sinfonia::RosEnvironment::setMasterURI( uri, networkInterface );
+	    nodeHandlerPtr.reset( new ros::NodeHandle("~") );
+	}
+	
+    }
+
+    void RobotToolkit::stopService()
+    {
+	stopRosLoop();
+    }
+
+
+    QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet);
 }

@@ -75,9 +75,9 @@ int main(int argc, char **argv)
 	exit(0);
     }
     #if LIBQI_VERSION>24
-    app.startSession();
+	app.startSession();
     #else
-    app.start();
+	app.start();
     #endif
     boost::shared_ptr<Sinfonia::RobotToolkit> robotToolkit = boost::make_shared<Sinfonia::RobotToolkit>(app.session(), variablesMap["namespace"].as<std::string>());
     app.session()->registerService("robot_toolkit", robotToolkit);
@@ -89,17 +89,16 @@ int main(int argc, char **argv)
 
 	std::cout << BOLDYELLOW << "using ip address: " << BOLDCYAN << roscoreIp << " @ " << networkInterface << RESETCOLOR << std::endl;
 		    
-	/*	    
 	robotToolkit->init();
-	robotToolkit->setMasterURINet( "http://"+roscore_ip+":11311", network_interface); */
+	robotToolkit->setMasterURINet( "http://"+roscoreIp+":11311", networkInterface); 
     }
     else
     {
 	std::cout << BOLDRED << "No ip address given. Run qicli call to set the master uri" << RESETCOLOR << std::endl;
-	//robotToolkit->init();
+	robotToolkit->init();
     }
     app.run();
-    //robotToolkit->stopService();
+    robotToolkit->stopService();
     app.session()->close();
     return 0;
 }
