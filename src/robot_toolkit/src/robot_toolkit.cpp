@@ -20,7 +20,17 @@
 
 
 #include "robot_toolkit/robot_toolkit.hpp"
+#include "robot_toolkit/message_actions.h"
+
 #include "robot_toolkit/ros_environment.hpp"
+
+#include "publishers/joint_state.hpp"
+#include "recorders/joint_state.hpp"
+#include "converters/joint_state.hpp"
+
+
+
+
 namespace Sinfonia
 {
     RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
@@ -34,6 +44,7 @@ namespace Sinfonia
 	{
 	    Sinfonia::RosEnvironment::setPrefix(prefix);
 	}
+	sessionPtr = session;
 	isRosLoopEnabled = true;
     }
 
@@ -55,6 +66,7 @@ namespace Sinfonia
     void RobotToolkit::init()
     {
 	ros::Time::init();
+	registerDefaultConverter();
 	startRosLoop();
     }
     
@@ -63,7 +75,7 @@ namespace Sinfonia
 	int counter = 0;
 	while(isRosLoopEnabled)
 	{
-	    printf("Hello world! %d times \n", counter);
+	    printf("Hello world! %d times from Manuel world\n", counter);
 	    counter++;
 	    ros::Duration(1).sleep();
 	}
@@ -109,6 +121,40 @@ namespace Sinfonia
 	stopRosLoop();
     }
 
+    void RobotToolkit::registerDefaultConverter()
+    {
+	tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
+	tf2Buffer->setUsingDedicatedThread(true);
+	
+	boost::shared_ptr<Publisher::JointStatePublisher> jointStatePublisher = boost::make_shared<Publisher::JointStatePublisher>( "/joint_states" );
+	boost::shared_ptr<Recorder::JointStateRecorder> jointStateRecorder = boost::make_shared<Recorder::JointStateRecorder>( "/joint_states" );
+	boost::shared_ptr<Converter::JointStateConverter> jointStateConverter = boost::make_shared<Converter::JointStateConverter>( "joint_states", 50, tf2Buffer, sessionPtr );
+	jointStateConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::JointStatePublisher::publish, jointStatePublisher, _1, _2) );
+	jointStateConverter->registerCallback( MessageAction::RECORD, boost::bind(&Recorder::JointStateRecorder::write, jointStateRecorder, _1, _2) );
+	jointStateConverter->registerCallback( MessageAction::LOG, boost::bind(&Recorder::JointStateRecorder::bufferize, jointStateRecorder, _1, _2) );
+	registerGroup( jointStateConverter, jointStatePublisher, jointStateRecorder );
+    }
+
+    void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher, Recorder::Recorder recorder)
+    {
+	registerConverter(converter);
+	registerPublisher(converter.name(), publisher);
+	registerRecorder(converter.name(), recorder, converter.frequency());
+    }
+    
+    void RobotToolkit::registerConverter(Converter::Converter& converter)
+    {
+	
+    }
+
+    void RobotToolkit::registerPublisher(const std::string& converterName, Publisher::Publisher& publisher)
+    {
+	
+    }
+    void RobotToolkit::registerRecorder(const std::string& converterName, Recorder::Recorder& recorder, float frequency)
+    {
+
+    }
 
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet);
 }

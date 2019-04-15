@@ -4,16 +4,16 @@ project(robot_toolkit)
 # define source files that can be used by qibuild or catkin
 set(
   CONVERTERS_SRC
-  
+  src/converters/joint_state.cpp
   )
 set(
   TOOLS_SRC
- 
+    src/tools/robot_description.cpp
   )
 
 set(
   PUBLISHER_SRC
- 
+  src/publishers/joint_state.cpp
   )
 
 set(
@@ -28,12 +28,14 @@ set(
 
 set(
   RECORDER_SRC
-  
+  src/recorders/joint_state.cpp
   )
 
 set(
   ROBOT_TOOLKIT_SRC
   src/robot_toolkit.cpp
+  src/helpers/toolkit_helpers.cpp
+  src/recorders/globalrecorder.cpp
   )
   
 
