@@ -48,16 +48,51 @@ namespace Sinfonia
 	    void init();
 	    void stopService();
 	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
+	    void startPublishing();
 
 	    
 	private:
+	    
+	    struct ScheduledConverter 
+	    {
+		ScheduledConverter(const ros::Time& schedule, size_t conv_index):
+		schedule_(schedule), conv_index_(conv_index)
+		{
+		}
+
+		bool operator < (const ScheduledConverter& sp_in) const 
+		{
+		    return schedule_ > sp_in.schedule_;
+		}
+		
+		ros::Time schedule_;
+		
+		size_t conv_index_;
+	    };
+	    
 	    boost::thread mainThread;
+	    bool _publishEnabled;
+	    bool _recordEnabled;
+	    bool _logEnabled;
 	    //std::map< std::string, event::Event > eventMap;
 	    bool isRosLoopEnabled;
 	    boost::scoped_ptr<ros::NodeHandle> nodeHandlerPtr;
 	    boost::mutex mutexConvertersQueue;
+	    boost::mutex mutexRecorders;
 	    qi::SessionPtr sessionPtr;
 	    boost::shared_ptr<tf2_ros::Buffer> tf2Buffer;
+	    std::vector< Converter::Converter > _converters;
+	    std::priority_queue<ScheduledConverter> _convertersQueue;
+	    
+	    //std::map< std::string, event::Event > eventMap_;
+	    
+	    boost::shared_ptr<Recorder::GlobalRecorder> _recorder;
+	    std::map< std::string, Recorder::Recorder > _recorderMap;
+	    std::map< std::string, Publisher::Publisher > _publisherMap;
+	    
+	    typedef std::map< std::string, Publisher::Publisher>::const_iterator pubConstIter;
+	    typedef std::map< std::string, Recorder::Recorder>::const_iterator recConstIter;
+	    
 	    
 	    void rosLoop();
 	    void startRosLoop();
@@ -67,6 +102,7 @@ namespace Sinfonia
 	    void registerConverter(Sinfonia::Converter::Converter& converter);
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
 	    void registerRecorder(const std::string& converterName, Sinfonia::Recorder::Recorder& recorder, float frequency);	   
+	    
     };
 }
 

@@ -29,7 +29,8 @@
 #include "converters/joint_state.hpp"
 
 
-
+#include <boost/foreach.hpp>
+#define for_each BOOST_FOREACH
 
 namespace Sinfonia
 {
@@ -72,12 +73,75 @@ namespace Sinfonia
     
     void RobotToolkit::rosLoop()
     {
+	static std::vector<MessageAction::MessageAction> actions;
 	int counter = 0;
 	while(isRosLoopEnabled)
 	{
+	    /*
 	    printf("Hello world! %d times from Manuel world\n", counter);
 	    counter++;
-	    ros::Duration(1).sleep();
+	    ros::Duration(1).sleep();*/
+	    actions.clear();
+	    {
+		boost::mutex::scoped_lock lock( mutexConvertersQueue );
+		if(!_convertersQueue.empty())
+		{
+		    size_t convIndex = _convertersQueue.top().conv_index_;
+		    Converter::Converter& conv = _converters[convIndex];
+		    ros::Time schedule = _convertersQueue.top().schedule_;
+
+		    // check the publishing condition
+		    // 1. publishing enabled
+		    // 2. has to be registered
+		    // 3. has to be subscribed
+		    pubConstIter pubIt = _publisherMap.find( conv.name() );
+		    if ( _publishEnabled &&  pubIt != _publisherMap.end() && pubIt->second.isSubscribed() )
+		    {
+			actions.push_back(MessageAction::PUBLISH);
+		    }
+
+		    // check the recording condition
+		    // 1. recording enabled
+		    // 2. has to be registered
+		    // 3. has to be subscribed (configured to be recorded)
+		    recConstIter recIt = _recorderMap.find( conv.name() );
+		    {
+			boost::mutex::scoped_lock lock_record( mutexRecorders, boost::try_to_lock );
+			if ( lock_record && _recordEnabled && recIt != _recorderMap.end() && recIt->second.isSubscribed() )
+			{
+			    actions.push_back(MessageAction::RECORD);
+			}
+		    }
+
+		    // bufferize data in recorder
+		    if ( _logEnabled && recIt != _recorderMap.end() && conv.frequency() != 0)
+		    {
+			actions.push_back(MessageAction::LOG);
+		    }
+
+		    // only call when we have at least one action to perform
+		    if (actions.size() >0)
+		    {
+			conv.callAll( actions );
+		    }
+
+		    ros::Duration d( schedule - ros::Time::now() );
+		    if ( d > ros::Duration(0))
+		    {
+			d.sleep();
+		    }
+
+		    _convertersQueue.pop();
+		    if ( conv.frequency() != 0 )
+		    {
+			_convertersQueue.push(ScheduledConverter(schedule + ros::Duration(1.0f / conv.frequency()), convIndex));
+		    }		    
+		}
+	    }
+	    if ( _publishEnabled )
+	    {
+		ros::spinOnce();
+	    }
 	}
     }
     
@@ -113,8 +177,38 @@ namespace Sinfonia
 	    Sinfonia::RosEnvironment::setMasterURI( uri, networkInterface );
 	    nodeHandlerPtr.reset( new ros::NodeHandle("~") );
 	}
+	if(_converters.empty())
+	{
+	    std::cout << BOLDRED << "going to register converters" << RESETCOLOR << std::endl;
+	    registerDefaultConverter();
+	    //registerDefaultSubscriber();
+	    //startRosLoop();
+	}
+	else
+	{
+	    std::cout << "NOT going to re-register the converters" << std::endl;
+	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
+	    for_each( publisherMap::value_type &pub, _publisherMap )
+	    {
+		pub.second.reset(*nodeHandlerPtr);
+	    }
+	}
+
+	
+	// Start publishing again
+	startPublishing();
 	
     }
+    
+    void RobotToolkit::startPublishing()
+    {
+	_publishEnabled = true;
+	/*for(EventIter iterator = event_map_.begin(); iterator != event_map_.end(); iterator++)
+	{
+	    iterator->second.isPublishing(true);
+	}*/
+    }
+
 
     void RobotToolkit::stopService()
     {
@@ -123,6 +217,7 @@ namespace Sinfonia
 
     void RobotToolkit::registerDefaultConverter()
     {
+	printf("Registering Default Converter");
 	tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
 	tf2Buffer->setUsingDedicatedThread(true);
 	
@@ -137,6 +232,7 @@ namespace Sinfonia
 
     void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher, Recorder::Recorder recorder)
     {
+	printf("Registering Group");
 	registerConverter(converter);
 	registerPublisher(converter.name(), publisher);
 	registerRecorder(converter.name(), recorder, converter.frequency());
@@ -144,17 +240,30 @@ namespace Sinfonia
     
     void RobotToolkit::registerConverter(Converter::Converter& converter)
     {
-	
+	printf("Registering Converter");
+	boost::mutex::scoped_lock lock( mutexConvertersQueue );
+	int convIndex = _converters.size();
+	_converters.push_back( converter );
+	converter.reset();
+	_convertersQueue.push(ScheduledConverter(ros::Time::now(), convIndex));
     }
 
     void RobotToolkit::registerPublisher(const std::string& converterName, Publisher::Publisher& publisher)
     {
+	printf("Registering Publisher");
+	if (_publishEnabled) 
+	{
+	    publisher.reset(*nodeHandlerPtr);
+	}
+	
+	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
 	
     }
     void RobotToolkit::registerRecorder(const std::string& converterName, Recorder::Recorder& recorder, float frequency)
     {
-
+	recorder.reset(_recorder, frequency);
+	_recorderMap.insert( std::map<std::string, Recorder::Recorder>::value_type(converterName, recorder) );
     }
 
-    QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet);
+    QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

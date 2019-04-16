@@ -44,6 +44,8 @@ namespace Sinfonia
 	tf2Buffer_(tf2_buffer)
 	{
 	    robotDesc_ = Tools::getRobotDescription(robot_);
+	    
+	    
 	}
 
 	JointStateConverter::~JointStateConverter()
