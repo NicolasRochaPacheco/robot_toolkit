@@ -37,34 +37,36 @@ namespace Sinfonia
 
 	    public:
 		BaseConverter(const std::string& name, float frequency, qi::SessionPtr session):
-		    name_( name ),
-		    frequency_( frequency ),
-		    robot_(Helpers::Toolkit::getRobot(session)),
-		    session_(session),
-		    record_enabled_(false)
-		{}
+		_robot(Helpers::Toolkit::getRobot(session))
+		{
+		    _name = name;
+		    _frequency = frequency;
+		    _session = session;
+		    _recordEnabled = false;
+		}
 
 		virtual ~BaseConverter(){}
 
 		inline std::string name() const
 		{
-		    return name_;
+		    return _name;
 		}
 
 		inline float frequency() const
 		{
-		    return frequency_;
+		    return _frequency;
 		}
 
 	    protected:
-		std::string name_;
+		std::string _name;
 
-		float frequency_;
-		const Robot::Robot& robot_;
+		float _frequency;
+		
+		const Robot::Robot& _robot;
 
-		qi::SessionPtr session_;
+		qi::SessionPtr _session;
 
-		bool record_enabled_;
+		bool _recordEnabled;
 	}; 
 
     }

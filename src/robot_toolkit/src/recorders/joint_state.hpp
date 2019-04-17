@@ -59,43 +59,43 @@ namespace Sinfonia
 
 		inline std::string topic() const
 		{
-		    return topic_;
+		    return _topic;
 		}
 
 		inline bool isInitialized() const
 		{
-		    return isInitialized_;
+		    return _isInitialized;
 		}
 
 		inline void subscribe( bool state)
 		{
-		    isSubscribed_ = state;
+		    _isSubscribed = state;
 		}
 
 		inline bool isSubscribed() const
 		{
-		    return isSubscribed_;
+		    return _isSubscribed;
 		}
 
 	    protected:
-		std::string topic_;
+		std::string _topic;
 
-		boost::circular_buffer<sensor_msgs::JointState> bufferJoinState_;
-		boost::circular_buffer< std::vector<geometry_msgs::TransformStamped> > bufferTF_;
-		size_t bufferSize_;
-		float bufferDuration_;
+		boost::circular_buffer<sensor_msgs::JointState> _bufferJoinState;
+		boost::circular_buffer< std::vector<geometry_msgs::TransformStamped> > _bufferTF;
+		size_t _bufferSize;
+		float _bufferDuration;
 
-		boost::mutex mutex_;
+		boost::mutex _mutex;
 
-		bool isInitialized_;
-		bool isSubscribed_;
+		bool _isInitialized;
+		bool _isSubscribed;
 
-		boost::shared_ptr<Sinfonia::Recorder::GlobalRecorder> globalRecorder_;
+		boost::shared_ptr<Sinfonia::Recorder::GlobalRecorder> _globalRecorder;
 
-		float bufferFrequency_;
-		float converterFrequency_;
-		int counter_;
-		int maxCounter_;
+		float _bufferFrequency;
+		float _converterFrequency;
+		int _counter;
+		int _maxCounter;
 
 	};
 

@@ -45,16 +45,16 @@ namespace Sinfonia
 	{
 	    Sinfonia::RosEnvironment::setPrefix(prefix);
 	}
-	sessionPtr = session;
-	isRosLoopEnabled = true;
+	_sessionPtr = session;
+	_isRosLoopEnabled = true;
     }
 
     RobotToolkit::~RobotToolkit()
     {
 	std::cout << "robot_toolkit is shutting down.." << std::endl;
-	if(nodeHandlerPtr)
+	if(_nodeHandlerPtr)
 	{
-	    nodeHandlerPtr->shutdown();
+	    _nodeHandlerPtr->shutdown();
 	    ros::shutdown();
 	}
     }
@@ -74,52 +74,37 @@ namespace Sinfonia
     void RobotToolkit::rosLoop()
     {
 	static std::vector<MessageAction::MessageAction> actions;
-	int counter = 0;
-	while(isRosLoopEnabled)
+	while(_isRosLoopEnabled)
 	{
-	    /*
-	    printf("Hello world! %d times from Manuel world\n", counter);
-	    counter++;
-	    ros::Duration(1).sleep();*/
 	    actions.clear();
 	    {
-		boost::mutex::scoped_lock lock( mutexConvertersQueue );
+		boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 		if(!_convertersQueue.empty())
 		{
 		    size_t convIndex = _convertersQueue.top().conv_index_;
 		    Converter::Converter& conv = _converters[convIndex];
 		    ros::Time schedule = _convertersQueue.top().schedule_;
 
-		    // check the publishing condition
-		    // 1. publishing enabled
-		    // 2. has to be registered
-		    // 3. has to be subscribed
 		    pubConstIter pubIt = _publisherMap.find( conv.name() );
 		    if ( _publishEnabled &&  pubIt != _publisherMap.end() && pubIt->second.isSubscribed() )
 		    {
 			actions.push_back(MessageAction::PUBLISH);
 		    }
 
-		    // check the recording condition
-		    // 1. recording enabled
-		    // 2. has to be registered
-		    // 3. has to be subscribed (configured to be recorded)
 		    recConstIter recIt = _recorderMap.find( conv.name() );
 		    {
-			boost::mutex::scoped_lock lock_record( mutexRecorders, boost::try_to_lock );
+			boost::mutex::scoped_lock lock_record( _mutexRecorders, boost::try_to_lock );
 			if ( lock_record && _recordEnabled && recIt != _recorderMap.end() && recIt->second.isSubscribed() )
 			{
 			    actions.push_back(MessageAction::RECORD);
 			}
 		    }
 
-		    // bufferize data in recorder
 		    if ( _logEnabled && recIt != _recorderMap.end() && conv.frequency() != 0)
 		    {
 			actions.push_back(MessageAction::LOG);
 		    }
 
-		    // only call when we have at least one action to perform
 		    if (actions.size() >0)
 		    {
 			conv.callAll( actions );
@@ -147,42 +132,32 @@ namespace Sinfonia
     
     void RobotToolkit::startRosLoop()
     {
-	if (mainThread.get_id() ==  boost::thread::id())
-	    mainThread = boost::thread( &RobotToolkit::rosLoop, this );
-	/*
-	for(EventIter i = eventMap.begin(); i != eventMap.end(); i++)
-	{
-	    i->second.startProcess();
-	}*/
-	isRosLoopEnabled = true;
+	if (_mainThread.get_id() ==  boost::thread::id())
+	    _mainThread = boost::thread( &RobotToolkit::rosLoop, this );
+	_isRosLoopEnabled = true;
     }
 
     void RobotToolkit::stopRosLoop()
     {
-	isRosLoopEnabled = false;
-	if (mainThread.get_id() !=  boost::thread::id())
-	    mainThread.join();
-	/*for(EventIter i = eventMap.begin(); i != eventMap.end(); i++)
-	{
-	    i->second.stopProcess();
-	}*/	
+	_isRosLoopEnabled = false;
+	if (_mainThread.get_id() !=  boost::thread::id())
+	    _mainThread.join();
     }
     
     void RobotToolkit::setMasterURINet(const std::string& uri, const std::string& networkInterface)
     {
-	boost::mutex::scoped_lock lock( mutexConvertersQueue );
+	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 	{
-	    nodeHandlerPtr.reset();
+	    _nodeHandlerPtr.reset();
 	    std::cout << "nodehandle reset " << std::endl;
 	    Sinfonia::RosEnvironment::setMasterURI( uri, networkInterface );
-	    nodeHandlerPtr.reset( new ros::NodeHandle("~") );
+	    _nodeHandlerPtr.reset( new ros::NodeHandle("~") );
 	}
 	if(_converters.empty())
 	{
 	    std::cout << BOLDRED << "going to register converters" << RESETCOLOR << std::endl;
 	    registerDefaultConverter();
-	    //registerDefaultSubscriber();
-	    //startRosLoop();
+
 	}
 	else
 	{
@@ -190,12 +165,9 @@ namespace Sinfonia
 	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
 	    for_each( publisherMap::value_type &pub, _publisherMap )
 	    {
-		pub.second.reset(*nodeHandlerPtr);
+		pub.second.reset(*_nodeHandlerPtr);
 	    }
 	}
-
-	
-	// Start publishing again
 	startPublishing();
 	
     }
@@ -203,10 +175,6 @@ namespace Sinfonia
     void RobotToolkit::startPublishing()
     {
 	_publishEnabled = true;
-	/*for(EventIter iterator = event_map_.begin(); iterator != event_map_.end(); iterator++)
-	{
-	    iterator->second.isPublishing(true);
-	}*/
     }
 
 
@@ -217,13 +185,13 @@ namespace Sinfonia
 
     void RobotToolkit::registerDefaultConverter()
     {
-	printf("Registering Default Converter");
-	tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
-	tf2Buffer->setUsingDedicatedThread(true);
+	
+	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
+	_tf2Buffer->setUsingDedicatedThread(true);
 	
 	boost::shared_ptr<Publisher::JointStatePublisher> jointStatePublisher = boost::make_shared<Publisher::JointStatePublisher>( "/joint_states" );
 	boost::shared_ptr<Recorder::JointStateRecorder> jointStateRecorder = boost::make_shared<Recorder::JointStateRecorder>( "/joint_states" );
-	boost::shared_ptr<Converter::JointStateConverter> jointStateConverter = boost::make_shared<Converter::JointStateConverter>( "joint_states", 50, tf2Buffer, sessionPtr );
+	boost::shared_ptr<Converter::JointStateConverter> jointStateConverter = boost::make_shared<Converter::JointStateConverter>( "joint_states", 50, _tf2Buffer, _sessionPtr );
 	jointStateConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::JointStatePublisher::publish, jointStatePublisher, _1, _2) );
 	jointStateConverter->registerCallback( MessageAction::RECORD, boost::bind(&Recorder::JointStateRecorder::write, jointStateRecorder, _1, _2) );
 	jointStateConverter->registerCallback( MessageAction::LOG, boost::bind(&Recorder::JointStateRecorder::bufferize, jointStateRecorder, _1, _2) );
@@ -232,7 +200,6 @@ namespace Sinfonia
 
     void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher, Recorder::Recorder recorder)
     {
-	printf("Registering Group");
 	registerConverter(converter);
 	registerPublisher(converter.name(), publisher);
 	registerRecorder(converter.name(), recorder, converter.frequency());
@@ -240,8 +207,7 @@ namespace Sinfonia
     
     void RobotToolkit::registerConverter(Converter::Converter& converter)
     {
-	printf("Registering Converter");
-	boost::mutex::scoped_lock lock( mutexConvertersQueue );
+	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 	int convIndex = _converters.size();
 	_converters.push_back( converter );
 	converter.reset();
@@ -250,10 +216,9 @@ namespace Sinfonia
 
     void RobotToolkit::registerPublisher(const std::string& converterName, Publisher::Publisher& publisher)
     {
-	printf("Registering Publisher");
 	if (_publishEnabled) 
 	{
-	    publisher.reset(*nodeHandlerPtr);
+	    publisher.reset(*_nodeHandlerPtr);
 	}
 	
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );

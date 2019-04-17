@@ -47,7 +47,7 @@ namespace Sinfonia
 	typedef std::map<std::string, boost::shared_ptr<urdf::JointMimic> > mimicMap;
 
 	public:
-	    JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2_buffer, const qi::SessionPtr& session );
+	    JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
 
 	    ~JointStateConverter();
 
@@ -61,23 +61,23 @@ namespace Sinfonia
 
 	    
 	    void addChildren(const KDL::SegmentMap::const_iterator segment);
-	    std::map<std::string, robot_state_publisher::SegmentPair> segments_, segmentsFixed_;
+	    std::map<std::string, robot_state_publisher::SegmentPair> _segments, _segmentsFixed;
 	    void setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix);
 	    void setFixedTransforms(const std::string& tfPrefix, const ros::Time& time);
 
-	    bufferPtr tf2Buffer_;
+	    bufferPtr _tf2Buffer;
   
-	    qi::AnyObject pMotion_;
+	    qi::AnyObject _pMotion;
 
-	    std::map<MessageAction::MessageAction, callbackT> callbacks_;
+	    std::map<MessageAction::MessageAction, callbackT> _callbacks;
 	    
-	    std::string robotDesc_;
+	    std::string _robotDesc;
 	    
-	    mimicMap mimic_;
+	    mimicMap _mimic;
 	    
-	    sensor_msgs::JointState msgJointStates_;
+	    sensor_msgs::JointState _msgJointStates;
 	    
-	    std::vector<geometry_msgs::TransformStamped> tfTransforms_;
+	    std::vector<geometry_msgs::TransformStamped> _tfTransforms;
 
 	};
 

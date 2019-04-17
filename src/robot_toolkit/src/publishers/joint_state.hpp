@@ -35,34 +35,34 @@ namespace Sinfonia
 	class JointStatePublisher
 	{
 
-	public:
-	    JointStatePublisher( const std::string& topic = "/joint_states" );
+	    public:
+		JointStatePublisher( const std::string& topic = "/joint_states" );
 
-	    inline std::string topic() const
-	    {
-		return topic_;
-	    }
+		inline std::string topic() const
+		{
+		    return topic_;
+		}
 
-	    inline bool isInitialized() const
-	    {
-		return isInitialized_;
-	    }
+		inline bool isInitialized() const
+		{
+		    return isInitialized_;
+		}
 
-	    virtual void publish( const sensor_msgs::JointState& jointStatesMessage,
-				    const std::vector<geometry_msgs::TransformStamped>& TfTransforms );
+		virtual void publish( const sensor_msgs::JointState& jointStatesMessage,
+					const std::vector<geometry_msgs::TransformStamped>& TfTransforms );
 
-	    virtual void reset( ros::NodeHandle& nodeHandle );
+		virtual void reset( ros::NodeHandle& nodeHandle );
 
-	    virtual bool isSubscribed() const;
+		virtual bool isSubscribed() const;
 
-	private:
-	    boost::shared_ptr<tf2_ros::TransformBroadcaster> TFBroadcasterPtr_;
+	    private:
+		boost::shared_ptr<tf2_ros::TransformBroadcaster> TFBroadcasterPtr_;
 
-	    ros::Publisher pubJointStates_;
+		ros::Publisher pubJointStates_;
 
-	    std::string topic_;
+		std::string topic_;
 
-	    bool isInitialized_;
+		bool isInitialized_;
 
 	};
 

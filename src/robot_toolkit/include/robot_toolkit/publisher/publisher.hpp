@@ -38,32 +38,31 @@ namespace Sinfonia
 	    public:
 
 		template<typename T>
-		Publisher( const T& publisher ):
-		publisherPtr( boost::make_shared<PublisherModel<T> >(publisher) )
+		Publisher( const T& publisher )
 		{
-		    
+		    _publisherPtr = boost::make_shared<PublisherModel<T> >(publisher);
 		}
 		
 		bool isInitialized() const
 		{
-		    return publisherPtr->isInitialized();
+		    return _publisherPtr->isInitialized();
 		}
 
 		bool isSubscribed() const
 		{
-		    return publisherPtr->isSubscribed();
+		    return _publisherPtr->isSubscribed();
 		}
 
 		void reset( ros::NodeHandle& nodeHandle )
 		{
 		    std::cout << topic() << " is resetting" << std::endl;
-		    publisherPtr->reset( nodeHandle );
+		    _publisherPtr->reset( nodeHandle );
 		    std::cout << topic() << " reset" << std::endl;
 		}
 
 		std::string topic() const
 		{
-		    return publisherPtr->topic();
+		    return _publisherPtr->topic();
 		}
 
 		friend bool operator==( const Publisher& lhs, const Publisher& rhs )
@@ -92,34 +91,35 @@ namespace Sinfonia
 		template<typename T>
 		struct PublisherModel : public PublisherConcept
 		{
-		    PublisherModel( const T& other ):
-		    publisher_( other )
-		    {}
+		    PublisherModel( const T& other )
+		    {
+			_publisher = other;
+		    }
 
 		    std::string topic() const
 		    {
-			return publisher_->topic();
+			return _publisher->topic();
 		    }
 
 		    bool isInitialized() const
 		    {
-			return publisher_->isInitialized();
+			return _publisher->isInitialized();
 		    }
 
 		    bool isSubscribed() const
 		    {
-			return publisher_->isSubscribed();
+			return _publisher->isSubscribed();
 		    }
 
 		    void reset( ros::NodeHandle& nodeHandler )
 		    {
-			publisher_->reset(nodeHandler);
+			_publisher->reset(nodeHandler);
 		    }
 
-		    T publisher_;
+		    T _publisher;
 		};
 
-		boost::shared_ptr<PublisherConcept> publisherPtr;
+		boost::shared_ptr<PublisherConcept> _publisherPtr;
 
 	};
     } 

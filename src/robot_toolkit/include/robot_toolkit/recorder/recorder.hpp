@@ -44,15 +44,15 @@ namespace Sinfonia
 	    public:
 		
 		template<typename T>
-		Recorder( T recorder ):
-		recorderPtr( boost::make_shared<RecorderModel<T> >(recorder) )
-		{}
+		Recorder( T recorder )
+		{
+		    recorderPtr = boost::make_shared<RecorderModel<T> >(recorder) ;
+		}
 
 		bool isInitialized() const
 		{
 		    return recorderPtr->isInitialized();
 		}
-
 
 		void subscribe( bool state )
 		{
@@ -104,49 +104,48 @@ namespace Sinfonia
 		    virtual void setBufferDuration(float duration) = 0;
 		    virtual void reset( boost::shared_ptr<Sinfonia::Recorder::GlobalRecorder> gr, float frequency ) = 0;
 		};
-
-
 		
 		template<typename T>
 		struct RecorderModel : public RecorderConcept
 		{
-		    RecorderModel( const T& other ):
-		    recorder_( other )
-		    {}
+		    RecorderModel( const T& other )
+		    {
+			recorder_ = other;
+		    }
 
 		    void reset( boost::shared_ptr<Sinfonia::Recorder::GlobalRecorder> gr, float frequency )
 		    {
-		    recorder_->reset( gr, frequency );
+			recorder_->reset( gr, frequency );
 		    }
 
 		    bool isInitialized() const
 		    {
-		    return recorder_->isInitialized();
+			return recorder_->isInitialized();
 		    }
 
 		    void subscribe(bool state)
 		    {
-		    recorder_->subscribe( state );
+			recorder_->subscribe( state );
 		    }
 
 		    bool isSubscribed() const
 		    {
-		    return recorder_->isSubscribed();
+			return recorder_->isSubscribed();
 		    }
 
 		    std::string topic() const
 		    {
-		    return recorder_->topic();
+			return recorder_->topic();
 		    }
 
 		    void writeDump(const ros::Time& time)
 		    {
-		    recorder_->writeDump(time);
+			recorder_->writeDump(time);
 		    }
 
 		    void setBufferDuration(float duration)
 		    {
-		    recorder_->setBufferDuration(duration);
+			recorder_->setBufferDuration(duration);
 		    }
 
 		    T recorder_;

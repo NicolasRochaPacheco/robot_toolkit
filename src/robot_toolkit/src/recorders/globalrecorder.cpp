@@ -48,10 +48,10 @@ namespace Sinfonia
 
 	GlobalRecorder::GlobalRecorder(const std::string& prefixTopic):
 	_bag(),
-	_processMutex(),
-	_nameBag(""),
-	_isStarted(false)
+	_processMutex()
 	{
+	    _nameBag = "";
+	    _isStarted = false;
 	    if (!prefixTopic.empty())
 	    {
 		_prefixTopic = "/" + prefixTopic + "/";
@@ -69,7 +69,7 @@ namespace Sinfonia
 	    {
 		try 
 		{    
-		    boost::filesystem::path cur_path(boost::filesystem::current_path());
+		    boost::filesystem::path currentPath(boost::filesystem::current_path());
 		    time_t rawTime;
 		    struct tm * timeInfo;
 		    char buffer[80];
@@ -79,11 +79,11 @@ namespace Sinfonia
 
 		    if (!prefixBag.empty()) 
 		    {
-			_nameBag = cur_path.string()+ "/" + prefixBag + "_" + buffer;
+			_nameBag = currentPath.string()+ "/" + prefixBag + "_" + buffer;
 		    }
 		    else 
 		    {
-			_nameBag = cur_path.string() + "/" + buffer;
+			_nameBag = currentPath.string() + "/" + buffer;
 		    }
 		    
 		    _nameBag.append(".bag");

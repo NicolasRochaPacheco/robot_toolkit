@@ -23,93 +23,92 @@ namespace Sinfonia
 {
     namespace Recorder
     {
-	JointStateRecorder::JointStateRecorder( const std::string& topic, float bufferFrequency ):
-	topic_( topic ),
-	bufferDuration_(Helpers::Recorder::bufferDefaultDuration),
-	isInitialized_( false ),
-	isSubscribed_( false ),
-	bufferFrequency_(bufferFrequency),
-	counter_(1)
+	JointStateRecorder::JointStateRecorder( const std::string& topic, float bufferFrequency )
 	{
-	    
+	    _topic =  topic;
+	    _bufferDuration = Helpers::Recorder::bufferDefaultDuration;
+	    _isInitialized = false;
+	    _isSubscribed = false;
+	    _bufferFrequency = bufferFrequency;
+	    _counter = 1;
 	}
 
-	void JointStateRecorder::write( const sensor_msgs::JointState& jointStateMessage, const std::vector<geometry_msgs::TransformStamped>& tf_transforms )
+	void JointStateRecorder::write( const sensor_msgs::JointState& jointStateMessage, const std::vector<geometry_msgs::TransformStamped>& TfTtransforms )
 	{
 	    if (!jointStateMessage.header.stamp.isZero())
 	    {
-		globalRecorder_->write(topic_, jointStateMessage, jointStateMessage.header.stamp);
+		_globalRecorder->write(_topic, jointStateMessage, jointStateMessage.header.stamp);
 	    }
 	    else 
 	    {
-		globalRecorder_->write(topic_, jointStateMessage);
+		_globalRecorder->write(_topic, jointStateMessage);
 	    }
-	    globalRecorder_->write("/tf", tf_transforms);
+	    _globalRecorder->write("/tf", TfTtransforms);
 	}
 
 	void JointStateRecorder::writeDump(const ros::Time& time)
 	{
-	    boost::mutex::scoped_lock lock_write_buffer(mutex_);
+	    boost::mutex::scoped_lock lock_write_buffer(_mutex);
 	    boost::circular_buffer< std::vector<geometry_msgs::TransformStamped> >::iterator iTf;
-	    for (iTf = bufferTF_.begin(); iTf != bufferTF_.end(); iTf++)
+	    for (iTf = _bufferTF.begin(); iTf != _bufferTF.end(); iTf++)
 	    {
-		globalRecorder_->write("/tf", *iTf);
+		_globalRecorder->write("/tf", *iTf);
 	    }
-	    for (boost::circular_buffer<sensor_msgs::JointState>::iterator itJs = bufferJoinState_.begin();
-		itJs != bufferJoinState_.end(); itJs++)
+	    for (boost::circular_buffer<sensor_msgs::JointState>::iterator itJs = _bufferJoinState.begin();
+		itJs != _bufferJoinState.end(); itJs++)
 	    {
 		if (!itJs->header.stamp.isZero())
 		{
-		    globalRecorder_->write(topic_, *itJs, itJs->header.stamp);
+		    _globalRecorder->write(_topic, *itJs, itJs->header.stamp);
 		}
 		else
 		{
-		    globalRecorder_->write(topic_, *itJs);
+		    _globalRecorder->write(_topic, *itJs);
 		}
 	    }
 	}
 
 	void JointStateRecorder::reset(boost::shared_ptr<GlobalRecorder> globalRecorder, float converterFrequency)
 	{
-	    globalRecorder_ = globalRecorder;
-	    converterFrequency_ = converterFrequency;
-	    if (bufferFrequency_ != 0)
+	    _globalRecorder = globalRecorder;
+	    _converterFrequency = converterFrequency;
+	    if (_bufferFrequency != 0)
 	    {
-		maxCounter_ = static_cast<int>(converterFrequency_/bufferFrequency_);
-		bufferSize_ = static_cast<size_t>(bufferDuration_*(converterFrequency_/maxCounter_));
+		_maxCounter = static_cast<int>(_converterFrequency/_bufferFrequency);
+		_bufferSize = static_cast<size_t>(_bufferDuration*(_converterFrequency/_maxCounter));
 	    }
 	    else
 	    {
-		maxCounter_ = 1;
-		bufferSize_ = static_cast<size_t>(bufferDuration_*converterFrequency_);
+		_maxCounter = 1;
+		_bufferSize = static_cast<size_t>(_bufferDuration*_converterFrequency);
 	    }
-	    bufferJoinState_.resize(bufferSize_);
-	    bufferTF_.resize(bufferSize_);
-	    isInitialized_ = true;
+	    _bufferJoinState.resize(_bufferSize);
+	    _bufferTF.resize(_bufferSize);
+	    _isInitialized = true;
 	}
 
 	void JointStateRecorder::bufferize( const sensor_msgs::JointState& jointStateMessage, const std::vector<geometry_msgs::TransformStamped>& tfTransforms )
 	{
-	    boost::mutex::scoped_lock lock_bufferize( mutex_ );
-	    if (counter_ < maxCounter_)
+	    boost::mutex::scoped_lock lock_bufferize( _mutex );
+	    if (_counter < _maxCounter)
 	    {
-		counter_++;
+		_counter++;
 	    }
 	    else
 	    {
-		counter_ = 1;
-		bufferJoinState_.push_back(jointStateMessage);
-		bufferTF_.push_back(tfTransforms);
+		_counter = 1;
+		_bufferJoinState.push_back(jointStateMessage);
+		_bufferTF.push_back(tfTransforms);
 	    }
 	}
 
 	void JointStateRecorder::setBufferDuration(float duration)
 	{
-	    boost::mutex::scoped_lock lock_bufferize(mutex_);
-	    bufferSize_ = static_cast<size_t>(duration*(converterFrequency_/maxCounter_));
-	    bufferDuration_ = duration;
-	    bufferJoinState_.set_capacity(bufferSize_);
-	    bufferTF_.set_capacity(bufferSize_);
+	    boost::mutex::scoped_lock lock_bufferize(_mutex);
+	    _bufferSize = static_cast<size_t>(duration*(_converterFrequency/_maxCounter));
+	    _bufferDuration = duration;
+	    _bufferJoinState.set_capacity(_bufferSize);
+	    _bufferTF.set_capacity(_bufferSize);
 	}
 
     }

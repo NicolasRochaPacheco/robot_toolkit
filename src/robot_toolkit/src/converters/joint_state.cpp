@@ -38,14 +38,13 @@ namespace Sinfonia
     namespace Converter
     {
 
-	JointStateConverter::JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2_buffer, const qi::SessionPtr& session ):
-	BaseConverter( name, frequency, session ),
-	pMotion_( session->service("ALMotion") ),
-	tf2Buffer_(tf2_buffer)
+	JointStateConverter::JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session ):
+	BaseConverter( name, frequency, session )
 	{
-	    robotDesc_ = Tools::getRobotDescription(robot_);
-	    
-	    
+	    _pMotion =  session->service("ALMotion");
+	    _tf2Buffer = tf2Buffer;
+	    _robotDesc = Tools::getRobotDescription(_robot);
+    
 	}
 
 	JointStateConverter::~JointStateConverter()
@@ -54,71 +53,72 @@ namespace Sinfonia
 
 	void JointStateConverter::reset()
 	{
-	    if ( robotDesc_.empty() )
+	    if ( _robotDesc.empty() )
 	    {
 		std::cout << "error in loading robot description" << std::endl;
 		return;
 	    }
 	    
 	    urdf::Model model;
-	    model.initString( robotDesc_ );
+	    model.initString( _robotDesc );
 	    KDL::Tree tree;
 	    kdl_parser::treeFromUrdfModel( model, tree );
 
 	    addChildren( tree.getRootSegment() );
 
-	    mimic_.clear();
+	    _mimic.clear();
 	    for(std::map< std::string, boost::shared_ptr< urdf::Joint > >::iterator i = model.joints_.begin(); i != model.joints_.end(); i++)
 	    {
 		if(i->second->mimic)
 		{
-		    mimic_.insert(make_pair(i->first, i->second->mimic));
+		    _mimic.insert(make_pair(i->first, i->second->mimic));
 		}
 	    }
 	    
-	    msgJointStates_.name = pMotion_.call<std::vector<std::string> >("getBodyNames", "Body" );
+	    _msgJointStates.name = _pMotion.call<std::vector<std::string> >("getBodyNames", "Body" );
 	}
 
 	void JointStateConverter::registerCallback( const MessageAction::MessageAction action, callbackT callBack )
 	{
-	    callbacks_[action] = callBack;
+	    _callbacks[action] = callBack;
 	}
 
 	void JointStateConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
 	{
-	    std::vector<double> alJointAngles = pMotion_.call<std::vector<double> >("getAngles", "Body", true );
+	    std::vector<double> alJointAngles = _pMotion.call<std::vector<double> >("getAngles", "Body", true );
 	    const ros::Time& stamp = ros::Time::now();
 	    
-	    msgJointStates_.header.stamp = stamp;
+	    _msgJointStates.header.stamp = stamp;
 
-	    msgJointStates_.position = std::vector<double>( alJointAngles.begin(), alJointAngles.end() );
+	    _msgJointStates.position = std::vector<double>( alJointAngles.begin(), alJointAngles.end() );
 
 	    std::map< std::string, double > jointStateMap;
 	    
-	    std::vector<double>::const_iterator itPos = msgJointStates_.position.begin();
-	    for(std::vector<std::string>::const_iterator itName = msgJointStates_.name.begin(); itName != msgJointStates_.name.end(); ++itName, ++itPos)
+	    std::vector<double>::const_iterator itPos = _msgJointStates.position.begin();
+	    for(std::vector<std::string>::const_iterator itName = _msgJointStates.name.begin(); itName != _msgJointStates.name.end(); ++itName, ++itPos)
 	    {
 		jointStateMap[*itName] = *itPos;
 	    }
 
 	    // for mimic map
-	    for(mimicMap::iterator i = mimic_.begin(); i != mimic_.end(); i++)
+	    for(mimicMap::iterator i = _mimic.begin(); i != _mimic.end(); i++)
 	    {
-		if(jointStateMap.find(i->second->joint_name) != jointStateMap.end()){
-		double pos = jointStateMap[i->second->joint_name] * i->second->multiplier + i->second->offset;
-		jointStateMap[i->first] = pos;
+		if(jointStateMap.find(i->second->joint_name) != jointStateMap.end())
+		{
+		    double pos = jointStateMap[i->second->joint_name] * i->second->multiplier + i->second->offset;
+		    jointStateMap[i->first] = pos;
 		}
 	    }
 
 	    // reset the transforms we want to use at this time
-	    tfTransforms_.clear();
+	    _tfTransforms.clear();
 	    static const std::string& jt_tf_prefix = "";
 	    setTransforms(jointStateMap, stamp, jt_tf_prefix);
 	    setFixedTransforms(jt_tf_prefix, stamp);
 
 
-	    std::vector<float> alOdometryData = pMotion_.call<std::vector<float> >( "getPosition", "Torso", 1, true );
-	    const ros::Time& odom_stamp = ros::Time::now();
+	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", 1, true );
+	    const ros::Time& odomStamp = ros::Time::now();
 	    const float& odomX  =  alOdometryData[0];
 	    const float& odomY  =  alOdometryData[1];
 	    const float& odomZ  =  alOdometryData[2];
@@ -126,37 +126,37 @@ namespace Sinfonia
 	    const float& odomWY =  alOdometryData[4];
 	    const float& odomWZ =  alOdometryData[5];
 	    //since all odometry is 6DOF we'll need a quaternion created from yaw
-	    tf2::Quaternion tf_quat;
-	    tf_quat.setRPY( odomWX, odomWY, odomWZ );
-	    geometry_msgs::Quaternion odom_quat = tf2::toMsg( tf_quat );
+	    tf2::Quaternion tfQuaternion;
+	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
+	    geometry_msgs::Quaternion odom_quat = tf2::toMsg( tfQuaternion );
 
 	    static geometry_msgs::TransformStamped msgTfOdom;
 	    msgTfOdom.header.frame_id = "odom";
 	    msgTfOdom.child_frame_id = "base_link";
-	    msgTfOdom.header.stamp = odom_stamp;
+	    msgTfOdom.header.stamp = odomStamp;
 
 	    msgTfOdom.transform.translation.x = odomX;
 	    msgTfOdom.transform.translation.y = odomY;
 	    msgTfOdom.transform.translation.z = odomZ;
 	    msgTfOdom.transform.rotation = odom_quat;
 
-	    tfTransforms_.push_back( msgTfOdom );
-	    tf2Buffer_->setTransform( msgTfOdom, "naoqiconverter", false);
+	    _tfTransforms.push_back( msgTfOdom );
+	    _tf2Buffer->setTransform( msgTfOdom, "naoqiconverter", false);
 
-	    if (robot_ == Robot::NAO )
+	    if (_robot == Robot::NAO )
 	    {
-		Nao::addBaseFootprint( tf2Buffer_, tfTransforms_, odom_stamp-ros::Duration(0.1) );
+		Nao::addBaseFootprint( _tf2Buffer, _tfTransforms, odomStamp-ros::Duration(0.1) );
 	    }
 
 	    // If nobody uses that buffer, do not fill it next time
-	    if (( tf2Buffer_ ) && ( tf2Buffer_.use_count() == 1 ))
+	    if (( _tf2Buffer ) && ( _tf2Buffer.use_count() == 1 ))
 	    {
-		tf2Buffer_.reset();
+		_tf2Buffer.reset();
 	    }
 
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
-		callbacks_[action]( msgJointStates_, tfTransforms_ );
+		_callbacks[action]( _msgJointStates, _tfTransforms );
 	    }
 	}
 
@@ -170,8 +170,8 @@ namespace Sinfonia
 	    // loop over all joints
 	    for (std::map<std::string, double>::const_iterator jnt=jointPositions.begin(); jnt != jointPositions.end(); jnt++)
 	    {
-		std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg = segments_.find(jnt->first);
-		if (seg != segments_.end()){
+		std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg = _segments.find(jnt->first);
+		if (seg != _segments.end()){
 		seg->second.segment.pose(jnt->second).M.GetQuaternion(tfTransform.transform.rotation.x,
 									tfTransform.transform.rotation.y,
 									tfTransform.transform.rotation.z,
@@ -180,28 +180,26 @@ namespace Sinfonia
 		tfTransform.transform.translation.y = seg->second.segment.pose(jnt->second).p.y();
 		tfTransform.transform.translation.z = seg->second.segment.pose(jnt->second).p.z();
 
-		//tf_transform.header.frame_id = tf::resolve(tf_prefix, seg->second.root);
-		//tf_transform.child_frame_id = tf::resolve(tf_prefix, seg->second.tip);
-		tfTransform.header.frame_id = seg->second.root; // tf2 does not suppport tf_prefixing
+		tfTransform.header.frame_id = seg->second.root;
 		tfTransform.child_frame_id = seg->second.tip;
 
-		tfTransforms_.push_back(tfTransform);
+		_tfTransforms.push_back(tfTransform);
 
-		if (tf2Buffer_)
-		    tf2Buffer_->setTransform(tfTransform, "naoqiconverter", false);
+		if (_tf2Buffer)
+		    _tf2Buffer->setTransform(tfTransform, "naoqiconverter", false);
 		}
 	    }
 
 	}
 
 	// Copied from robot state publisher
-	void JointStateConverter::setFixedTransforms(const std::string& msgJointStates_, const ros::Time& time)
+	void JointStateConverter::setFixedTransforms(const std::string& tfPrefix, const ros::Time& time)
 	{
 	    geometry_msgs::TransformStamped tfTransform;
 	    tfTransform.header.stamp = time/*+ros::Duration(0.5)*/;  // future publish by 0.5 seconds
 
 	    // loop over all fixed segments
-	    for (std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg=segmentsFixed_.begin(); seg != segmentsFixed_.end(); seg++)
+	    for (std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg=_segmentsFixed.begin(); seg != _segmentsFixed.end(); seg++)
 	    {
 		seg->second.segment.pose(0).M.GetQuaternion(tfTransform.transform.rotation.x,
 							    tfTransform.transform.rotation.y,
@@ -210,18 +208,14 @@ namespace Sinfonia
 		tfTransform.transform.translation.x = seg->second.segment.pose(0).p.x();
 		tfTransform.transform.translation.y = seg->second.segment.pose(0).p.y();
 		tfTransform.transform.translation.z = seg->second.segment.pose(0).p.z();
-
-		//tf_transform.header.frame_id = tf::resolve(tf_prefix, seg->second.root);
-		//tf_transform.child_frame_id = tf::resolve(tf_prefix, seg->second.tip);
 		tfTransform.header.frame_id = seg->second.root;
 		tfTransform.child_frame_id = seg->second.tip;
 
-		tfTransforms_.push_back(tfTransform);
+		_tfTransforms.push_back(tfTransform);
 
-		if (tf2Buffer_)
-		tf2Buffer_->setTransform(tfTransform, "naoqiconverter", true);
+		if (_tf2Buffer)
+		_tf2Buffer->setTransform(tfTransform, "naoqiconverter", true);
 	    }
-	    //tf_broadcaster_.sendTransform(tf_transforms);
 	 }
 
 	void JointStateConverter::addChildren(const KDL::SegmentMap::const_iterator segment)
@@ -235,12 +229,12 @@ namespace Sinfonia
 		robot_state_publisher::SegmentPair s(GetTreeElementSegment(children[i]->second), root, child.getName());
 		if (child.getJoint().getType() == KDL::Joint::None)
 		{
-		    segmentsFixed_.insert(std::make_pair(child.getJoint().getName(), s));
+		    _segmentsFixed.insert(std::make_pair(child.getJoint().getName(), s));
 		    ROS_DEBUG("Adding fixed segment from %s to %s", root.c_str(), child.getName().c_str());
 		}
 		else
 		{
-		    segments_.insert(std::make_pair(child.getJoint().getName(), s));
+		    _segments.insert(std::make_pair(child.getJoint().getName(), s));
 		    ROS_DEBUG("Adding moving segment from %s to %s", root.c_str(), child.getName().c_str());
 		}
 		addChildren(children[i]);

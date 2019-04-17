@@ -25,10 +25,11 @@ namespace Sinfonia
     namespace Publisher
     {
 
-	JointStatePublisher::JointStatePublisher( const std::string& topic ):
-	topic_( topic ),
-	isInitialized_( false )
-	{}
+	JointStatePublisher::JointStatePublisher(const std::string& topic)
+	{
+	    topic_ = topic;
+	    isInitialized_ = false;
+	}
 
 	void JointStatePublisher::publish( const sensor_msgs::JointState& jointStatesMessage,
 					const std::vector<geometry_msgs::TransformStamped>& TfTransforms )

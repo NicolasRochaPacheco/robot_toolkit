@@ -28,7 +28,7 @@ namespace Sinfonia
 	namespace Recorder
 	{
 
-	static const float bufferDefaultDuration = 10.f;
+	    static const float bufferDefaultDuration = 10.f;
 
 	} 
     }

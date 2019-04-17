@@ -31,9 +31,6 @@
 #include <rosbag/bag.h>
 #include <geometry_msgs/TransformStamped.h>
 
-
-
-
 namespace Sinfonia
 {
     namespace Recorder
