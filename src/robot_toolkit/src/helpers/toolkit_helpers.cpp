@@ -43,19 +43,9 @@ namespace Sinfonia
 		qi::AnyObject robotMemory = session->service("ALMemory");
 		std::string robot = robotMemory.call<std::string>("getData", "RobotConfig/Body/Type" );
 		std::transform(robot.begin(), robot.end(), robot.begin(), ::tolower);
-
-		if (std::string(robot) == "nao")
-		{
-		    info.type = naoqi_bridge_msgs::RobotInfo::NAO;
-		}
-		if (std::string(robot) == "pepper" || std::string(robot) == "juliette" )
-		{
-		    info.type = naoqi_bridge_msgs::RobotInfo::PEPPER;
-		}
-		if (std::string(robot) == "romeo" )
-		{
-		    info.type = naoqi_bridge_msgs::RobotInfo::ROMEO;
-		}
+		
+		info.type = naoqi_bridge_msgs::RobotInfo::PEPPER;
+		
 
 		qi::AnyObject robotMotion = session->service("ALMotion");
 		std::vector<std::vector<qi::AnyValue> > config = robotMotion.call<std::vector<std::vector<qi::AnyValue> > >("getRobotConfig");
@@ -178,28 +168,6 @@ namespace Sinfonia
 	    {
 		static naoqi_bridge_msgs::RobotInfo robotInfo =  getRobotInfoLocal(session);
 		return robotInfo;
-	    }
-	    
-	    const Robot::Robot& getRobot( const qi::SessionPtr& session )
-	    {
-		static Robot::Robot robot = Robot::UNIDENTIFIED;
-
-		if ( getRobotInfo(session).type == naoqi_bridge_msgs::RobotInfo::PEPPER )
-		{
-		    robot = Robot::PEPPER;
-		}
-		
-		else if ( getRobotInfo(session).type == naoqi_bridge_msgs::RobotInfo::NAO )
-		{
-		    robot = Robot::NAO;
-		}
-		
-		else if ( getRobotInfo(session).type == naoqi_bridge_msgs::RobotInfo::ROMEO )
-		{
-		    robot = Robot::ROMEO;
-		}
-
-		return robot;
 	    }
 	    
 	    bool& setLanguage( const qi::SessionPtr& session, naoqi_bridge_msgs::SetStringRequest request)

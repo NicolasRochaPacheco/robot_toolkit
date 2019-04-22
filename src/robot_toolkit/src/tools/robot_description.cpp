@@ -27,30 +27,14 @@ namespace Sinfonia
 
     namespace Tools
     {
-	std::string getRobotDescription( const Robot::Robot& robot)
+	std::string getRobotDescription()
 	{
 	    std::string urdfPath;
 	    static std::string robotDescription;
 	    if(!robotDescription.empty())
 		return robotDescription;
-
-	    if ( robot == Robot::PEPPER)
-	    {
-		urdfPath = Helpers::FileSystem::getURDF("pepper.urdf");
-	    }
-	    else if ( robot == Robot::NAO )
-	    {
-		urdfPath = Helpers::FileSystem::getURDF("nao.urdf");
-	    }
-	    else if ( robot == Robot::ROMEO )
-	    {
-		urdfPath = Helpers::FileSystem::getURDF("romeo.urdf");
-	    }
-	    else
-	    {
-		std::cerr << " could not load urdf file from disk " << std::endl;
-		return std::string();
-	    }
+	    
+	    urdfPath = Helpers::FileSystem::getURDF("pepper.urdf");
 
 	    std::ifstream stream( (urdfPath).c_str() );
 	    if (!stream)

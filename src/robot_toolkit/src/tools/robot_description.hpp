@@ -32,7 +32,7 @@ namespace Sinfonia
 {
     namespace Tools
     {
-	std::string getRobotDescription( const Robot::Robot& robot);
+	std::string getRobotDescription();
     }
 
 }

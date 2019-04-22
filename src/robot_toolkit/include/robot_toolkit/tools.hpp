@@ -51,17 +51,6 @@ namespace Sinfonia
 	    Bool
 	};
     }
-    
-    namespace Robot
-    {
-	enum Robot
-	{    
-	    UNIDENTIFIED,
-	    NAO,
-	    PEPPER,
-	    ROMEO
-	};
-    }
 } 
 
 #if LIBQI_VERSION>24

@@ -36,8 +36,7 @@ namespace Sinfonia
 	{
 
 	    public:
-		BaseConverter(const std::string& name, float frequency, qi::SessionPtr session):
-		_robot(Helpers::Toolkit::getRobot(session))
+		BaseConverter(const std::string& name, float frequency, qi::SessionPtr session)
 		{
 		    _name = name;
 		    _frequency = frequency;
@@ -62,8 +61,6 @@ namespace Sinfonia
 
 		float _frequency;
 		
-		const Robot::Robot& _robot;
-
 		qi::SessionPtr _session;
 
 		bool _recordEnabled;

@@ -43,7 +43,7 @@ namespace Sinfonia
 	{
 	    _pMotion =  session->service("ALMotion");
 	    _tf2Buffer = tf2Buffer;
-	    _robotDesc = Tools::getRobotDescription(_robot);
+	    _robotDesc = Tools::getRobotDescription();
     
 	}
 
@@ -142,11 +142,6 @@ namespace Sinfonia
 
 	    _tfTransforms.push_back( msgTfOdom );
 	    _tf2Buffer->setTransform( msgTfOdom, "naoqiconverter", false);
-
-	    if (_robot == Robot::NAO )
-	    {
-		Nao::addBaseFootprint( _tf2Buffer, _tfTransforms, odomStamp-ros::Duration(0.1) );
-	    }
 
 	    // If nobody uses that buffer, do not fill it next time
 	    if (( _tf2Buffer ) && ( _tf2Buffer.use_count() == 1 ))

@@ -34,9 +34,7 @@ namespace Sinfonia
     namespace Helpers
     {
 	namespace Toolkit
-	{
-	    const Robot::Robot& getRobot(const qi::SessionPtr& session);
-	    
+	{	    
 
 	    const naoqi_bridge_msgs::RobotInfo& getRobotInfo(const qi::SessionPtr& session);
 
