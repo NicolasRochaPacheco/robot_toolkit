@@ -90,20 +90,6 @@ namespace Sinfonia
 			actions.push_back(MessageAction::PUBLISH);
 		    }
 
-		    recConstIter recIt = _recorderMap.find( conv.name() );
-		    {
-			boost::mutex::scoped_lock lock_record( _mutexRecorders, boost::try_to_lock );
-			if ( lock_record && _recordEnabled && recIt != _recorderMap.end() && recIt->second.isSubscribed() )
-			{
-			    actions.push_back(MessageAction::RECORD);
-			}
-		    }
-
-		    if ( _logEnabled && recIt != _recorderMap.end() && conv.frequency() != 0)
-		    {
-			actions.push_back(MessageAction::LOG);
-		    }
-
 		    if (actions.size() >0)
 		    {
 			conv.callAll( actions );
