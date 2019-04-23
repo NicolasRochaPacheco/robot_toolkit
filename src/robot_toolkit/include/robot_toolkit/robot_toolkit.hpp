@@ -27,6 +27,7 @@
 #include "robot_toolkit/converter/converter.hpp"
 #include "robot_toolkit/publisher/publisher.hpp"
 #include "robot_toolkit/recorder/recorder.hpp"
+#include "robot_toolkit/subscriber/subscriber.hpp"
 
 #include <tf2_ros/buffer.h>
 
@@ -90,6 +91,7 @@ namespace Sinfonia
 	    
 	    
 	    std::vector< Converter::Converter > _converters;
+	    std::vector< Subscriber::Subscriber > _subscribers;
 	    std::priority_queue<ScheduledConverter> _convertersQueue;
 	    
 	    
@@ -107,6 +109,8 @@ namespace Sinfonia
 	    void registerGroup(Sinfonia::Converter::Converter converter, Sinfonia::Publisher::Publisher publisher);
 	    void registerConverter(Sinfonia::Converter::Converter& converter);
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
+	    void registerDefaultSubscriber();
+	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);
 	    
     };
 }

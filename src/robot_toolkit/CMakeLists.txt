@@ -13,12 +13,12 @@ set(
 
 set(
   PUBLISHER_SRC
-  src/navigation_tools/publishers/navigation_tools.cpp
+    src/navigation_tools/publishers/navigation_tools.cpp
   )
 
 set(
   SUBSCRIBER_SRC
- 
+    src/navigation_tools/subscribers/cmd_vel.cpp
   )
 
 set(

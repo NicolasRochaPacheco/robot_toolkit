@@ -29,6 +29,8 @@
 
 #include "navigation_tools/converters/navigation_tools.hpp"
 
+#include "navigation_tools/subscribers/cmd_vel.hpp"
+
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
 
@@ -68,6 +70,7 @@ namespace Sinfonia
     {
 	ros::Time::init();
 	registerDefaultConverter();
+	registerDefaultSubscriber();
 	startRosLoop();
     }
     
@@ -143,6 +146,7 @@ namespace Sinfonia
 	{
 	    std::cout << BOLDRED << "going to register converters" << RESETCOLOR << std::endl;
 	    registerDefaultConverter();
+	    registerDefaultSubscriber();
 
 	}
 	else
@@ -152,6 +156,12 @@ namespace Sinfonia
 	    for_each( publisherMap::value_type &pub, _publisherMap )
 	    {
 		pub.second.reset(*_nodeHandlerPtr);
+	    }
+	    
+	    for_each( Subscriber::Subscriber& sub, _subscribers )
+	    {
+		std::cout << "resetting subscriber " << sub.name() << std::endl;
+		sub.reset( *_nodeHandlerPtr );
 	    }
 	}
 	startPublishing();
@@ -209,6 +219,34 @@ namespace Sinfonia
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
 	
     }
+    
+    void RobotToolkit::registerDefaultSubscriber()
+    {
+	std::cout << "registered DefaulerDefault 1"<< std::endl;
+	if (!_subscribers.empty())
+	    return;
+	std::cout << "registered DefaulerDefault 2"<< std::endl;
+	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("teleop", "/cmd_vel", _sessionPtr));
+    }
+    void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
+    {
+	std::vector<Subscriber::Subscriber>::iterator it;
+	it = std::find( _subscribers.begin(), _subscribers.end(), subscriber );
+	size_t subIndex = 0;
+
+	if (it == _subscribers.end() )
+	{
+	    subIndex = _subscribers.size();
+	    _subscribers.push_back( subscriber );
+	    std::cout << "registered subscriber:\t" << subscriber.name() << std::endl;
+	}
+
+	else
+	{
+	    std::cout << "re-initialized existing subscriber:\t" << it->name() << std::endl;
+	}
+    }
+
 
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }
