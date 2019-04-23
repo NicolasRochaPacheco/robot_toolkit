@@ -104,10 +104,9 @@ namespace Sinfonia
 	    void startRosLoop();
 	    void stopRosLoop();
 	    void registerDefaultConverter();
-	    void registerGroup(Sinfonia::Converter::Converter converter, Sinfonia::Publisher::Publisher publisher, Sinfonia::Recorder::Recorder recorder);
+	    void registerGroup(Sinfonia::Converter::Converter converter, Sinfonia::Publisher::Publisher publisher);
 	    void registerConverter(Sinfonia::Converter::Converter& converter);
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
-	    void registerRecorder(const std::string& converterName, Sinfonia::Recorder::Recorder& recorder, float frequency);	   
 	    
     };
 }

@@ -18,8 +18,8 @@
 //======================================================================//
 
 
-#ifndef JOINT_STATE_CONVERTER_HPP
-#define JOINT_STATE_CONVERTER_HPP
+#ifndef NAVIGATION_TOOLS_CONVERTER_HPP
+#define NAVIGATION_TOOLS_CONVERTER_HPP
 
 
 #include "converter_base.hpp"
@@ -37,19 +37,19 @@ namespace Sinfonia
     namespace Converter
     {
 
-	class JointStateConverter : public BaseConverter<JointStateConverter>
+	class NavigationToolsConverter : public BaseConverter<NavigationToolsConverter>
 	{
 
-	typedef boost::function<void(sensor_msgs::JointState&, std::vector<geometry_msgs::TransformStamped>&) > callbackT;
+	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&) > callbackT;
 
 	typedef boost::shared_ptr<tf2_ros::Buffer> bufferPtr;
 
 	typedef std::map<std::string, boost::shared_ptr<urdf::JointMimic> > mimicMap;
 
 	public:
-	    JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
+	    NavigationToolsConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
 
-	    ~JointStateConverter();
+	    ~NavigationToolsConverter();
 
 	    virtual void reset( );
 

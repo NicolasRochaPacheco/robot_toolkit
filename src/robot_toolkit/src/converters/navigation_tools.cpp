@@ -20,7 +20,7 @@
 
 
 
-#include "joint_state.hpp"
+#include "navigation_tools.hpp"
 #include "nao_footprint.hpp"
 
 
@@ -38,7 +38,7 @@ namespace Sinfonia
     namespace Converter
     {
 
-	JointStateConverter::JointStateConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session ):
+	NavigationToolsConverter::NavigationToolsConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session ):
 	BaseConverter( name, frequency, session )
 	{
 	    _pMotion =  session->service("ALMotion");
@@ -47,11 +47,11 @@ namespace Sinfonia
     
 	}
 
-	JointStateConverter::~JointStateConverter()
+	NavigationToolsConverter::~NavigationToolsConverter()
 	{
 	}
 
-	void JointStateConverter::reset()
+	void NavigationToolsConverter::reset()
 	{
 	    if ( _robotDesc.empty() )
 	    {
@@ -78,12 +78,12 @@ namespace Sinfonia
 	    _msgJointStates.name = _pMotion.call<std::vector<std::string> >("getBodyNames", "Body" );
 	}
 
-	void JointStateConverter::registerCallback( const MessageAction::MessageAction action, callbackT callBack )
+	void NavigationToolsConverter::registerCallback( const MessageAction::MessageAction action, callbackT callBack )
 	{
 	    _callbacks[action] = callBack;
 	}
 
-	void JointStateConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
+	void NavigationToolsConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
 	{
 	    std::vector<double> alJointAngles = _pMotion.call<std::vector<double> >("getAngles", "Body", true );
 	    const ros::Time& stamp = ros::Time::now();
@@ -151,13 +151,13 @@ namespace Sinfonia
 
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
-		_callbacks[action]( _msgJointStates, _tfTransforms );
+		_callbacks[action](_tfTransforms);
 	    }
 	}
 
 
 	// Copied from robot state publisher
-	void JointStateConverter::setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix)
+	void NavigationToolsConverter::setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix)
 	{
 	    geometry_msgs::TransformStamped tfTransform;
 	    tfTransform.header.stamp = time;
@@ -188,7 +188,7 @@ namespace Sinfonia
 	}
 
 	// Copied from robot state publisher
-	void JointStateConverter::setFixedTransforms(const std::string& tfPrefix, const ros::Time& time)
+	void NavigationToolsConverter::setFixedTransforms(const std::string& tfPrefix, const ros::Time& time)
 	{
 	    geometry_msgs::TransformStamped tfTransform;
 	    tfTransform.header.stamp = time/*+ros::Duration(0.5)*/;  // future publish by 0.5 seconds
@@ -213,7 +213,7 @@ namespace Sinfonia
 	    }
 	 }
 
-	void JointStateConverter::addChildren(const KDL::SegmentMap::const_iterator segment)
+	void NavigationToolsConverter::addChildren(const KDL::SegmentMap::const_iterator segment)
 	{
 	    const std::string& root = GetTreeElementSegment(segment->second).getName();
 

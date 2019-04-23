@@ -24,10 +24,9 @@
 
 #include "robot_toolkit/ros_environment.hpp"
 
-#include "publishers/joint_state.hpp"
-#include "recorders/joint_state.hpp"
-#include "converters/joint_state.hpp"
+#include "publishers/navigation_tools.hpp"
 
+#include "converters/navigation_tools.hpp"
 
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
@@ -189,20 +188,18 @@ namespace Sinfonia
 	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
 	_tf2Buffer->setUsingDedicatedThread(true);
 	
-	boost::shared_ptr<Publisher::JointStatePublisher> jointStatePublisher = boost::make_shared<Publisher::JointStatePublisher>( "/joint_states" );
-	boost::shared_ptr<Recorder::JointStateRecorder> jointStateRecorder = boost::make_shared<Recorder::JointStateRecorder>( "/joint_states" );
-	boost::shared_ptr<Converter::JointStateConverter> jointStateConverter = boost::make_shared<Converter::JointStateConverter>( "joint_states", 50, _tf2Buffer, _sessionPtr );
-	jointStateConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::JointStatePublisher::publish, jointStatePublisher, _1, _2) );
-	jointStateConverter->registerCallback( MessageAction::RECORD, boost::bind(&Recorder::JointStateRecorder::write, jointStateRecorder, _1, _2) );
-	jointStateConverter->registerCallback( MessageAction::LOG, boost::bind(&Recorder::JointStateRecorder::bufferize, jointStateRecorder, _1, _2) );
-	registerGroup( jointStateConverter, jointStatePublisher, jointStateRecorder );
+	boost::shared_ptr<Publisher::NavigationToolsPublisher> navigationToolsPublisher = boost::make_shared<Publisher::NavigationToolsPublisher>();
+	boost::shared_ptr<Converter::NavigationToolsConverter> navigationToolsConverter = boost::make_shared<Converter::NavigationToolsConverter>( "navigation_tools", 50, _tf2Buffer, _sessionPtr );
+	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publishTF, navigationToolsPublisher, _1) );
+	
+	registerGroup( navigationToolsConverter, navigationToolsPublisher);
     }
 
-    void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher, Recorder::Recorder recorder)
+    void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher)
     {
 	registerConverter(converter);
 	registerPublisher(converter.name(), publisher);
-	registerRecorder(converter.name(), recorder, converter.frequency());
+	//registerRecorder(converter.name(), recorder, converter.frequency());
     }
     
     void RobotToolkit::registerConverter(Converter::Converter& converter)
@@ -223,11 +220,6 @@ namespace Sinfonia
 	
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
 	
-    }
-    void RobotToolkit::registerRecorder(const std::string& converterName, Recorder::Recorder& recorder, float frequency)
-    {
-	recorder.reset(_recorder, frequency);
-	_recorderMap.insert( std::map<std::string, Recorder::Recorder>::value_type(converterName, recorder) );
     }
 
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);

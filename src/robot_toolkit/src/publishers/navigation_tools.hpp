@@ -18,40 +18,55 @@
 //======================================================================//
 
 
-#include "joint_state.hpp"
+#ifndef NAVIGATION_TOOLS_PUBLISHER_HPP
+#define NAVIGATION_TOOLS_PUBLISHER_HPP
+
+
+#include <ros/ros.h>
+#include <geometry_msgs/Transform.h>
+#include <sensor_msgs/JointState.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 
-	JointStatePublisher::JointStatePublisher(const std::string& topic)
+	class NavigationToolsPublisher
 	{
-	    topic_ = topic;
-	    isInitialized_ = false;
-	}
 
-	void JointStatePublisher::publish( const sensor_msgs::JointState& jointStatesMessage,
-					const std::vector<geometry_msgs::TransformStamped>& TfTransforms )
-	{
-	    pubJointStates_.publish(jointStatesMessage);
-	    TFBroadcasterPtr_->sendTransform(TfTransforms);
-	}
+	    public:
+		NavigationToolsPublisher();
 
+		inline std::string topic() const
+		{
+		    return topic_;
+		}
 
-	void JointStatePublisher::reset( ros::NodeHandle& nodeHandle )
-	{
-	    pubJointStates_ = nodeHandle.advertise<sensor_msgs::JointState>( topic_, 10 );
+		inline bool isInitialized() const
+		{
+		    return isInitialized_;
+		}
+		
+		virtual void publishTF( const std::vector<geometry_msgs::TransformStamped>& TfTransforms );
+					
 
-	    TFBroadcasterPtr_ = boost::make_shared<tf2_ros::TransformBroadcaster>();
+		virtual void reset( ros::NodeHandle& nodeHandle );
 
-	    isInitialized_ = true;
-	}
+		virtual bool isSubscribed() const;
 
-	bool JointStatePublisher::isSubscribed() const
-	{
-	    return true;
-	}
+	    private:
+		boost::shared_ptr<tf2_ros::TransformBroadcaster> TFBroadcasterPtr_;
+
+		ros::Publisher pubJointStates_;
+
+		std::string topic_;
+
+		bool isInitialized_;
+
+	};
 
     }
-} 
+}
+
+#endif
