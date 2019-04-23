@@ -24,6 +24,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Transform.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
 #include <tf2_ros/transform_broadcaster.h>
 
@@ -37,32 +38,23 @@ namespace Sinfonia
 
 	    public:
 		NavigationToolsPublisher();
+		std::string topic();
 
-		inline std::string topic() const
-		{
-		    return topic_;
-		}
-
-		inline bool isInitialized() const
-		{
-		    return isInitialized_;
-		}
+		bool isInitialized();
 		
-		virtual void publishTF( const std::vector<geometry_msgs::TransformStamped>& TfTransforms );
-					
-
+		virtual void publish( const std::vector<geometry_msgs::TransformStamped>& TfTransforms, const nav_msgs::Odometry odomMessage);
 		virtual void reset( ros::NodeHandle& nodeHandle );
 
 		virtual bool isSubscribed() const;
 
 	    private:
-		boost::shared_ptr<tf2_ros::TransformBroadcaster> TFBroadcasterPtr_;
+		boost::shared_ptr<tf2_ros::TransformBroadcaster> _TFBroadcasterPtr;
 
-		ros::Publisher pubJointStates_;
+		ros::Publisher _odomPublisher;
 
-		std::string topic_;
+		std::string _topic;
 
-		bool isInitialized_;
+		bool _isInitialized;
 
 	};
 

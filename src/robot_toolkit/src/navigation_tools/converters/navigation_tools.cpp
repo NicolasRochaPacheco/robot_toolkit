@@ -21,8 +21,6 @@
 
 
 #include "navigation_tools.hpp"
-#include "nao_footprint.hpp"
-
 
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
@@ -85,73 +83,11 @@ namespace Sinfonia
 
 	void NavigationToolsConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
 	{
-	    std::vector<double> alJointAngles = _pMotion.call<std::vector<double> >("getAngles", "Body", true );
-	    const ros::Time& stamp = ros::Time::now();
-	    
-	    _msgJointStates.header.stamp = stamp;
-
-	    _msgJointStates.position = std::vector<double>( alJointAngles.begin(), alJointAngles.end() );
-
-	    std::map< std::string, double > jointStateMap;
-	    
-	    std::vector<double>::const_iterator itPos = _msgJointStates.position.begin();
-	    for(std::vector<std::string>::const_iterator itName = _msgJointStates.name.begin(); itName != _msgJointStates.name.end(); ++itName, ++itPos)
-	    {
-		jointStateMap[*itName] = *itPos;
-	    }
-
-	    // for mimic map
-	    for(mimicMap::iterator i = _mimic.begin(); i != _mimic.end(); i++)
-	    {
-		if(jointStateMap.find(i->second->joint_name) != jointStateMap.end())
-		{
-		    double pos = jointStateMap[i->second->joint_name] * i->second->multiplier + i->second->offset;
-		    jointStateMap[i->first] = pos;
-		}
-	    }
-
-	    // reset the transforms we want to use at this time
-	    _tfTransforms.clear();
-	    static const std::string& jt_tf_prefix = "";
-	    setTransforms(jointStateMap, stamp, jt_tf_prefix);
-	    setFixedTransforms(jt_tf_prefix, stamp);
-
-
-	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", 1, true );
-	    const ros::Time& odomStamp = ros::Time::now();
-	    const float& odomX  =  alOdometryData[0];
-	    const float& odomY  =  alOdometryData[1];
-	    const float& odomZ  =  alOdometryData[2];
-	    const float& odomWX =  alOdometryData[3];
-	    const float& odomWY =  alOdometryData[4];
-	    const float& odomWZ =  alOdometryData[5];
-	    //since all odometry is 6DOF we'll need a quaternion created from yaw
-	    tf2::Quaternion tfQuaternion;
-	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
-	    geometry_msgs::Quaternion odom_quat = tf2::toMsg( tfQuaternion );
-
-	    static geometry_msgs::TransformStamped msgTfOdom;
-	    msgTfOdom.header.frame_id = "odom";
-	    msgTfOdom.child_frame_id = "base_link";
-	    msgTfOdom.header.stamp = odomStamp;
-
-	    msgTfOdom.transform.translation.x = odomX;
-	    msgTfOdom.transform.translation.y = odomY;
-	    msgTfOdom.transform.translation.z = odomZ;
-	    msgTfOdom.transform.rotation = odom_quat;
-
-	    _tfTransforms.push_back( msgTfOdom );
-	    _tf2Buffer->setTransform( msgTfOdom, "naoqiconverter", false);
-
-	    // If nobody uses that buffer, do not fill it next time
-	    if (( _tf2Buffer ) && ( _tf2Buffer.use_count() == 1 ))
-	    {
-		_tf2Buffer.reset();
-	    }
-
+	    callTF();
+	    callOdom();
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
-		_callbacks[action](_tfTransforms);
+		_callbacks[action](_tfTransforms, _msgOdom);
 	    }
 	}
 
@@ -235,6 +171,115 @@ namespace Sinfonia
 		addChildren(children[i]);
 	    }
 	}
+	
+	void NavigationToolsConverter::callTF()
+	{
+ std::vector<double> alJointAngles = _pMotion.call<std::vector<double> >("getAngles", "Body", true );
+	    const ros::Time& stamp = ros::Time::now();
+	    
+	    _msgJointStates.header.stamp = stamp;
 
+	    _msgJointStates.position = std::vector<double>( alJointAngles.begin(), alJointAngles.end() );
+
+	    std::map< std::string, double > jointStateMap;
+	    
+	    std::vector<double>::const_iterator itPos = _msgJointStates.position.begin();
+	    for(std::vector<std::string>::const_iterator itName = _msgJointStates.name.begin(); itName != _msgJointStates.name.end(); ++itName, ++itPos)
+	    {
+		jointStateMap[*itName] = *itPos;
+	    }
+
+	    // for mimic map
+	    for(mimicMap::iterator i = _mimic.begin(); i != _mimic.end(); i++)
+	    {
+		if(jointStateMap.find(i->second->joint_name) != jointStateMap.end())
+		{
+		    double pos = jointStateMap[i->second->joint_name] * i->second->multiplier + i->second->offset;
+		    jointStateMap[i->first] = pos;
+		}
+	    }
+
+	    // reset the transforms we want to use at this time
+	    _tfTransforms.clear();
+	    static const std::string& jtTfPrefix = "";
+	    setTransforms(jointStateMap, stamp, jtTfPrefix);
+	    setFixedTransforms(jtTfPrefix, stamp);
+
+
+	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", 1, true );
+	    const ros::Time& odomStamp = ros::Time::now();
+	    const float& odomX  =  alOdometryData[0];
+	    const float& odomY  =  alOdometryData[1];
+	    const float& odomZ  =  alOdometryData[2];
+	    const float& odomWX =  alOdometryData[3];
+	    const float& odomWY =  alOdometryData[4];
+	    const float& odomWZ =  alOdometryData[5];
+	    //since all odometry is 6DOF we'll need a quaternion created from yaw
+	    tf2::Quaternion tfQuaternion;
+	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
+	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
+
+	    static geometry_msgs::TransformStamped msgTfOdom;
+	    msgTfOdom.header.frame_id = "odom";
+	    msgTfOdom.child_frame_id = "base_link";
+	    msgTfOdom.header.stamp = odomStamp;
+
+	    msgTfOdom.transform.translation.x = odomX;
+	    msgTfOdom.transform.translation.y = odomY;
+	    msgTfOdom.transform.translation.z = odomZ;
+	    msgTfOdom.transform.rotation = odomQuaternion;
+
+	    _tfTransforms.push_back( msgTfOdom );
+	    _tf2Buffer->setTransform( msgTfOdom, "naoqiconverter", false);
+
+	    // If nobody uses that buffer, do not fill it next time
+	    if (( _tf2Buffer ) && ( _tf2Buffer.use_count() == 1 ))
+	    {
+		_tf2Buffer.reset();
+	    }
+	}
+
+	void NavigationToolsConverter::callOdom()
+	{
+	    int frameWorld = 1;
+	    bool useSensor = true;
+	    // documentation of getPosition available here: http://doc.aldebaran.com/2-1/naoqi/motion/control-cartesian.html
+	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", frameWorld, useSensor );
+	    
+	    const ros::Time& odom_stamp = ros::Time::now();
+	    std::vector<float> al_speed_data = _pMotion.call<std::vector<float> >( "getRobotVelocity" );
+	    
+	    const float& odomX  =  alOdometryData[0];
+	    const float& odomY  =  alOdometryData[1];
+	    const float& odomZ  =  alOdometryData[2];
+	    const float& odomWX =  alOdometryData[3];
+	    const float& odomWY =  alOdometryData[4];
+	    const float& odomWZ =  alOdometryData[5];
+	    
+	    const float& dX = al_speed_data[0];
+	    const float& dY = al_speed_data[1];
+	    const float& dWZ = al_speed_data[2];
+
+	    tf2::Quaternion tfQuaternion;
+	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
+	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
+
+	    _msgOdom.header.frame_id = "odom";
+	    _msgOdom.child_frame_id = "base_link";
+	    _msgOdom.header.stamp = odom_stamp;
+
+	    _msgOdom.pose.pose.orientation = odomQuaternion;
+	    _msgOdom.pose.pose.position.x = odomX;
+	    _msgOdom.pose.pose.position.y = odomY;
+	    _msgOdom.pose.pose.position.z = odomZ;
+	    
+	    _msgOdom.twist.twist.linear.x = dX;
+	    _msgOdom.twist.twist.linear.y = dY;
+	    _msgOdom.twist.twist.linear.z = 0;
+	    
+	    _msgOdom.twist.twist.angular.x = 0;
+	    _msgOdom.twist.twist.angular.y = 0;
+	    _msgOdom.twist.twist.angular.z = dWZ;
+	}
     }
 } 

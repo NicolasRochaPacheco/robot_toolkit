@@ -27,21 +27,32 @@ namespace Sinfonia
 
 	NavigationToolsPublisher::NavigationToolsPublisher()
 	{
-	    isInitialized_ = false;
+	    _isInitialized = false;
 	}
-
-	void NavigationToolsPublisher::publishTF(const std::vector<geometry_msgs::TransformStamped>& TfTransforms )
+	
+	std::string NavigationToolsPublisher::topic()
 	{
-	    TFBroadcasterPtr_->sendTransform(TfTransforms);
+	    return _topic;
+	}
+	
+	bool NavigationToolsPublisher::isInitialized()
+	{
+	    return _isInitialized;
 	}
 
+	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms, const nav_msgs::Odometry odomMessage)
+	{
+	    _TFBroadcasterPtr->sendTransform(TfTransforms);
+	    _odomPublisher.publish(odomMessage);
+	}
 
 	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
 	{
 
-	    TFBroadcasterPtr_ = boost::make_shared<tf2_ros::TransformBroadcaster>();
+	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
+	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
 
-	    isInitialized_ = true;
+	    _isInitialized = true;
 	}
 
 	bool NavigationToolsPublisher::isSubscribed() const

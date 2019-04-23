@@ -22,12 +22,13 @@
 #define NAVIGATION_TOOLS_CONVERTER_HPP
 
 
-#include "converter_base.hpp"
-#include "../tools/robot_description.hpp"
+#include "../../converters/converter_base.hpp"
+#include "../../tools/robot_description.hpp"
 #include "robot_toolkit/message_actions.h"
 
 
 #include <urdf/model.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
 #include <tf2_ros/buffer.h>
 #include <robot_state_publisher/robot_state_publisher.h>
@@ -40,7 +41,7 @@ namespace Sinfonia
 	class NavigationToolsConverter : public BaseConverter<NavigationToolsConverter>
 	{
 
-	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&) > callbackT;
+	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&, nav_msgs::Odometry) > callbackT;
 
 	typedef boost::shared_ptr<tf2_ros::Buffer> bufferPtr;
 
@@ -48,28 +49,25 @@ namespace Sinfonia
 
 	public:
 	    NavigationToolsConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
-
 	    ~NavigationToolsConverter();
 
 	    virtual void reset( );
-
 	    void registerCallback( const MessageAction::MessageAction action, callbackT callBack );
-
 	    void callAll( const std::vector<MessageAction::MessageAction>& actions );
 
-	private:
-
-	    
-	    void addChildren(const KDL::SegmentMap::const_iterator segment);
-	    std::map<std::string, robot_state_publisher::SegmentPair> _segments, _segmentsFixed;
+	private:    
 	    void setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix);
 	    void setFixedTransforms(const std::string& tfPrefix, const ros::Time& time);
-
+	    void addChildren(const KDL::SegmentMap::const_iterator segment);
+	    void callTF();
+	    void callOdom();
+	    
 	    bufferPtr _tf2Buffer;
   
 	    qi::AnyObject _pMotion;
 
 	    std::map<MessageAction::MessageAction, callbackT> _callbacks;
+	    std::map<std::string, robot_state_publisher::SegmentPair> _segments, _segmentsFixed;
 	    
 	    std::string _robotDesc;
 	    
@@ -78,6 +76,7 @@ namespace Sinfonia
 	    sensor_msgs::JointState _msgJointStates;
 	    
 	    std::vector<geometry_msgs::TransformStamped> _tfTransforms;
+	    nav_msgs::Odometry _msgOdom;
 
 	};
 

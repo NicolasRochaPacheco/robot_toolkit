@@ -4,7 +4,7 @@ project(robot_toolkit)
 # define source files that can be used by qibuild or catkin
 set(
   CONVERTERS_SRC
-  src/converters/navigation_tools.cpp
+    src/navigation_tools/converters/navigation_tools.cpp
   )
 set(
   TOOLS_SRC
@@ -13,7 +13,7 @@ set(
 
 set(
   PUBLISHER_SRC
-  src/publishers/navigation_tools.cpp
+  src/navigation_tools/publishers/navigation_tools.cpp
   )
 
 set(
@@ -47,6 +47,7 @@ find_package(catkin COMPONENTS
   diagnostic_msgs
   diagnostic_updater
   geometry_msgs
+  nav_msgs
   image_transport
   kdl_parser
   naoqi_bridge_msgs

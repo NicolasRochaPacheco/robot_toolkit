@@ -24,9 +24,10 @@
 
 #include "robot_toolkit/ros_environment.hpp"
 
-#include "publishers/navigation_tools.hpp"
 
-#include "converters/navigation_tools.hpp"
+#include "navigation_tools/publishers/navigation_tools.hpp"
+
+#include "navigation_tools/converters/navigation_tools.hpp"
 
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
@@ -171,13 +172,15 @@ namespace Sinfonia
     void RobotToolkit::registerDefaultConverter()
     {
 	
+	
 	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
 	_tf2Buffer->setUsingDedicatedThread(true);
 	
 	boost::shared_ptr<Publisher::NavigationToolsPublisher> navigationToolsPublisher = boost::make_shared<Publisher::NavigationToolsPublisher>();
 	boost::shared_ptr<Converter::NavigationToolsConverter> navigationToolsConverter = boost::make_shared<Converter::NavigationToolsConverter>( "navigation_tools", 50, _tf2Buffer, _sessionPtr );
-	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publishTF, navigationToolsPublisher, _1) );
+	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publish, navigationToolsPublisher, _1, _2) );
 	
+
 	registerGroup( navigationToolsConverter, navigationToolsPublisher);
     }
 
@@ -185,7 +188,6 @@ namespace Sinfonia
     {
 	registerConverter(converter);
 	registerPublisher(converter.name(), publisher);
-	//registerRecorder(converter.name(), recorder, converter.frequency());
     }
     
     void RobotToolkit::registerConverter(Converter::Converter& converter)
