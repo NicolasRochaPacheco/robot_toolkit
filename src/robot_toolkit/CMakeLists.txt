@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robot_toolkit)
 
-# define source files that can be used by qibuild or catkin
 set(
   CONVERTERS_SRC
     src/navigation_tools/converters/navigation_tools.cpp
@@ -122,6 +121,7 @@ target_link_libraries(
   robot_toolkit
   ${catkin_LIBRARIES}
 )
+
 install(TARGETS robot_toolkit_node DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # install the urdf for runtime loading

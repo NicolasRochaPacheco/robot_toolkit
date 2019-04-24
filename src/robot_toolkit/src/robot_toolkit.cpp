@@ -24,7 +24,7 @@
 
 #include "robot_toolkit/ros_environment.hpp"
 
-#include <dynamic_reconfigure/server.h>
+
 
 
 #include "navigation_tools/publishers/navigation_tools.hpp"
