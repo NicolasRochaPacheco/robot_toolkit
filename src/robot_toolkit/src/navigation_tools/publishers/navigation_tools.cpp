@@ -28,7 +28,7 @@ namespace Sinfonia
 	NavigationToolsPublisher::NavigationToolsPublisher()
 	{
 	    _isInitialized = false;
-	    _topic = "/odom";
+	    _topic = "/tf";
 	}
 	
 	std::string NavigationToolsPublisher::topic()
@@ -41,18 +41,14 @@ namespace Sinfonia
 	    return _isInitialized;
 	}
 
-	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms, const nav_msgs::Odometry odomMessage)
+	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms)
 	{
 	    _TFBroadcasterPtr->sendTransform(TfTransforms);
-	    _odomPublisher.publish(odomMessage);
 	}
 
 	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
 	{
-
 	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
-
 	    _isInitialized = true;
 	}
 

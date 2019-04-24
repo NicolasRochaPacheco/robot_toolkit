@@ -18,38 +18,32 @@
 //======================================================================//
 
 
-#ifndef NAVIGATION_TOOLS_PUBLISHER_HPP
-#define NAVIGATION_TOOLS_PUBLISHER_HPP
+#ifndef ODOM_TOOLS_PUBLISHER_HPP
+#define ODOM_TOOLS_PUBLISHER_HPP
 
 
 #include <ros/ros.h>
-#include <geometry_msgs/Transform.h>
 #include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <tf2_ros/transform_broadcaster.h>
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 
-	class NavigationToolsPublisher
+	class OdomToolsPublisher
 	{
 
 	    public:
-		NavigationToolsPublisher();
+		OdomToolsPublisher();
 		std::string topic();
 
 		bool isInitialized();
 		
-		virtual void publish( const std::vector<geometry_msgs::TransformStamped>& TfTransforms);
+		virtual void publish(const nav_msgs::Odometry odomMessage);
 		virtual void reset( ros::NodeHandle& nodeHandle );
-
 		virtual bool isSubscribed() const;
 
 	    private:
-		boost::shared_ptr<tf2_ros::TransformBroadcaster> _TFBroadcasterPtr;
-
 		ros::Publisher _odomPublisher;
 
 		std::string _topic;

@@ -41,7 +41,7 @@ namespace Sinfonia
 	class NavigationToolsConverter : public BaseConverter<NavigationToolsConverter>
 	{
 
-	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&, nav_msgs::Odometry) > callbackT;
+	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&) > callbackT;
 
 	typedef boost::shared_ptr<tf2_ros::Buffer> bufferPtr;
 
@@ -60,7 +60,6 @@ namespace Sinfonia
 	    void setFixedTransforms(const std::string& tfPrefix, const ros::Time& time);
 	    void addChildren(const KDL::SegmentMap::const_iterator segment);
 	    void callTF();
-	    void callOdom();
 	    
 	    bufferPtr _tf2Buffer;
   
@@ -76,7 +75,7 @@ namespace Sinfonia
 	    sensor_msgs::JointState _msgJointStates;
 	    
 	    std::vector<geometry_msgs::TransformStamped> _tfTransforms;
-	    nav_msgs::Odometry _msgOdom;
+	    
 
 	};
 

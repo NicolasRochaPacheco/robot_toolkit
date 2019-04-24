@@ -6,6 +6,7 @@ set(
   CONVERTERS_SRC
     src/navigation_tools/converters/navigation_tools.cpp
     src/laser_tools/converters/laser_tools.cpp
+    src/odom_tools/converters/odom_tools.cpp
   )
 set(
   TOOLS_SRC
@@ -16,6 +17,7 @@ set(
   PUBLISHER_SRC
     src/navigation_tools/publishers/navigation_tools.cpp
     src/laser_tools/publishers/laser_tools.cpp
+    src/odom_tools/publishers/odom_tools.cpp
   )
 
 set(

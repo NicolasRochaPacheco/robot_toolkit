@@ -24,12 +24,16 @@
 
 #include "robot_toolkit/ros_environment.hpp"
 
+#include <dynamic_reconfigure/server.h>
+
 
 #include "navigation_tools/publishers/navigation_tools.hpp"
 #include "laser_tools/publishers/laser_tools.hpp"
+#include "odom_tools/publishers/odom_tools.hpp"
 
 #include "navigation_tools/converters/navigation_tools.hpp"
 #include "laser_tools/converters/laser_tools.hpp"
+#include "odom_tools/converters/odom_tools.hpp"
 
 #include "navigation_tools/subscribers/cmd_vel.hpp"
 
@@ -190,11 +194,16 @@ namespace Sinfonia
 	
 	boost::shared_ptr<Publisher::NavigationToolsPublisher> navigationToolsPublisher = boost::make_shared<Publisher::NavigationToolsPublisher>();
 	boost::shared_ptr<Converter::NavigationToolsConverter> navigationToolsConverter = boost::make_shared<Converter::NavigationToolsConverter>( "navigation_tools", 50, _tf2Buffer, _sessionPtr );
-	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publish, navigationToolsPublisher, _1, _2) );
+	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publish, navigationToolsPublisher, _1) );
 	registerGroup( navigationToolsConverter, navigationToolsPublisher);
 	
+	boost::shared_ptr<Publisher::OdomToolsPublisher> odomToolsPublisher = boost::make_shared<Publisher::OdomToolsPublisher>();
+	boost::shared_ptr<Converter::OdomConverter> odomToolsConverter = boost::make_shared<Converter::OdomConverter>( "odom_tools", 10, _sessionPtr );
+	odomToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomToolsPublisher::publish, odomToolsPublisher, _1) );
+	registerGroup( odomToolsConverter, odomToolsPublisher);
+	
 	boost::shared_ptr<Publisher::LaserToolsPublisher> laserToolsPublisher = boost::make_shared<Publisher::LaserToolsPublisher>();
-	boost::shared_ptr<Converter::LaserToolsConverter> laserToolsConverter = boost::make_shared<Converter::LaserToolsConverter>( "laser_tools", 50, _sessionPtr );
+	boost::shared_ptr<Converter::LaserToolsConverter> laserToolsConverter = boost::make_shared<Converter::LaserToolsConverter>( "laser_tools", 10, _sessionPtr );
 	laserToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserToolsPublisher::publish, laserToolsPublisher, _1) );
 	registerGroup( laserToolsConverter, laserToolsPublisher);
 	

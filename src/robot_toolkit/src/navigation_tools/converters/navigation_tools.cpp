@@ -84,10 +84,9 @@ namespace Sinfonia
 	void NavigationToolsConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
 	{
 	    callTF();
-	    callOdom();
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
-		_callbacks[action](_tfTransforms, _msgOdom);
+		_callbacks[action](_tfTransforms);
 	    }
 	}
 
@@ -237,49 +236,6 @@ namespace Sinfonia
 	    {
 		_tf2Buffer.reset();
 	    }
-	}
-
-	void NavigationToolsConverter::callOdom()
-	{
-	    int frameWorld = 1;
-	    bool useSensor = true;
-	    // documentation of getPosition available here: http://doc.aldebaran.com/2-1/naoqi/motion/control-cartesian.html
-	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", frameWorld, useSensor );
-	    
-	    const ros::Time& odom_stamp = ros::Time::now();
-	    std::vector<float> al_speed_data = _pMotion.call<std::vector<float> >( "getRobotVelocity" );
-	    
-	    const float& odomX  =  alOdometryData[0];
-	    const float& odomY  =  alOdometryData[1];
-	    const float& odomZ  =  alOdometryData[2];
-	    const float& odomWX =  alOdometryData[3];
-	    const float& odomWY =  alOdometryData[4];
-	    const float& odomWZ =  alOdometryData[5];
-	    
-	    const float& dX = al_speed_data[0];
-	    const float& dY = al_speed_data[1];
-	    const float& dWZ = al_speed_data[2];
-
-	    tf2::Quaternion tfQuaternion;
-	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
-	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
-
-	    _msgOdom.header.frame_id = "odom";
-	    _msgOdom.child_frame_id = "base_link";
-	    _msgOdom.header.stamp = odom_stamp;
-
-	    _msgOdom.pose.pose.orientation = odomQuaternion;
-	    _msgOdom.pose.pose.position.x = odomX;
-	    _msgOdom.pose.pose.position.y = odomY;
-	    _msgOdom.pose.pose.position.z = odomZ;
-	    
-	    _msgOdom.twist.twist.linear.x = dX;
-	    _msgOdom.twist.twist.linear.y = dY;
-	    _msgOdom.twist.twist.linear.z = 0;
-	    
-	    _msgOdom.twist.twist.angular.x = 0;
-	    _msgOdom.twist.twist.angular.y = 0;
-	    _msgOdom.twist.twist.angular.z = dWZ;
 	}
     }
 } 

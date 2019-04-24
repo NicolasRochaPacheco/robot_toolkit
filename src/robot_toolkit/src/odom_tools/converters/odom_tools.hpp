@@ -18,44 +18,42 @@
 //======================================================================//
 
 
-#ifndef NAVIGATION_TOOLS_PUBLISHER_HPP
-#define NAVIGATION_TOOLS_PUBLISHER_HPP
+#ifndef ODOM_TOOLS_CONVERTER_HPP
+#define ODOM_TOOLS_CONVERTER_HPP
+
+#include "../../converters/converter_base.hpp"
+#include "../../tools/robot_description.hpp"
 
 
-#include <ros/ros.h>
-#include <geometry_msgs/Transform.h>
+#include "robot_toolkit/message_actions.h"
+
+#include <urdf/model.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
-#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/buffer.h>
+#include <robot_state_publisher/robot_state_publisher.h>
 
 namespace Sinfonia
 {
-    namespace Publisher
+    namespace Converter
     {
 
-	class NavigationToolsPublisher
+	class OdomConverter : public BaseConverter<OdomConverter>
 	{
+	    typedef boost::function<void(nav_msgs::Odometry&)> callbackT;
 
 	    public:
-		NavigationToolsPublisher();
-		std::string topic();
-
-		bool isInitialized();
-		
-		virtual void publish( const std::vector<geometry_msgs::TransformStamped>& TfTransforms);
-		virtual void reset( ros::NodeHandle& nodeHandle );
-
-		virtual bool isSubscribed() const;
+		OdomConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+		void registerCallback( MessageAction::MessageAction action, callbackT callback );
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+		void reset( );
 
 	    private:
-		boost::shared_ptr<tf2_ros::TransformBroadcaster> _TFBroadcasterPtr;
-
-		ros::Publisher _odomPublisher;
-
-		std::string _topic;
-
-		bool _isInitialized;
-
+		qi::AnyObject _pMotion;
+		std::map<MessageAction::MessageAction, callbackT> _callbacks;
+		nav_msgs::Odometry _msgOdom;
+		
+		void callOdom();
 	};
 
     }

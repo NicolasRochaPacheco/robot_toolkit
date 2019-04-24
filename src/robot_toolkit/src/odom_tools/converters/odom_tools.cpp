@@ -18,7 +18,12 @@
 //======================================================================//
 
 
-#include "odom.hpp"
+#include "odom_tools.hpp"
+
+#include <boost/foreach.hpp>
+#define for_each BOOST_FOREACH
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace Sinfonia
 {
@@ -31,60 +36,65 @@ namespace Sinfonia
 
 	}
 	
-	void OdomConverter::registerCallback(message_actions::MessageAction action, Callback_t callback)
+	void OdomConverter::registerCallback(MessageAction::MessageAction action, callbackT callback)
 	{
 	    _callbacks[action] = callback;
 	}
 	
-	void OdomConverter::callAll(const std::vector<message_actions::MessageAction>& actions )
+	void OdomConverter::callAll(const std::vector<MessageAction::MessageAction>& actions )
 	{
-	    int FRAME_WORLD = 1;
-	    bool use_sensor = true;
-	    // documentation of getPosition available here: http://doc.aldebaran.com/2-1/naoqi/motion/control-cartesian.html
-	    std::vector<float> al_odometry_data = p_motion_.call<std::vector<float> >( "getPosition", "Torso", FRAME_WORLD, use_sensor );
+	    callOdom();
+	    for_each( MessageAction::MessageAction action, actions )
+	    {
+		_callbacks[action](_msgOdom);
+	    }
+	}
+	
+	void OdomConverter::callOdom()
+	{
+	    int frameWorld = 1;
+	    bool useSensor = true;
+	    std::vector<float> alOdometryData = _pMotion.call<std::vector<float> >( "getPosition", "Torso", frameWorld, useSensor );
 	    
 	    const ros::Time& odom_stamp = ros::Time::now();
-	    std::vector<float> al_speed_data = p_motion_.call<std::vector<float> >( "getRobotVelocity" );
+	    std::vector<float> al_speed_data = _pMotion.call<std::vector<float> >( "getRobotVelocity" );
 	    
-	    const float& odomX  =  al_odometry_data[0];
-	    const float& odomY  =  al_odometry_data[1];
-	    const float& odomZ  =  al_odometry_data[2];
-	    const float& odomWX =  al_odometry_data[3];
-	    const float& odomWY =  al_odometry_data[4];
-	    const float& odomWZ =  al_odometry_data[5];
+	    const float& odomX  =  alOdometryData[0];
+	    const float& odomY  =  alOdometryData[1];
+	    const float& odomZ  =  alOdometryData[2];
+	    const float& odomWX =  alOdometryData[3];
+	    const float& odomWY =  alOdometryData[4];
+	    const float& odomWZ =  alOdometryData[5];
 	    
 	    const float& dX = al_speed_data[0];
 	    const float& dY = al_speed_data[1];
 	    const float& dWZ = al_speed_data[2];
 
-	    //since all odometry is 6DOF we'll need a quaternion created from yaw
-	    tf2::Quaternion tf_quat;
-	    tf_quat.setRPY( odomWX, odomWY, odomWZ );
-	    geometry_msgs::Quaternion odom_quat = tf2::toMsg( tf_quat );
+	    tf2::Quaternion tfQuaternion;
+	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
+	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
 
-	    static nav_msgs::Odometry msg_odom;
-	    msg_odom.header.frame_id = "odom";
-	    msg_odom.child_frame_id = "base_link";
-	    msg_odom.header.stamp = odom_stamp;
+	    _msgOdom.header.frame_id = "odom";
+	    _msgOdom.child_frame_id = "base_link";
+	    _msgOdom.header.stamp = odom_stamp;
 
-	    msg_odom.pose.pose.orientation = odom_quat;
-	    msg_odom.pose.pose.position.x = odomX;
-	    msg_odom.pose.pose.position.y = odomY;
-	    msg_odom.pose.pose.position.z = odomZ;
+	    _msgOdom.pose.pose.orientation = odomQuaternion;
+	    _msgOdom.pose.pose.position.x = odomX;
+	    _msgOdom.pose.pose.position.y = odomY;
+	    _msgOdom.pose.pose.position.z = odomZ;
 	    
-	    msg_odom.twist.twist.linear.x = dX;
-	    msg_odom.twist.twist.linear.y = dY;
-	    msg_odom.twist.twist.linear.z = 0;
+	    _msgOdom.twist.twist.linear.x = dX;
+	    _msgOdom.twist.twist.linear.y = dY;
+	    _msgOdom.twist.twist.linear.z = 0;
 	    
-	    msg_odom.twist.twist.angular.x = 0;
-	    msg_odom.twist.twist.angular.y = 0;
-	    msg_odom.twist.twist.angular.z = dWZ;
+	    _msgOdom.twist.twist.angular.x = 0;
+	    _msgOdom.twist.twist.angular.y = 0;
+	    _msgOdom.twist.twist.angular.z = dWZ;
+	}
+	
+	void OdomConverter::reset()
+	{
 
-	    for_each( message_actions::MessageAction action, actions )
-	    {
-		callbacks_[action](msg_odom);
-		
-	    }
 	}
 
 

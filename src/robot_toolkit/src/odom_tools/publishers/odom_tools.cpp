@@ -17,37 +17,40 @@
 //                                                                      //
 //======================================================================//
 
+#include "odom_tools.hpp"
 
-#ifndef ODOM_CONVERTER_HPP
-#define ODOM_CONVERTER_HPP
-
-#include "../../converters/converter_base.hpp"
-#include <naoqi_driver/message_actions.h>
-
-
-
-namespace Sinfonia
+namespace Sinfonia 
 {
-    namespace Converter
+    namespace Publisher 
     {
-
-	class OdomConverter : public BaseConverter<OdomConverter>
+	OdomToolsPublisher::OdomToolsPublisher()
 	{
-	    typedef boost::function<void(nav_msgs::Odometry&)> callbackT;
-
-	    public:
-		OdomConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
-		void registerCallback( message_actions::MessageAction action, Callback_t callback );
-		void callAll( const std::vector<message_actions::MessageAction>& actions );
-		void reset( );
-
-	    private:
-		qi::AnyObject _pMotion;
-		std::map<message_actions::MessageAction, callbackT> _callbacks;
-		nav_msgs::Odometry _msg;
-	};
-
+	    _topic = "/odom";
+	}
+	
+	std::string OdomToolsPublisher::topic()
+	{
+	    return _topic;
+	}
+	
+	bool OdomToolsPublisher::isInitialized()
+	{
+	    return _isInitialized;
+	}
+	
+	void OdomToolsPublisher::publish(const nav_msgs::Odometry odomMessage)
+	{
+	    _odomPublisher.publish(odomMessage);
+	}
+	void OdomToolsPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
+	    _isInitialized = true;
+	}
+	
+	bool OdomToolsPublisher::isSubscribed() const
+	{
+	    return true;
+	}
     }
 }
-
-#endif
