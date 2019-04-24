@@ -17,49 +17,45 @@
 //                                                                      //
 //======================================================================//
 
-
-#include "navigation_tools.hpp"
+#include "laser_tools.hpp"
 
 namespace Sinfonia
 {
     namespace Publisher
     {
-
-	NavigationToolsPublisher::NavigationToolsPublisher()
+	
+	LaserToolsPublisher::LaserToolsPublisher()
 	{
 	    _isInitialized = false;
-	    _topic = "/odom";
+	     _topic = "/laser";
 	}
-	
-	std::string NavigationToolsPublisher::topic()
-	{
-	    return _topic;
-	}
-	
-	bool NavigationToolsPublisher::isInitialized()
+
+	bool LaserToolsPublisher::isInitialized() const
 	{
 	    return _isInitialized;
 	}
-
-	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms, const nav_msgs::Odometry odomMessage)
+	
+	std::string LaserToolsPublisher::topic()
 	{
-	    _TFBroadcasterPtr->sendTransform(TfTransforms);
-	    _odomPublisher.publish(odomMessage);
+	    return _topic;
 	}
 
-	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
+	bool LaserToolsPublisher::isSubscribed() const
 	{
+	    if (_isInitialized == false) 
+		return false;
+	    return _publisher.getNumSubscribers() > 0;
+	}
 
-	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
-
+	void LaserToolsPublisher::publish(sensor_msgs::LaserScan& message)
+	{
+	    _publisher.publish( message );
+	}
+	
+	void LaserToolsPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _publisher = nodeHandle.advertise<sensor_msgs::LaserScan>( _topic, 10 );
 	    _isInitialized = true;
 	}
-
-	bool NavigationToolsPublisher::isSubscribed() const
-	{
-	    return true;
-	}
-
     }
-} 
+}

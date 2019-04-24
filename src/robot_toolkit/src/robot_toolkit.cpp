@@ -26,8 +26,10 @@
 
 
 #include "navigation_tools/publishers/navigation_tools.hpp"
+#include "laser_tools/publishers/laser_tools.hpp"
 
 #include "navigation_tools/converters/navigation_tools.hpp"
+#include "laser_tools/converters/laser_tools.hpp"
 
 #include "navigation_tools/subscribers/cmd_vel.hpp"
 
@@ -189,9 +191,15 @@ namespace Sinfonia
 	boost::shared_ptr<Publisher::NavigationToolsPublisher> navigationToolsPublisher = boost::make_shared<Publisher::NavigationToolsPublisher>();
 	boost::shared_ptr<Converter::NavigationToolsConverter> navigationToolsConverter = boost::make_shared<Converter::NavigationToolsConverter>( "navigation_tools", 50, _tf2Buffer, _sessionPtr );
 	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publish, navigationToolsPublisher, _1, _2) );
+	registerGroup( navigationToolsConverter, navigationToolsPublisher);
+	
+	boost::shared_ptr<Publisher::LaserToolsPublisher> laserToolsPublisher = boost::make_shared<Publisher::LaserToolsPublisher>();
+	boost::shared_ptr<Converter::LaserToolsConverter> laserToolsConverter = boost::make_shared<Converter::LaserToolsConverter>( "laser_tools", 50, _sessionPtr );
+	laserToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserToolsPublisher::publish, laserToolsPublisher, _1) );
+	registerGroup( laserToolsConverter, laserToolsPublisher);
 	
 
-	registerGroup( navigationToolsConverter, navigationToolsPublisher);
+	
     }
 
     void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher)
@@ -226,7 +234,7 @@ namespace Sinfonia
 	if (!_subscribers.empty())
 	    return;
 	std::cout << "registered DefaulerDefault 2"<< std::endl;
-	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("teleop", "/cmd_vel", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
     }
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
     {

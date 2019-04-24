@@ -5,6 +5,7 @@ project(robot_toolkit)
 set(
   CONVERTERS_SRC
     src/navigation_tools/converters/navigation_tools.cpp
+    src/laser_tools/converters/laser_tools.cpp
   )
 set(
   TOOLS_SRC
@@ -14,6 +15,7 @@ set(
 set(
   PUBLISHER_SRC
     src/navigation_tools/publishers/navigation_tools.cpp
+    src/laser_tools/publishers/laser_tools.cpp
   )
 
 set(

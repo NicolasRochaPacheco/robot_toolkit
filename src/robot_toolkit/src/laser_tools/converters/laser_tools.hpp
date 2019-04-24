@@ -18,48 +18,44 @@
 //======================================================================//
 
 
-#include "navigation_tools.hpp"
+#ifndef LASER_TOOLS_CONVERTER_HPP
+#define LASER_TOOLS_CONVERTER_HPP
+
+#include <boost/foreach.hpp>
+
+#include "../../converters/converter_base.hpp"
+#include "robot_toolkit/message_actions.h"
+
+
+#include <sensor_msgs/LaserScan.h>
 
 namespace Sinfonia
 {
-    namespace Publisher
+    namespace Converter
     {
 
-	NavigationToolsPublisher::NavigationToolsPublisher()
-	{
-	    _isInitialized = false;
-	    _topic = "/odom";
-	}
-	
-	std::string NavigationToolsPublisher::topic()
-	{
-	    return _topic;
-	}
-	
-	bool NavigationToolsPublisher::isInitialized()
-	{
-	    return _isInitialized;
-	}
-
-	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms, const nav_msgs::Odometry odomMessage)
-	{
-	    _TFBroadcasterPtr->sendTransform(TfTransforms);
-	    _odomPublisher.publish(odomMessage);
-	}
-
-	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
+	class LaserToolsConverter : public BaseConverter<LaserToolsConverter>
 	{
 
-	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
+	    typedef boost::function<void(sensor_msgs::LaserScan&)> CallbackT;
 
-	    _isInitialized = true;
-	}
+	    public:
+		LaserToolsConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
 
-	bool NavigationToolsPublisher::isSubscribed() const
-	{
-	    return true;
-	}
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 
-    }
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+
+		void reset( );
+
+	    private:
+		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
+		qi::AnyObject _pMemory;
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		sensor_msgs::LaserScan _message;
+	};
+
+    } 
 } 
+
+#endif

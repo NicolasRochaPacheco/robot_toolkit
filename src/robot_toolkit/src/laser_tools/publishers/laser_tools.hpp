@@ -18,48 +18,44 @@
 //======================================================================//
 
 
-#include "navigation_tools.hpp"
+
+#ifndef LASER_TOOLS_PUBLISHER_HPP
+#define LASER_TOOLS_PUBLISHER_HPP
+
+#include <string>
+
+#include <sensor_msgs/LaserScan.h>
+#include <ros/ros.h>
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 
-	NavigationToolsPublisher::NavigationToolsPublisher()
-	{
-	    _isInitialized = false;
-	    _topic = "/odom";
-	}
-	
-	std::string NavigationToolsPublisher::topic()
-	{
-	    return _topic;
-	}
-	
-	bool NavigationToolsPublisher::isInitialized()
-	{
-	    return _isInitialized;
-	}
-
-	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms, const nav_msgs::Odometry odomMessage)
-	{
-	    _TFBroadcasterPtr->sendTransform(TfTransforms);
-	    _odomPublisher.publish(odomMessage);
-	}
-
-	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
+	class LaserToolsPublisher
 	{
 
-	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
+	    public:
+		LaserToolsPublisher();
+		virtual ~LaserToolsPublisher() {}
+		std::string topic();
 
-	    _isInitialized = true;
-	}
 
-	bool NavigationToolsPublisher::isSubscribed() const
-	{
-	    return true;
-	}
+		bool isInitialized() const;
 
-    }
+		bool isSubscribed() const;
+
+		void publish( sensor_msgs::LaserScan& message );
+
+		void reset( ros::NodeHandle& nodeHandle );
+
+	    protected:
+		bool _isInitialized;
+		ros::Publisher _publisher;
+		std::string _topic;
+	};
+
+    } 
 } 
+
+#endif
