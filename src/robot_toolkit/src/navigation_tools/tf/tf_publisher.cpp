@@ -18,44 +18,44 @@
 //======================================================================//
 
 
-
-#ifndef LASER_TOOLS_PUBLISHER_HPP
-#define LASER_TOOLS_PUBLISHER_HPP
-
-#include <string>
-
-#include <sensor_msgs/LaserScan.h>
-#include <ros/ros.h>
+#include "tf_publisher.hpp"
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 
-	class LaserToolsPublisher
+	TfPublisher::TfPublisher()
 	{
+	    _isInitialized = false;
+	    _topic = "/tf";
+	}
+	
+	std::string TfPublisher::topic()
+	{
+	    return _topic;
+	}
+	
+	bool TfPublisher::isInitialized()
+	{
+	    return _isInitialized;
+	}
 
-	    public:
-		LaserToolsPublisher();
-		virtual ~LaserToolsPublisher() {}
-		std::string topic();
+	void TfPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms)
+	{
+	    _TFBroadcasterPtr->sendTransform(TfTransforms);
+	}
 
+	void TfPublisher::reset( ros::NodeHandle& nodeHandle )
+	{
+	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
+	    _isInitialized = true;
+	}
 
-		bool isInitialized() const;
+	bool TfPublisher::isSubscribed() const
+	{
+	    return true;
+	}
 
-		bool isSubscribed() const;
-
-		void publish( sensor_msgs::LaserScan& message );
-
-		void reset( ros::NodeHandle& nodeHandle );
-
-	    protected:
-		bool _isInitialized;
-		ros::Publisher _publisher;
-		std::string _topic;
-	};
-
-    } 
+    }
 } 
-
-#endif

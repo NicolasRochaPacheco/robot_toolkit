@@ -18,41 +18,44 @@
 //======================================================================//
 
 
-#ifndef ODOM_TOOLS_PUBLISHER_HPP
-#define ODOM_TOOLS_PUBLISHER_HPP
+#ifndef LASER_CONVERTER_HPP
+#define LASER_CONVERTER_HPP
+
+#include <boost/foreach.hpp>
+
+#include "../../converters/converter_base.hpp"
+#include "robot_toolkit/message_actions.h"
 
 
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/LaserScan.h>
 
 namespace Sinfonia
 {
-    namespace Publisher
+    namespace Converter
     {
 
-	class OdomToolsPublisher
+	class LaserConverter : public BaseConverter<LaserConverter>
 	{
 
-	    public:
-		OdomToolsPublisher();
-		std::string topic();
+	    typedef boost::function<void(sensor_msgs::LaserScan&)> CallbackT;
 
-		bool isInitialized();
-		
-		virtual void publish(const nav_msgs::Odometry odomMessage);
-		virtual void reset( ros::NodeHandle& nodeHandle );
-		virtual bool isSubscribed() const;
+	    public:
+		LaserConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
+
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+
+		void reset( );
 
 	    private:
-		ros::Publisher _odomPublisher;
-
-		std::string _topic;
-
-		bool _isInitialized;
-
+		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
+		qi::AnyObject _pMemory;
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		sensor_msgs::LaserScan _message;
 	};
 
-    }
-}
+    } 
+} 
 
 #endif

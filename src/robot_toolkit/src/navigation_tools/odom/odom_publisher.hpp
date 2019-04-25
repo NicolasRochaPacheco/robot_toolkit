@@ -17,40 +17,42 @@
 //                                                                      //
 //======================================================================//
 
-#include "odom_tools.hpp"
 
-namespace Sinfonia 
+#ifndef ODOM_PUBLISHER_HPP
+#define ODOM_PUBLISHER_HPP
+
+
+#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>
+
+namespace Sinfonia
 {
-    namespace Publisher 
+    namespace Publisher
     {
-	OdomToolsPublisher::OdomToolsPublisher()
+
+	class OdomPublisher
 	{
-	    _topic = "/odom";
-	}
-	
-	std::string OdomToolsPublisher::topic()
-	{
-	    return _topic;
-	}
-	
-	bool OdomToolsPublisher::isInitialized()
-	{
-	    return _isInitialized;
-	}
-	
-	void OdomToolsPublisher::publish(const nav_msgs::Odometry odomMessage)
-	{
-	    _odomPublisher.publish(odomMessage);
-	}
-	void OdomToolsPublisher::reset(ros::NodeHandle& nodeHandle)
-	{
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
-	    _isInitialized = true;
-	}
-	
-	bool OdomToolsPublisher::isSubscribed() const
-	{
-	    return true;
-	}
+
+	    public:
+		OdomPublisher();
+		std::string topic();
+
+		bool isInitialized();
+		
+		virtual void publish(const nav_msgs::Odometry odomMessage);
+		virtual void reset( ros::NodeHandle& nodeHandle );
+		virtual bool isSubscribed() const;
+
+	    private:
+		ros::Publisher _odomPublisher;
+
+		std::string _topic;
+
+		bool _isInitialized;
+
+	};
+
     }
 }
+
+#endif

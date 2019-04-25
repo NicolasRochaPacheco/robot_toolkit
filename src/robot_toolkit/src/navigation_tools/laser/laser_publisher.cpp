@@ -17,42 +17,42 @@
 //                                                                      //
 //======================================================================//
 
-#include "laser_tools.hpp"
+#include "laser_publisher.hpp"
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 	
-	LaserToolsPublisher::LaserToolsPublisher()
+	LaserPublisher::LaserPublisher()
 	{
 	    _isInitialized = false;
 	     _topic = "/laser";
 	}
 
-	bool LaserToolsPublisher::isInitialized() const
+	bool LaserPublisher::isInitialized() const
 	{
 	    return _isInitialized;
 	}
 	
-	std::string LaserToolsPublisher::topic()
+	std::string LaserPublisher::topic()
 	{
 	    return _topic;
 	}
 
-	bool LaserToolsPublisher::isSubscribed() const
+	bool LaserPublisher::isSubscribed() const
 	{
 	    if (_isInitialized == false) 
 		return false;
 	    return _publisher.getNumSubscribers() > 0;
 	}
 
-	void LaserToolsPublisher::publish(sensor_msgs::LaserScan& message)
+	void LaserPublisher::publish(sensor_msgs::LaserScan& message)
 	{
 	    _publisher.publish( message );
 	}
 	
-	void LaserToolsPublisher::reset(ros::NodeHandle& nodeHandle)
+	void LaserPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
 	    _publisher = nodeHandle.advertise<sensor_msgs::LaserScan>( _topic, 10 );
 	    _isInitialized = true;

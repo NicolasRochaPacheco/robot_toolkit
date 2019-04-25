@@ -3,9 +3,9 @@ project(robot_toolkit)
 
 set(
   CONVERTERS_SRC
-    src/navigation_tools/converters/navigation_tools.cpp
-    src/laser_tools/converters/laser_tools.cpp
-    src/odom_tools/converters/odom_tools.cpp
+    src/navigation_tools/laser/laser_converter.cpp
+    src/navigation_tools/odom/odom_converter.cpp
+    src/navigation_tools/tf/tf_converter.cpp
   )
 set(
   TOOLS_SRC
@@ -14,14 +14,15 @@ set(
 
 set(
   PUBLISHER_SRC
-    src/navigation_tools/publishers/navigation_tools.cpp
-    src/laser_tools/publishers/laser_tools.cpp
-    src/odom_tools/publishers/odom_tools.cpp
+  
+    src/navigation_tools/laser/laser_publisher.cpp
+    src/navigation_tools/odom/odom_publisher.cpp
+    src/navigation_tools/tf/tf_publisher.cpp
   )
 
 set(
   SUBSCRIBER_SRC
-    src/navigation_tools/subscribers/cmd_vel.cpp
+    src/navigation_tools/cmd_vel/cmd_vel_subscriber.cpp
   )
 
 set(

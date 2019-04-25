@@ -17,45 +17,40 @@
 //                                                                      //
 //======================================================================//
 
+#include "odom_publisher.hpp"
 
-#include "navigation_tools.hpp"
-
-namespace Sinfonia
+namespace Sinfonia 
 {
-    namespace Publisher
+    namespace Publisher 
     {
-
-	NavigationToolsPublisher::NavigationToolsPublisher()
+	OdomPublisher::OdomPublisher()
 	{
-	    _isInitialized = false;
-	    _topic = "/tf";
+	    _topic = "/odom";
 	}
 	
-	std::string NavigationToolsPublisher::topic()
+	std::string OdomPublisher::topic()
 	{
 	    return _topic;
 	}
 	
-	bool NavigationToolsPublisher::isInitialized()
+	bool OdomPublisher::isInitialized()
 	{
 	    return _isInitialized;
 	}
-
-	void NavigationToolsPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms)
+	
+	void OdomPublisher::publish(const nav_msgs::Odometry odomMessage)
 	{
-	    _TFBroadcasterPtr->sendTransform(TfTransforms);
+	    _odomPublisher.publish(odomMessage);
 	}
-
-	void NavigationToolsPublisher::reset( ros::NodeHandle& nodeHandle )
+	void OdomPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
-	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
+	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
 	    _isInitialized = true;
 	}
-
-	bool NavigationToolsPublisher::isSubscribed() const
+	
+	bool OdomPublisher::isSubscribed() const
 	{
 	    return true;
 	}
-
     }
-} 
+}

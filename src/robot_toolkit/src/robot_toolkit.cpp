@@ -26,17 +26,6 @@
 
 
 
-
-#include "navigation_tools/publishers/navigation_tools.hpp"
-#include "laser_tools/publishers/laser_tools.hpp"
-#include "odom_tools/publishers/odom_tools.hpp"
-
-#include "navigation_tools/converters/navigation_tools.hpp"
-#include "laser_tools/converters/laser_tools.hpp"
-#include "odom_tools/converters/odom_tools.hpp"
-
-#include "navigation_tools/subscribers/cmd_vel.hpp"
-
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
 
@@ -55,6 +44,7 @@ namespace Sinfonia
 	}
 	_sessionPtr = session;
 	_isRosLoopEnabled = true;
+	
     }
 
     RobotToolkit::~RobotToolkit()
@@ -188,26 +178,26 @@ namespace Sinfonia
     void RobotToolkit::registerDefaultConverter()
     {
 	
-	
 	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
 	_tf2Buffer->setUsingDedicatedThread(true);
 	
-	boost::shared_ptr<Publisher::NavigationToolsPublisher> navigationToolsPublisher = boost::make_shared<Publisher::NavigationToolsPublisher>();
-	boost::shared_ptr<Converter::NavigationToolsConverter> navigationToolsConverter = boost::make_shared<Converter::NavigationToolsConverter>( "navigation_tools", 50, _tf2Buffer, _sessionPtr );
-	navigationToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::NavigationToolsPublisher::publish, navigationToolsPublisher, _1) );
-	registerGroup( navigationToolsConverter, navigationToolsPublisher);
 	
-	boost::shared_ptr<Publisher::OdomToolsPublisher> odomToolsPublisher = boost::make_shared<Publisher::OdomToolsPublisher>();
-	boost::shared_ptr<Converter::OdomConverter> odomToolsConverter = boost::make_shared<Converter::OdomConverter>( "odom_tools", 10, _sessionPtr );
-	odomToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomToolsPublisher::publish, odomToolsPublisher, _1) );
-	registerGroup( odomToolsConverter, odomToolsPublisher);
 	
-	boost::shared_ptr<Publisher::LaserToolsPublisher> laserToolsPublisher = boost::make_shared<Publisher::LaserToolsPublisher>();
-	boost::shared_ptr<Converter::LaserToolsConverter> laserToolsConverter = boost::make_shared<Converter::LaserToolsConverter>( "laser_tools", 10, _sessionPtr );
-	laserToolsConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserToolsPublisher::publish, laserToolsPublisher, _1) );
-	registerGroup( laserToolsConverter, laserToolsPublisher);
 	
-
+	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
+	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
+	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
+	registerGroup( tfConverter, tfPublisher);
+	
+	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>();
+	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 20, _sessionPtr );
+	odomConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomPublisher::publish, odomPublisher, _1) );
+	registerGroup( odomConverter, odomPublisher);
+	
+	boost::shared_ptr<Publisher::LaserPublisher> laserPublisher = boost::make_shared<Publisher::LaserPublisher>();
+	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 20, _sessionPtr );
+	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
+	registerGroup( laserConverter, laserPublisher);
 	
     }
 

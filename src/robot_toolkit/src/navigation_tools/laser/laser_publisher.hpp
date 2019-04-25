@@ -18,41 +18,41 @@
 //======================================================================//
 
 
-#ifndef LASER_TOOLS_CONVERTER_HPP
-#define LASER_TOOLS_CONVERTER_HPP
 
-#include <boost/foreach.hpp>
+#ifndef LASER_PUBLISHER_HPP
+#define LASER_PUBLISHER_HPP
 
-#include "../../converters/converter_base.hpp"
-#include "robot_toolkit/message_actions.h"
-
+#include <string>
 
 #include <sensor_msgs/LaserScan.h>
+#include <ros/ros.h>
 
 namespace Sinfonia
 {
-    namespace Converter
+    namespace Publisher
     {
 
-	class LaserToolsConverter : public BaseConverter<LaserToolsConverter>
+	class LaserPublisher
 	{
 
-	    typedef boost::function<void(sensor_msgs::LaserScan&)> CallbackT;
-
 	    public:
-		LaserToolsConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+		LaserPublisher();
+		virtual ~LaserPublisher() {}
+		std::string topic();
 
-		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 
-		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+		bool isInitialized() const;
 
-		void reset( );
+		bool isSubscribed() const;
 
-	    private:
-		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
-		qi::AnyObject _pMemory;
-		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
-		sensor_msgs::LaserScan _message;
+		void publish( sensor_msgs::LaserScan& message );
+
+		void reset( ros::NodeHandle& nodeHandle );
+
+	    protected:
+		bool _isInitialized;
+		ros::Publisher _publisher;
+		std::string _topic;
 	};
 
     } 

@@ -29,6 +29,19 @@
 #include "robot_toolkit/recorder/recorder.hpp"
 #include "robot_toolkit/subscriber/subscriber.hpp"
 
+
+#include "../../src/navigation_tools/tf/tf_publisher.hpp"
+#include "../../src/navigation_tools/odom/odom_publisher.hpp"
+#include "../../src/navigation_tools/laser/laser_publisher.hpp"
+
+
+#include "../../src/navigation_tools/tf/tf_converter.hpp"
+#include "../../src/navigation_tools/odom/odom_converter.hpp"
+#include "../../src/navigation_tools/laser/laser_converter.hpp"
+
+#include "../../src/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
+
+
 #include <tf2_ros/buffer.h>
 
 namespace tf2_ros
@@ -60,6 +73,7 @@ namespace Sinfonia
 		ScheduledConverter(const ros::Time& schedule, size_t conv_index):
 		schedule_(schedule), conv_index_(conv_index)
 		{
+		    
 		}
 
 		bool operator < (const ScheduledConverter& sp_in) const 
@@ -79,8 +93,9 @@ namespace Sinfonia
 	    bool _publishEnabled;
 	    bool _isRosLoopEnabled;
 	    
-	    
 	    boost::shared_ptr<tf2_ros::Buffer> _tf2Buffer;
+	    
+	    
 	    boost::scoped_ptr<ros::NodeHandle> _nodeHandlerPtr;
 	    boost::shared_ptr<Recorder::GlobalRecorder> _recorder;
 	    
@@ -100,6 +115,7 @@ namespace Sinfonia
 	    
 	    typedef std::map< std::string, Publisher::Publisher>::const_iterator pubConstIter;
 	    typedef std::map< std::string, Recorder::Recorder>::const_iterator recConstIter;
+	    
 	    
 	    
 	    void rosLoop();

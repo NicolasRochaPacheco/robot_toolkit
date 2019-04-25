@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "laser_tools.hpp"
+#include "laser_converter.hpp"
 
 #define for_each BOOST_FOREACH
 
@@ -121,18 +121,18 @@ namespace Sinfonia
 					    "Device/SubDeviceList/Platform/LaserSensor/Left/Horizontal/Seg15/Y/Sensor/Value",
 							};
 							
-	LaserToolsConverter::LaserToolsConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session):
+	LaserConverter::LaserConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session):
 	    BaseConverter( name, frequency, session )
 	{
 	    _pMemory = _session->service("ALMemory");
 	}
 	
-	void LaserToolsConverter::registerCallback(MessageAction::MessageAction action, LaserToolsConverter::CallbackT callback)
+	void LaserConverter::registerCallback(MessageAction::MessageAction action, LaserConverter::CallbackT callback)
 	{
 	    _callbacks[action] = callback;
 	}
 
-	void LaserToolsConverter::callAll(const std::vector<MessageAction::MessageAction>& actions)
+	void LaserConverter::callAll(const std::vector<MessageAction::MessageAction>& actions)
 	{
 	    static const std::vector<std::string> laserKeysValue(_laserMemoryKeys, _laserMemoryKeys+90);
 
@@ -193,7 +193,7 @@ namespace Sinfonia
 
 	}
 	
-	void LaserToolsConverter::reset()
+	void LaserConverter::reset()
 	{
 	    _message.header.frame_id = "base_footprint";
 	    _message.angle_min = -2.0944;
@@ -204,7 +204,7 @@ namespace Sinfonia
 	    _message.ranges = std::vector<float>(61, -1.0f);
 	}
 
-	std::vector< float > LaserToolsConverter::fromAnyValueToFloatVector(qi::AnyValue& value, std::vector< float >& result)
+	std::vector< float > LaserConverter::fromAnyValueToFloatVector(qi::AnyValue& value, std::vector< float >& result)
 	{
 	    qi::AnyReferenceVector anyrefs = value.asListValuePtr();
 	    for(int i=0; i<anyrefs.size();i++)

@@ -18,8 +18,8 @@
 //======================================================================//
 
 
-#ifndef ODOM_TOOLS_CONVERTER_HPP
-#define ODOM_TOOLS_CONVERTER_HPP
+#ifndef ODOM_CONVERTER_HPP
+#define ODOM_CONVERTER_HPP
 
 #include "../../converters/converter_base.hpp"
 #include "../../tools/robot_description.hpp"

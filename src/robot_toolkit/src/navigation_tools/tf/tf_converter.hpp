@@ -18,9 +18,8 @@
 //======================================================================//
 
 
-#ifndef NAVIGATION_TOOLS_CONVERTER_HPP
-#define NAVIGATION_TOOLS_CONVERTER_HPP
-
+#ifndef TF_CONVERTER_HPP
+#define TF_CONVERTER_HPP
 
 #include "../../converters/converter_base.hpp"
 #include "../../tools/robot_description.hpp"
@@ -38,7 +37,7 @@ namespace Sinfonia
     namespace Converter
     {
 
-	class NavigationToolsConverter : public BaseConverter<NavigationToolsConverter>
+	class TfConverter : public BaseConverter<TfConverter>
 	{
 
 	typedef boost::function<void(std::vector<geometry_msgs::TransformStamped>&) > callbackT;
@@ -48,8 +47,8 @@ namespace Sinfonia
 	typedef std::map<std::string, boost::shared_ptr<urdf::JointMimic> > mimicMap;
 
 	public:
-	    NavigationToolsConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
-	    ~NavigationToolsConverter();
+	    TfConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
+	    ~TfConverter();
 
 	    virtual void reset( );
 	    void registerCallback( const MessageAction::MessageAction action, callbackT callBack );

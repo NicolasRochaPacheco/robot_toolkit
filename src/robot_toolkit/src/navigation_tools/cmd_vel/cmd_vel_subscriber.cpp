@@ -18,47 +18,34 @@
 //======================================================================//
 
 
-#ifndef NAVIGATION_TOOLS_PUBLISHER_HPP
-#define NAVIGATION_TOOLS_PUBLISHER_HPP
+#include "cmd_vel_subscriber.hpp"
 
-
-#include <ros/ros.h>
-#include <geometry_msgs/Transform.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <tf2_ros/transform_broadcaster.h>
-
-namespace Sinfonia
+namespace Sinfonia 
 {
-    namespace Publisher
+    namespace Subscriber 
     {
 
-	class NavigationToolsPublisher
+	CmdVelSubscriber::CmdVelSubscriber(const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session):
+	BaseSubscriber(name, cmdVelTopic, session)
 	{
+	    _cmdVelTopic = cmdVelTopic;
+	    _pMotion = _session-> service("ALMotion");
+	}
+	
+	void CmdVelSubscriber::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _subscriberCmdVel = nodeHandle.subscribe( _cmdVelTopic, 10, &CmdVelSubscriber::cmdVelCallback, this );	   
+	    _isInitialized = true;
+	}
 
-	    public:
-		NavigationToolsPublisher();
-		std::string topic();
-
-		bool isInitialized();
-		
-		virtual void publish( const std::vector<geometry_msgs::TransformStamped>& TfTransforms);
-		virtual void reset( ros::NodeHandle& nodeHandle );
-
-		virtual bool isSubscribed() const;
-
-	    private:
-		boost::shared_ptr<tf2_ros::TransformBroadcaster> _TFBroadcasterPtr;
-
-		ros::Publisher _odomPublisher;
-
-		std::string _topic;
-
-		bool _isInitialized;
-
-	};
+	void CmdVelSubscriber::cmdVelCallback(const geometry_msgs::TwistConstPtr& twistMsg)
+	{
+	    const float& velX = twistMsg->linear.x;
+	    const float& velY = twistMsg->linear.y;
+	    const float& velTh = twistMsg->angular.z;
+	    std::cout << "going to move x: " << velX << " y: " << velY << " th: " << velTh << std::endl;
+	    _pMotion.async<void>("move", velX, velY, velTh );
+	}
 
     }
 }
-
-#endif
