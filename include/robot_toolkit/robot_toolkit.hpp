@@ -44,6 +44,10 @@
 
 #include <tf2_ros/buffer.h>
 
+#include "ros/ros.h"
+
+#include "robot_toolkit/InitTf.h"
+
 namespace tf2_ros
 {
     class Buffer;
@@ -127,6 +131,8 @@ namespace Sinfonia
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
 	    void registerDefaultSubscriber();
 	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);
+	    
+	    bool initTf(robot_toolkit::InitTf::Request &req, robot_toolkit::InitTf::Response &res);
 	    
     };
 }

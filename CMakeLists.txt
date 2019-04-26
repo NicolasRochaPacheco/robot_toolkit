@@ -46,7 +46,7 @@ set(
 add_definitions( -DCATKIN_BUILD )
 
 # CMake file that uses catkin
-find_package(catkin COMPONENTS
+find_package(catkin REQUIRED COMPONENTS	
   cv_bridge
   diagnostic_msgs
   diagnostic_updater
@@ -65,15 +65,26 @@ find_package(catkin COMPONENTS
   tf2_geometry_msgs
   tf2_msgs
   tf2_ros
+  message_generation
 )
 
 find_package(OpenCV)
 find_package(orocos_kdl)
 
+add_service_files(
+  FILES
+  InitTf.srv
+  )
+  
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 
 catkin_package(LIBRARIES robot_toolkit_module robot_toolkit)
+catkin_package(CATKIN_DEPENDS message_runtime ) 
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=deprecated-declarations")

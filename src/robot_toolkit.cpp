@@ -178,16 +178,6 @@ namespace Sinfonia
     void RobotToolkit::registerDefaultConverter()
     {
 	
-	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
-	_tf2Buffer->setUsingDedicatedThread(true);
-	
-	
-	
-	
-	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
-	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
-	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
-	registerGroup( tfConverter, tfPublisher);
 	
 	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>();
 	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 20, _sessionPtr );
@@ -235,6 +225,7 @@ namespace Sinfonia
 	std::cout << "registered DefaulerDefault 2"<< std::endl;
 	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
     }
+    
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
     {
 	std::vector<Subscriber::Subscriber>::iterator it;
@@ -254,6 +245,18 @@ namespace Sinfonia
 	}
     }
 
+    bool RobotToolkit::initTf(robot_toolkit::InitTf::Request& req, robot_toolkit::InitTf::Response& res)
+    {
+	ROS_INFO("I heard: [%s]", req.data.c_str());
+	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
+	_tf2Buffer->setUsingDedicatedThread(true);
+
+	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
+	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
+	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
+	registerGroup( tfConverter, tfPublisher);
+	    res.response = true;
+    }
 
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }
