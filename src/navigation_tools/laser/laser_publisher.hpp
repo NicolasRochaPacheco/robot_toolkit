@@ -48,6 +48,8 @@ namespace Sinfonia
 		void publish( sensor_msgs::LaserScan& message );
 
 		void reset( ros::NodeHandle& nodeHandle );
+		
+		void shutdown();
 
 	    protected:
 		bool _isInitialized;

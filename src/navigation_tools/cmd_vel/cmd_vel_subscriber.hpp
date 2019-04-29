@@ -42,6 +42,7 @@ namespace Sinfonia
 
 		void reset( ros::NodeHandle& nodeHandle );
 		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
+		void shutdown();
 
 	    private:
 		std::string _cmdVelTopic;

@@ -46,6 +46,11 @@ namespace Sinfonia
 	    std::cout << "going to move x: " << velX << " y: " << velY << " th: " << velTh << std::endl;
 	    _pMotion.async<void>("move", velX, velY, velTh );
 	}
+	
+	void CmdVelSubscriber::shutdown()
+	{
+	    _subscriberCmdVel.shutdown();
+	}
 
     }
 }

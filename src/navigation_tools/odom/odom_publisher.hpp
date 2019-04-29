@@ -42,6 +42,7 @@ namespace Sinfonia
 		virtual void publish(const nav_msgs::Odometry odomMessage);
 		virtual void reset( ros::NodeHandle& nodeHandle );
 		virtual bool isSubscribed() const;
+		virtual void shutdown();
 
 	    private:
 		ros::Publisher _odomPublisher;

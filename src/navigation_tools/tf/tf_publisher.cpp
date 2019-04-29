@@ -43,12 +43,19 @@ namespace Sinfonia
 
 	void TfPublisher::publish(const std::vector< geometry_msgs::TransformStamped >& TfTransforms)
 	{
-	    _TFBroadcasterPtr->sendTransform(TfTransforms);
+	   
+	    tf2_msgs::TFMessage message;
+	    for (std::vector<geometry_msgs::TransformStamped>::const_iterator i = TfTransforms.begin(); i != TfTransforms.end(); ++i)
+	    {
+		message.transforms.push_back(*i);
+	    }
+	    _tfPublisher.publish(message);
 	}
 
 	void TfPublisher::reset( ros::NodeHandle& nodeHandle )
 	{
-	    _TFBroadcasterPtr = boost::make_shared<tf2_ros::TransformBroadcaster>();
+	    
+	    _tfPublisher = nodeHandle.advertise<tf2_msgs::TFMessage>(_topic, 100 );
 	    _isInitialized = true;
 	}
 
@@ -56,6 +63,12 @@ namespace Sinfonia
 	{
 	    return true;
 	}
+	
+	void TfPublisher::shutdown()
+	{
+	    _tfPublisher.shutdown();
+	}
+
 
     }
 } 

@@ -26,7 +26,7 @@
 #include <geometry_msgs/Transform.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
-#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_msgs/TFMessage.h>
 
 namespace Sinfonia
 {
@@ -44,17 +44,16 @@ namespace Sinfonia
 		
 		virtual void publish( const std::vector<geometry_msgs::TransformStamped>& TfTransforms);
 		virtual void reset( ros::NodeHandle& nodeHandle );
-
+		virtual void shutdown();
 		virtual bool isSubscribed() const;
 
 	    private:
-		boost::shared_ptr<tf2_ros::TransformBroadcaster> _TFBroadcasterPtr;
-
-		ros::Publisher _odomPublisher;
+		ros::Publisher _tfPublisher;
 
 		std::string _topic;
 
 		bool _isInitialized;
+		
 
 	};
 

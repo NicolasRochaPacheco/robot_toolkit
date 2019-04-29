@@ -160,11 +160,8 @@ namespace Sinfonia
 		std::cout << "resetting subscriber " << sub.name() << std::endl;
 		sub.reset( *_nodeHandlerPtr );
 	    }
-	    /*for_each( Service::Service& srv, _services )
-	    {
-		std::cout << "resetting service " << srv.name() << std::endl;
-		srv.reset( *_nodeHandlerPtr );
-	    }**/
+	    
+	    
 	    resetService(* _nodeHandlerPtr);
 	}
 	startPublishing();
@@ -274,7 +271,17 @@ namespace Sinfonia
 	else 
 	{
 	    ROS_INFO("Shutting down tf! ");
+	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
 	    _convertersQueue = std::priority_queue<ScheduledConverter>();
+	    for_each( publisherMap::value_type &pub, _publisherMap )
+	    {
+		pub.second.shutdown();
+	    }
+	    for_each( Subscriber::Subscriber& sub, _subscribers )
+	    {
+		std::cout << "resetting subscriber " << sub.name() << std::endl;
+		sub.shutdown();
+	    }
 	}
 	return true;
     }

@@ -44,7 +44,7 @@ namespace Sinfonia
 	}
 	void OdomPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
-	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>("/odom", 10 );
+	    _odomPublisher = nodeHandle.advertise<nav_msgs::Odometry>(_topic, 10 );
 	    _isInitialized = true;
 	}
 	
@@ -52,5 +52,11 @@ namespace Sinfonia
 	{
 	    return true;
 	}
+	
+	void OdomPublisher::shutdown()
+	{
+	    _odomPublisher.shutdown();
+	}
+
     }
 }

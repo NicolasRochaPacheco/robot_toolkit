@@ -57,5 +57,11 @@ namespace Sinfonia
 	    _publisher = nodeHandle.advertise<sensor_msgs::LaserScan>( _topic, 10 );
 	    _isInitialized = true;
 	}
+	
+	void LaserPublisher::shutdown()
+	{
+	    _publisher.shutdown();
+	}
+
     }
 }

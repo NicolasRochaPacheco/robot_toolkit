@@ -67,6 +67,11 @@ namespace Sinfonia
 		{
 		    return _subscriberPtr->topic();
 		}
+		
+		void shutdown()
+		{
+		    _subscriberPtr->shutdown();
+		}
 
 		friend bool operator==( const Subscriber& lhs, const Subscriber& rhs )
 		{
@@ -84,6 +89,7 @@ namespace Sinfonia
 		    virtual void reset( ros::NodeHandle& nh ) = 0;
 		    virtual std::string name() const = 0;
 		    virtual std::string topic() const = 0;
+		    virtual void shutdown() = 0;
 		};
 
 		template<typename T>
@@ -113,7 +119,10 @@ namespace Sinfonia
 		    {
 			_subscriber->reset( nodeHandle );
 		    }
-
+		    void shutdown()
+		    {
+			_subscriber->shutdown();
+		    }
 		    T _subscriber;
 		};
 
