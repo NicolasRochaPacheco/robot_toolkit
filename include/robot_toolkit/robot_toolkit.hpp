@@ -30,10 +30,10 @@
 #include "robot_toolkit/subscriber/subscriber.hpp"
 
 
+
 #include "../../src/navigation_tools/tf/tf_publisher.hpp"
 #include "../../src/navigation_tools/odom/odom_publisher.hpp"
 #include "../../src/navigation_tools/laser/laser_publisher.hpp"
-
 
 #include "../../src/navigation_tools/tf/tf_converter.hpp"
 #include "../../src/navigation_tools/odom/odom_converter.hpp"
@@ -41,12 +41,13 @@
 
 #include "../../src/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
+#include "robot_toolkit_msgs/InitTf.h"
 
 #include <tf2_ros/buffer.h>
 
 #include "ros/ros.h"
 
-#include "robot_toolkit_msgs/InitTf.h"
+
 
 namespace tf2_ros
 {
@@ -68,6 +69,9 @@ namespace Sinfonia
 	    void stopService();
 	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
 	    void startPublishing();
+	    
+	    bool initTf();
+	    bool callbackTf( robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res );
 
 	    
 	private:
@@ -97,6 +101,7 @@ namespace Sinfonia
 	    bool _publishEnabled;
 	    bool _isRosLoopEnabled;
 	    
+	    
 	    boost::shared_ptr<tf2_ros::Buffer> _tf2Buffer;
 	    
 	    
@@ -112,6 +117,9 @@ namespace Sinfonia
 	    std::vector< Converter::Converter > _converters;
 	    std::vector< Subscriber::Subscriber > _subscribers;
 	    std::priority_queue<ScheduledConverter> _convertersQueue;
+	    
+	    ros::ServiceServer _serviceTf;
+	    
 	    
 	    
 	    std::map< std::string, Recorder::Recorder > _recorderMap;
@@ -131,9 +139,7 @@ namespace Sinfonia
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
 	    void registerDefaultSubscriber();
 	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);
-	    
-	    bool initTf(robot_toolkit_msgs::InitTf::Request &req, robot_toolkit_msgs::InitTf::Response &res);
-	    
+	    void resetService(ros::NodeHandle& nodeHandle);
     };
 }
 

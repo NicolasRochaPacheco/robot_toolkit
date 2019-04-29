@@ -73,6 +73,7 @@ namespace Sinfonia
     void RobotToolkit::rosLoop()
     {
 	static std::vector<MessageAction::MessageAction> actions;
+	ROS_INFO("Ready to initTF.");
 	while(_isRosLoopEnabled)
 	{
 	    actions.clear();
@@ -105,7 +106,7 @@ namespace Sinfonia
 		    if ( conv.frequency() != 0 )
 		    {
 			_convertersQueue.push(ScheduledConverter(schedule + ros::Duration(1.0f / conv.frequency()), convIndex));
-		    }		    
+		    }	
 		}
 	    }
 	    if ( _publishEnabled )
@@ -159,11 +160,18 @@ namespace Sinfonia
 		std::cout << "resetting subscriber " << sub.name() << std::endl;
 		sub.reset( *_nodeHandlerPtr );
 	    }
+	    /*for_each( Service::Service& srv, _services )
+	    {
+		std::cout << "resetting service " << srv.name() << std::endl;
+		srv.reset( *_nodeHandlerPtr );
+	    }**/
+	    resetService(* _nodeHandlerPtr);
 	}
 	startPublishing();
 	
     }
     
+
     void RobotToolkit::startPublishing()
     {
 	_publishEnabled = true;
@@ -244,19 +252,33 @@ namespace Sinfonia
 	    std::cout << "re-initialized existing subscriber:\t" << it->name() << std::endl;
 	}
     }
-
-    bool RobotToolkit::initTf(robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res)
+    
+    void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
     {
-	ROS_INFO("I heard: [%s]", req.data.c_str());
-	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
-	_tf2Buffer->setUsingDedicatedThread(true);
-
-	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
-	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
-	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
-	registerGroup( tfConverter, tfPublisher);
-	    res.response = true;
+	_serviceTf = nodeHandle.advertiseService("initTf" , &RobotToolkit::callbackTf, this);
     }
+    
+    bool RobotToolkit::callbackTf(robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res)
+    {
+	if(req.data == "on")
+	{    
+	    ROS_INFO("Starting tf! ");
+	    _tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
+	    _tf2Buffer->setUsingDedicatedThread(true);
+
+	    boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
+	    boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
+	    tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
+	    registerGroup( tfConverter, tfPublisher);
+	}
+	else 
+	{
+	    ROS_INFO("Shutting down tf! ");
+	    _convertersQueue = std::priority_queue<ScheduledConverter>();
+	}
+	return true;
+    }
+
 
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }
