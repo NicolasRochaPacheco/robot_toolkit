@@ -245,7 +245,7 @@ namespace Sinfonia
 	}
     }
 
-    bool RobotToolkit::initTf(robot_toolkit::InitTf::Request& req, robot_toolkit::InitTf::Response& res)
+    bool RobotToolkit::initTf(robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res)
     {
 	ROS_INFO("I heard: [%s]", req.data.c_str());
 	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );

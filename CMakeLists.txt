@@ -65,17 +65,12 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   tf2_msgs
   tf2_ros
-  message_generation
+  robot_toolkit_msgs
 )
 
 find_package(OpenCV)
 find_package(orocos_kdl)
-
-add_service_files(
-  FILES
-  InitTf.srv
-  )
-  
+ 
 generate_messages(
   DEPENDENCIES
   std_msgs

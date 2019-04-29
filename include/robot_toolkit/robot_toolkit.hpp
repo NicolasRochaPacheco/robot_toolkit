@@ -46,7 +46,7 @@
 
 #include "ros/ros.h"
 
-#include "robot_toolkit/InitTf.h"
+#include "robot_toolkit_msgs/InitTf.h"
 
 namespace tf2_ros
 {
@@ -132,7 +132,7 @@ namespace Sinfonia
 	    void registerDefaultSubscriber();
 	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);
 	    
-	    bool initTf(robot_toolkit::InitTf::Request &req, robot_toolkit::InitTf::Response &res);
+	    bool initTf(robot_toolkit_msgs::InitTf::Request &req, robot_toolkit_msgs::InitTf::Response &res);
 	    
     };
 }
