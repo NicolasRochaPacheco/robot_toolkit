@@ -17,48 +17,34 @@
 //                                                                      //
 //======================================================================//
 
-#include "odom_publisher.hpp"
+#ifndef SQUEDULED_CONVERTER_HPP
+#define SQUEDULED_CONVERTER_HPP
 
-namespace Sinfonia 
+#include "ros/ros.h"
+
+namespace Sinfonia
 {
-    namespace Publisher 
+    namespace Helpers
     {
-	OdomPublisher::OdomPublisher()
-	{
-	    _topic = "/odom";
-	}
-	
-	std::string OdomPublisher::topic()
-	{
-	    return _topic;
-	}
-	
-	bool OdomPublisher::isInitialized()
-	{
-	    return _isInitialized;
-	}
-	
-	void OdomPublisher::publish(const nav_msgs::Odometry odomMessage)
-	{
-	    _publisher.publish(odomMessage);
-	}
-	void OdomPublisher::reset(ros::NodeHandle& nodeHandle)
-	{
-	    _publisher = nodeHandle.advertise<nav_msgs::Odometry>(_topic, 10 );
-	    _isInitialized = true;
-	}
-	
-	bool OdomPublisher::isSubscribed() const
-	{
-	    if (!_isInitialized) 
-		return false;
-	    return _publisher.getNumSubscribers() > 0;
-	}
-	
-	void OdomPublisher::shutdown()
-	{
-	    _publisher.shutdown();
-	}
+	struct ScheduledConverter 
+	    {
+		ScheduledConverter(const ros::Time& schedule, size_t converterIndex):
+		_schedule(schedule), _converterIndex(converterIndex)
+		{
+		    
+		}
 
+		bool operator < (const ScheduledConverter& spIn) const 
+		{
+		    return _schedule > spIn._schedule;
+		}
+		
+		ros::Time _schedule;
+		
+		size_t _converterIndex;
+	    };
     }
 }
+
+
+#endif

@@ -46,9 +46,15 @@ namespace Sinfonia
 		{
 		    return converterPtr->name();
 		}
-		float frequency() const
+		
+		float getFrequency() const
 		{
-		    return converterPtr->frequency();
+		    return converterPtr->getFrequency();
+		}
+		
+		void setFrequency(float frequency) const
+		{
+		    converterPtr->setFrequency(frequency);
 		}
 
 		void reset()
@@ -87,7 +93,8 @@ namespace Sinfonia
 		{
 		    virtual ~ConverterConcept(){}
 		    virtual std::string name() const = 0;
-		    virtual float frequency() const = 0;
+		    virtual float getFrequency() const = 0;
+		    virtual void setFrequency(float frequency)  = 0;
 		    virtual void reset() = 0;
 		    virtual void callAll( const std::vector<Sinfonia::MessageAction::MessageAction>& actions ) = 0;
 		};
@@ -104,9 +111,14 @@ namespace Sinfonia
 			return converter_->name();
 		    }
 
-		    float frequency() const
+		    float getFrequency() const
 		    {
-			return converter_->frequency();
+			return converter_->getFrequency();
+		    }
+		    
+		    void setFrequency(float frequency)
+		    {
+			converter_->setFrequency(frequency);
 		    }
 		    
 		    void reset()

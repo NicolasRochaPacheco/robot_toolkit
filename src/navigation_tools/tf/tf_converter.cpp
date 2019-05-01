@@ -41,7 +41,7 @@ namespace Sinfonia
 	{
 	    _pMotion =  session->service("ALMotion");
 	    _tf2Buffer = tf2Buffer;
-	    _robotDesc = Tools::getRobotDescription();
+	    _robotDescription = Tools::getRobotDescription();
     
 	}
 
@@ -51,14 +51,14 @@ namespace Sinfonia
 
 	void TfConverter::reset()
 	{
-	    if ( _robotDesc.empty() )
+	    if ( _robotDescription.empty() )
 	    {
 		std::cout << "error in loading robot description" << std::endl;
 		return;
 	    }
 	    
 	    urdf::Model model;
-	    model.initString( _robotDesc );
+	    model.initString( _robotDescription );
 	    KDL::Tree tree;
 	    kdl_parser::treeFromUrdfModel( model, tree );
 
@@ -83,11 +83,13 @@ namespace Sinfonia
 
 	void TfConverter::callAll( const std::vector<MessageAction::MessageAction>& actions )
 	{
+	    double init = ros::Time::now().toSec();
 	    callTF();
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
 		_callbacks[action](_tfTransforms);
 	    }
+	    //std::cout << BOLDYELLOW << "Topic: /tf " << BOLDCYAN << "elapsed time (s): "<< std::fixed << std::setprecision(8) << ros::Time::now().toSec() - init << std::endl;
 	}
 
 
@@ -101,22 +103,23 @@ namespace Sinfonia
 	    for (std::map<std::string, double>::const_iterator jnt=jointPositions.begin(); jnt != jointPositions.end(); jnt++)
 	    {
 		std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg = _segments.find(jnt->first);
-		if (seg != _segments.end()){
-		seg->second.segment.pose(jnt->second).M.GetQuaternion(tfTransform.transform.rotation.x,
-									tfTransform.transform.rotation.y,
-									tfTransform.transform.rotation.z,
-									tfTransform.transform.rotation.w);
-		tfTransform.transform.translation.x = seg->second.segment.pose(jnt->second).p.x();
-		tfTransform.transform.translation.y = seg->second.segment.pose(jnt->second).p.y();
-		tfTransform.transform.translation.z = seg->second.segment.pose(jnt->second).p.z();
+		if (seg != _segments.end())
+		{
+		    seg->second.segment.pose(jnt->second).M.GetQuaternion(tfTransform.transform.rotation.x,
+									    tfTransform.transform.rotation.y,
+									    tfTransform.transform.rotation.z,
+									    tfTransform.transform.rotation.w);
+		    tfTransform.transform.translation.x = seg->second.segment.pose(jnt->second).p.x();
+		    tfTransform.transform.translation.y = seg->second.segment.pose(jnt->second).p.y();
+		    tfTransform.transform.translation.z = seg->second.segment.pose(jnt->second).p.z();
 
-		tfTransform.header.frame_id = seg->second.root;
-		tfTransform.child_frame_id = seg->second.tip;
+		    tfTransform.header.frame_id = seg->second.root;
+		    tfTransform.child_frame_id = seg->second.tip;
 
-		_tfTransforms.push_back(tfTransform);
+		    _tfTransforms.push_back(tfTransform);
 
-		if (_tf2Buffer)
-		    _tf2Buffer->setTransform(tfTransform, "naoqiconverter", false);
+		    if (_tf2Buffer)
+			_tf2Buffer->setTransform(tfTransform, "naoqiconverter", false);
 		}
 	    }
 
@@ -126,9 +129,7 @@ namespace Sinfonia
 	void TfConverter::setFixedTransforms(const std::string& tfPrefix, const ros::Time& time)
 	{
 	    geometry_msgs::TransformStamped tfTransform;
-	    tfTransform.header.stamp = time/*+ros::Duration(0.5)*/;  // future publish by 0.5 seconds
-
-	    // loop over all fixed segments
+	    tfTransform.header.stamp = time;
 	    for (std::map<std::string, robot_state_publisher::SegmentPair>::const_iterator seg=_segmentsFixed.begin(); seg != _segmentsFixed.end(); seg++)
 	    {
 		seg->second.segment.pose(0).M.GetQuaternion(tfTransform.transform.rotation.x,
@@ -188,7 +189,6 @@ namespace Sinfonia
 		jointStateMap[*itName] = *itPos;
 	    }
 
-	    // for mimic map
 	    for(mimicMap::iterator i = _mimic.begin(); i != _mimic.end(); i++)
 	    {
 		if(jointStateMap.find(i->second->joint_name) != jointStateMap.end())
@@ -198,7 +198,6 @@ namespace Sinfonia
 		}
 	    }
 
-	    // reset the transforms we want to use at this time
 	    _tfTransforms.clear();
 	    static const std::string& jtTfPrefix = "";
 	    setTransforms(jointStateMap, stamp, jtTfPrefix);
@@ -213,7 +212,7 @@ namespace Sinfonia
 	    const float& odomWX =  alOdometryData[3];
 	    const float& odomWY =  alOdometryData[4];
 	    const float& odomWZ =  alOdometryData[5];
-	    //since all odometry is 6DOF we'll need a quaternion created from yaw
+
 	    tf2::Quaternion tfQuaternion;
 	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
 	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
@@ -231,7 +230,6 @@ namespace Sinfonia
 	    _tfTransforms.push_back( msgTfOdom );
 	    _tf2Buffer->setTransform( msgTfOdom, "naoqiconverter", false);
 
-	    // If nobody uses that buffer, do not fill it next time
 	    if (( _tf2Buffer ) && ( _tf2Buffer.use_count() == 1 ))
 	    {
 		_tf2Buffer.reset();

@@ -43,11 +43,13 @@ namespace Sinfonia
 	
 	void OdomConverter::callAll(const std::vector<MessageAction::MessageAction>& actions )
 	{
+	    double init = ros::Time::now().toSec();
 	    callOdom();
 	    for_each( MessageAction::MessageAction action, actions )
 	    {
 		_callbacks[action](_msgOdom);
 	    }
+	    //std::cout << BOLDYELLOW << "Topic: /odom " << BOLDCYAN << "elapsed time (s): "<< std::fixed << std::setprecision(8) << ros::Time::now().toSec() - init << std::endl;
 	}
 	
 	void OdomConverter::callOdom()

@@ -45,7 +45,7 @@ namespace Sinfonia
 		virtual void shutdown();
 
 	    private:
-		ros::Publisher _odomPublisher;
+		ros::Publisher _publisher;
 
 		std::string _topic;
 

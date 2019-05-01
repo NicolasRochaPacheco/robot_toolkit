@@ -49,24 +49,26 @@ namespace Sinfonia
 	    {
 		message.transforms.push_back(*i);
 	    }
-	    _tfPublisher.publish(message);
+	    _publisher.publish(message);
 	}
 
 	void TfPublisher::reset( ros::NodeHandle& nodeHandle )
 	{
 	    
-	    _tfPublisher = nodeHandle.advertise<tf2_msgs::TFMessage>(_topic, 100 );
+	    _publisher = nodeHandle.advertise<tf2_msgs::TFMessage>(_topic, 100 );
 	    _isInitialized = true;
 	}
 
 	bool TfPublisher::isSubscribed() const
 	{
-	    return true;
+	    if (!_isInitialized) 
+		return false;
+	    return _publisher.getNumSubscribers() > 0;
 	}
 	
 	void TfPublisher::shutdown()
 	{
-	    _tfPublisher.shutdown();
+	    _publisher.shutdown();
 	}
 
 

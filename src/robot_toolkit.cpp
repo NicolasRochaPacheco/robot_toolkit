@@ -73,7 +73,6 @@ namespace Sinfonia
     void RobotToolkit::rosLoop()
     {
 	static std::vector<MessageAction::MessageAction> actions;
-	ROS_INFO("Ready to initTF.");
 	while(_isRosLoopEnabled)
 	{
 	    actions.clear();
@@ -81,19 +80,18 @@ namespace Sinfonia
 		boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 		if(!_convertersQueue.empty())
 		{
-		    size_t convIndex = _convertersQueue.top().conv_index_;
-		    Converter::Converter& conv = _converters[convIndex];
-		    ros::Time schedule = _convertersQueue.top().schedule_;
-
-		    pubConstIter pubIt = _publisherMap.find( conv.name() );
-		    if ( _publishEnabled &&  pubIt != _publisherMap.end() && pubIt->second.isSubscribed() )
+		    size_t converterIndex = _convertersQueue.top()._converterIndex;
+		    Converter::Converter& converter = _converters[converterIndex];
+		    ros::Time schedule = _convertersQueue.top()._schedule;
+		    PublisherConstIterator publisherIterator = _publisherMap.find( converter.name() );
+		    if ( _publishEnabled &&  publisherIterator != _publisherMap.end() && publisherIterator->second.isSubscribed() )
 		    {
 			actions.push_back(MessageAction::PUBLISH);
 		    }
 
-		    if (actions.size() >0)
+		    if ( actions.size()>0 )
 		    {
-			conv.callAll( actions );
+			converter.callAll( actions );
 		    }
 
 		    ros::Duration d( schedule - ros::Time::now() );
@@ -101,11 +99,11 @@ namespace Sinfonia
 		    {
 			d.sleep();
 		    }
-
+		    
 		    _convertersQueue.pop();
-		    if ( conv.frequency() != 0 )
+		    if ( converter.getFrequency() != 0 )
 		    {
-			_convertersQueue.push(ScheduledConverter(schedule + ros::Duration(1.0f / conv.frequency()), convIndex));
+			_convertersQueue.push(Helpers::ScheduledConverter(schedule + ros::Duration(1.0f / converter.getFrequency()), converterIndex));
 		    }	
 		}
 	    }
@@ -149,19 +147,7 @@ namespace Sinfonia
 	else
 	{
 	    std::cout << "NOT going to re-register the converters" << std::endl;
-	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
-	    for_each( publisherMap::value_type &pub, _publisherMap )
-	    {
-		pub.second.reset(*_nodeHandlerPtr);
-	    }
-	    
-	    for_each( Subscriber::Subscriber& sub, _subscribers )
-	    {
-		std::cout << "resetting subscriber " << sub.name() << std::endl;
-		sub.reset( *_nodeHandlerPtr );
-	    }
-	    
-	    
+	    typedef std::map< std::string, Publisher::Publisher > publisherMap; 	    
 	    resetService(* _nodeHandlerPtr);
 	}
 	startPublishing();
@@ -182,15 +168,21 @@ namespace Sinfonia
 
     void RobotToolkit::registerDefaultConverter()
     {
-	
+	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
+	_tf2Buffer->setUsingDedicatedThread(true);
+
+	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
+	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 50, _tf2Buffer, _sessionPtr );
+	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
+	registerGroup( tfConverter, tfPublisher);
 	
 	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>();
-	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 20, _sessionPtr );
+	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 10, _sessionPtr );
 	odomConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomPublisher::publish, odomPublisher, _1) );
 	registerGroup( odomConverter, odomPublisher);
 	
 	boost::shared_ptr<Publisher::LaserPublisher> laserPublisher = boost::make_shared<Publisher::LaserPublisher>();
-	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 20, _sessionPtr );
+	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
 	
@@ -208,26 +200,18 @@ namespace Sinfonia
 	int convIndex = _converters.size();
 	_converters.push_back( converter );
 	converter.reset();
-	_convertersQueue.push(ScheduledConverter(ros::Time::now(), convIndex));
+	
     }
 
     void RobotToolkit::registerPublisher(const std::string& converterName, Publisher::Publisher& publisher)
     {
-	if (_publishEnabled) 
-	{
-	    publisher.reset(*_nodeHandlerPtr);
-	}
-	
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
-	
     }
     
     void RobotToolkit::registerDefaultSubscriber()
     {
-	std::cout << "registered DefaulerDefault 1"<< std::endl;
 	if (!_subscribers.empty())
 	    return;
-	std::cout << "registered DefaulerDefault 2"<< std::endl;
 	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
     }
     
@@ -250,42 +234,169 @@ namespace Sinfonia
 	}
     }
     
-    void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
+    void RobotToolkit::scheduleConverter(std::string converterName, float converterFrequency)
     {
-	_serviceTf = nodeHandle.advertiseService("initTf" , &RobotToolkit::callbackTf, this);
-    }
-    
-    bool RobotToolkit::callbackTf(robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res)
-    {
-	if(req.data == "on")
-	{    
-	    ROS_INFO("Starting tf! ");
-	    _tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
-	    _tf2Buffer->setUsingDedicatedThread(true);
-
-	    boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
-	    boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 20, _tf2Buffer, _sessionPtr );
-	    tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
-	    registerGroup( tfConverter, tfPublisher);
-	}
-	else 
+	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
+	for( int i=0; i<_converters.size(); i++ )
 	{
-	    ROS_INFO("Shutting down tf! ");
-	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
-	    _convertersQueue = std::priority_queue<ScheduledConverter>();
-	    for_each( publisherMap::value_type &pub, _publisherMap )
+	    if(_converters[i].name() == converterName)
+	    {
+		_converters[i].setFrequency(converterFrequency);
+		_convertersQueue.push(Helpers::ScheduledConverter(ros::Time::now(), i));
+	    }
+	}
+	typedef std::map< std::string, Publisher::Publisher > publisherMap;
+	for_each( publisherMap::value_type &pub, _publisherMap )
+	{
+	    if (pub.first.c_str() == converterName)
+	    {
+		pub.second.reset(*_nodeHandlerPtr);
+	    }
+	}
+	
+    }
+  
+    void RobotToolkit::unscheduleConverter(std::string converterName)
+    {
+	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
+	std::vector< Helpers::ScheduledConverter > auxiliarQueue;
+	size_t converterIndex;
+	typedef std::map< std::string, Publisher::Publisher > publisherMap;
+	int queueSize = _convertersQueue.size();
+	for( int i = 0; i < queueSize; i++)
+	{
+	    converterIndex = _convertersQueue.top()._converterIndex;
+	    Converter::Converter& converter = _converters[converterIndex];
+	    if(converter.name() != converterName)
+	    {
+		auxiliarQueue.push_back(_convertersQueue.top());
+	    }
+	    _convertersQueue.pop();
+	}
+	for( int i = 0; i < auxiliarQueue.size(); i++)
+	{
+	    _convertersQueue.push(auxiliarQueue[i]);
+	}
+	for_each( publisherMap::value_type &pub, _publisherMap )
+	{
+	    if (pub.first.c_str() == converterName)
 	    {
 		pub.second.shutdown();
 	    }
-	    for_each( Subscriber::Subscriber& sub, _subscribers )
+	}
+    }
+
+    void RobotToolkit::startSubscriber(std::string subscriberName)
+    {
+	for_each( Subscriber::Subscriber& sub, _subscribers )
+	{
+	    if(sub.name() == subscriberName)
 	    {
-		std::cout << "resetting subscriber " << sub.name() << std::endl;
+		sub.reset( *_nodeHandlerPtr );
+	    }
+	}
+    }
+    
+    void RobotToolkit::stopSubscriber(std::string subscriberName)
+    {
+	for_each( Subscriber::Subscriber& sub, _subscribers )
+	{
+	    if(sub.name() == subscriberName)
+	    {
 		sub.shutdown();
 	    }
 	}
+    }
+    
+    void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
+    {
+	_serviceTf = nodeHandle.advertiseService("/robot_tookit/navigation_tools_service" , &RobotToolkit::navigationToolsCallback, this);
+    }
+    
+    bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
+    {
+	std::string responseMessage;
+	if( request.data.command == "enable_all" )
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting Navigation Tools " << RESETCOLOR  << std::endl;
+	    scheduleConverter("tf", 50.0f);
+	    scheduleConverter("odom", 10.0f);
+	    scheduleConverter("laser", 10.0f);
+	    startSubscriber("cmd_vel");
+	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else if( request.data.command == "disable_all" )
+	{
+	    std::cout << BOLDBLUE << "[" << ros::Time::now().toSec() << "]" << " Stopping Navigation Tools " << RESETCOLOR  << std::endl;
+	    unscheduleConverter("tf");
+	    unscheduleConverter("odom");
+	    unscheduleConverter("laser");
+	    stopSubscriber("cmd_vel");
+	    responseMessage = "Functionalities stopped: tf, odom, laser, cmd_vel";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else if( request.data.command == "custom" )
+	{
+	    std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "]" << " Setting up navigation_tools " << RESETCOLOR  << std::endl;
+	    std::string startedFunctionalities = "Functionalities started: ";
+	    std::string stoppedFunctionalities = "Functionalities stopped: ";
+	    responseMessage = "topics";
+	    if( request.data.tf_enable )
+	    {
+		scheduleConverter("tf", request.data.tf_frequency);
+		startedFunctionalities += "tf@" + boost::lexical_cast<std::string>(request.data.tf_frequency) + "Hz, ";
+	    }
+	    else 
+	    {
+		unscheduleConverter("tf");
+		stoppedFunctionalities += "tf, ";
+	    }
+	    
+	    if( request.data.odom_enable )
+	    {
+		startedFunctionalities += "odom@" + boost::lexical_cast<std::string>(request.data.odom_frequency) + "Hz, ";
+		scheduleConverter("odom", request.data.odom_frequency);
+	    }
+	    else
+	    {
+		unscheduleConverter("odom");
+		stoppedFunctionalities += "odom, ";
+	    }
+	    
+	    if( request.data.laser_enable )
+	    {
+		startedFunctionalities += "laser@" + boost::lexical_cast<std::string>(request.data.laser_frequency) + "Hz, ";
+		scheduleConverter("laser", request.data.laser_frequency);
+	    }
+	    else 
+	    {
+		unscheduleConverter("laser");
+		stoppedFunctionalities += "laser, ";
+	    }
+	    
+	    if( request.data.cmd_vel_enable )
+	    {
+		startSubscriber("cmd_vel");
+		startedFunctionalities += "cmd_vel, ";
+	    }
+	    else
+	    {
+		stopSubscriber("cmd_vel");
+		stoppedFunctionalities += "cmd_vel, ";
+	    }
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << startedFunctionalities << RESETCOLOR  << std::endl;
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << stoppedFunctionalities << RESETCOLOR  << std::endl;
+	    responseMessage = startedFunctionalities + stoppedFunctionalities;
+	}
+	else
+	{
+	    responseMessage = "ERROR: unkown command in navigation_tools service";
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	response.result =  responseMessage;
 	return true;
     }
-
-
+    
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

@@ -28,6 +28,8 @@
 
 #include <ros/ros.h>
 
+#include "robot_toolkit/tools.hpp"
+
 namespace Sinfonia
 {
     namespace Publisher
@@ -55,9 +57,9 @@ namespace Sinfonia
 
 		void reset( ros::NodeHandle& nodeHandle )
 		{
-		    std::cout << topic() << " is resetting" << std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << topic() << " is resetting" << RESETCOLOR <<std::endl;
 		    _publisherPtr->reset( nodeHandle );
-		    std::cout << topic() << " reset" << std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << topic() << " reset" << RESETCOLOR << std::endl;
 		}
 
 		std::string topic() const

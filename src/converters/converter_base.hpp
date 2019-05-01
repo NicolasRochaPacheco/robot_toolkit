@@ -51,9 +51,14 @@ namespace Sinfonia
 		    return _name;
 		}
 
-		inline float frequency() const
+		inline float getFrequency() const
 		{
 		    return _frequency;
+		}
+		
+		inline void setFrequency(float frequency)
+		{
+		    _frequency = frequency;
 		}
 
 	    protected:

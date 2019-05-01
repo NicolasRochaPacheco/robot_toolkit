@@ -53,6 +53,7 @@ namespace Sinfonia
 		qi::AnyObject _pMemory;
 		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
 		sensor_msgs::LaserScan _message;
+		void callLaser();
 	};
 
     } 

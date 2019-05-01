@@ -67,7 +67,7 @@ namespace Sinfonia
 	    std::map<MessageAction::MessageAction, callbackT> _callbacks;
 	    std::map<std::string, robot_state_publisher::SegmentPair> _segments, _segmentsFixed;
 	    
-	    std::string _robotDesc;
+	    std::string _robotDescription;
 	    
 	    mimicMap _mimic;
 	    

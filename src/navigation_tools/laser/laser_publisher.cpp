@@ -42,7 +42,7 @@ namespace Sinfonia
 
 	bool LaserPublisher::isSubscribed() const
 	{
-	    if (_isInitialized == false) 
+	    if (!_isInitialized) 
 		return false;
 	    return _publisher.getNumSubscribers() > 0;
 	}

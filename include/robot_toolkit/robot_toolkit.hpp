@@ -29,7 +29,7 @@
 #include "robot_toolkit/recorder/recorder.hpp"
 #include "robot_toolkit/subscriber/subscriber.hpp"
 
-
+#include "../../src/helpers/scheduled_conveter.hpp"
 
 #include "../../src/navigation_tools/tf/tf_publisher.hpp"
 #include "../../src/navigation_tools/odom/odom_publisher.hpp"
@@ -41,7 +41,8 @@
 
 #include "../../src/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
-#include "robot_toolkit_msgs/InitTf.h"
+#include "robot_toolkit_msgs/navigation_tools_msg.h"
+#include "robot_toolkit_msgs/navigation_tools_srv.h"
 
 #include <tf2_ros/buffer.h>
 
@@ -69,30 +70,11 @@ namespace Sinfonia
 	    void stopService();
 	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
 	    void startPublishing();
-	    
-	    bool initTf();
-	    bool callbackTf( robot_toolkit_msgs::InitTf::Request& req, robot_toolkit_msgs::InitTf::Response& res );
+	 
+	    bool navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
 
 	    
 	private:
-	    
-	    struct ScheduledConverter 
-	    {
-		ScheduledConverter(const ros::Time& schedule, size_t conv_index):
-		schedule_(schedule), conv_index_(conv_index)
-		{
-		    
-		}
-
-		bool operator < (const ScheduledConverter& sp_in) const 
-		{
-		    return schedule_ > sp_in.schedule_;
-		}
-		
-		ros::Time schedule_;
-		
-		size_t conv_index_;
-	    };
 	    
 	    boost::thread _mainThread;
 	    
@@ -116,19 +98,16 @@ namespace Sinfonia
 	    
 	    std::vector< Converter::Converter > _converters;
 	    std::vector< Subscriber::Subscriber > _subscribers;
-	    std::priority_queue<ScheduledConverter> _convertersQueue;
+	    
+	    std::priority_queue<Helpers::ScheduledConverter> _convertersQueue;
 	    
 	    ros::ServiceServer _serviceTf;
 	    
-	    
-	    
-	    std::map< std::string, Recorder::Recorder > _recorderMap;
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    
-	    typedef std::map< std::string, Publisher::Publisher>::const_iterator pubConstIter;
-	    typedef std::map< std::string, Recorder::Recorder>::const_iterator recConstIter;
+	    //std::map< std::string, int > _converterIndex;
 	    
-	    
+	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   
 	    
 	    void rosLoop();
 	    void startRosLoop();
@@ -140,6 +119,10 @@ namespace Sinfonia
 	    void registerDefaultSubscriber();
 	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);
 	    void resetService(ros::NodeHandle& nodeHandle);
+	    void scheduleConverter(std::string converterName, float converterFrequency);
+	    void unscheduleConverter(std::string converterName);
+	    void startSubscriber(std::string subscriberName);
+	    void stopSubscriber(std::string subscriberName);
     };
 }
 

@@ -48,7 +48,7 @@ namespace Sinfonia
 		virtual bool isSubscribed() const;
 
 	    private:
-		ros::Publisher _tfPublisher;
+		ros::Publisher _publisher;
 
 		std::string _topic;
 

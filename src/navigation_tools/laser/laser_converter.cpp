@@ -134,8 +134,18 @@ namespace Sinfonia
 
 	void LaserConverter::callAll(const std::vector<MessageAction::MessageAction>& actions)
 	{
+	    double init = ros::Time::now().toSec();
+	    callLaser();
+	    for_each(MessageAction::MessageAction action, actions)
+	    {
+		_callbacks[action](_message);
+	    }
+	    //std::cout << BOLDYELLOW << "Topic: /laser " << BOLDCYAN << "elapsed time (s): "<< std::fixed << std::setprecision(8) << ros::Time::now().toSec() - init << std::endl;
+	}
+	
+	void LaserConverter::callLaser()
+	{
 	    static const std::vector<std::string> laserKeysValue(_laserMemoryKeys, _laserMemoryKeys+90);
-
 	    std::vector<float> resultValue;
 	    try
 	    {
@@ -184,13 +194,6 @@ namespace Sinfonia
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
 		_message.ranges[pos] = dist;
 	    }
-
-
-	    for_each(MessageAction::MessageAction action, actions)
-	    {
-		_callbacks[action](_message);
-	    }
-
 	}
 	
 	void LaserConverter::reset()

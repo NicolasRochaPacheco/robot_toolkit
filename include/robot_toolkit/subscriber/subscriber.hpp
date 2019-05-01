@@ -51,9 +51,9 @@ namespace Sinfonia
 
 		void reset( ros::NodeHandle& nodeHandle )
 		{
-		    std::cout << name() << " is resetting" << std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << name() << " is resetting" << std::endl;
 		    _subscriberPtr->reset( nodeHandle );
-		    std::cout << name() << " reset" << std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << name() << " reset" << std::endl;
 		}
 
 
@@ -75,7 +75,6 @@ namespace Sinfonia
 
 		friend bool operator==( const Subscriber& lhs, const Subscriber& rhs )
 		{
-		    // decision made for OR-comparison since we want to be more restrictive
 		    if ( lhs.name() == rhs.name() || lhs.topic() == rhs.topic() )
 			return true;
 		    return false;
