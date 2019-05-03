@@ -88,12 +88,12 @@ namespace Sinfonia
 		    {
 			actions.push_back(MessageAction::PUBLISH);
 		    }
-
+		    
 		    if ( actions.size()>0 )
 		    {
 			converter.callAll( actions );
 		    }
-
+		    
 		    ros::Duration d( schedule - ros::Time::now() );
 		    if ( d > ros::Duration(0))
 		    {
@@ -105,6 +105,10 @@ namespace Sinfonia
 		    {
 			_convertersQueue.push(Helpers::ScheduledConverter(schedule + ros::Duration(1.0f / converter.getFrequency()), converterIndex));
 		    }	
+		}
+		else
+		{
+		    ros::Duration(1).sleep();
 		}
 	    }
 	    if ( _publishEnabled )
@@ -133,7 +137,7 @@ namespace Sinfonia
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 	{
 	    _nodeHandlerPtr.reset();
-	    std::cout << "nodehandle reset " << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "nodehandle reset " << std::endl;
 	    Sinfonia::RosEnvironment::setMasterURI( uri, networkInterface );
 	    _nodeHandlerPtr.reset( new ros::NodeHandle("~") );
 	}
@@ -146,9 +150,10 @@ namespace Sinfonia
 	}
 	else
 	{
-	    std::cout << "NOT going to re-register the converters" << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "NOT going to re-register the converters" << std::endl;
 	    typedef std::map< std::string, Publisher::Publisher > publisherMap; 	    
 	    resetService(* _nodeHandlerPtr);
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready " << std::endl;
 	}
 	startPublishing();
 	
@@ -176,6 +181,7 @@ namespace Sinfonia
 	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
 	registerGroup( tfConverter, tfPublisher);
 	
+	
 	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>();
 	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 10, _sessionPtr );
 	odomConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomPublisher::publish, odomPublisher, _1) );
@@ -185,6 +191,8 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
+	
+	printRegisteredConverters();
 	
     }
 
@@ -208,6 +216,14 @@ namespace Sinfonia
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
     }
     
+    void RobotToolkit::printRegisteredConverters()
+    {
+	for( int i=0; i<_converters.size(); i++ )
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Registered /" << _converters[i].name() << " converter. " << std::endl;
+	}
+    }
+
     void RobotToolkit::registerDefaultSubscriber()
     {
 	if (!_subscribers.empty())
@@ -225,35 +241,51 @@ namespace Sinfonia
 	{
 	    subIndex = _subscribers.size();
 	    _subscribers.push_back( subscriber );
-	    std::cout << "registered subscriber:\t" << subscriber.name() << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Registered /" << subscriber.name() << " subscriber."<< std::endl;
 	}
 
 	else
 	{
-	    std::cout << "re-initialized existing subscriber:\t" << it->name() << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "re-initialized existing subscriber:\t" << it->name() << std::endl;
 	}
     }
     
     void RobotToolkit::scheduleConverter(std::string converterName, float converterFrequency)
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
-	for( int i=0; i<_converters.size(); i++ )
+	std::priority_queue<Helpers::ScheduledConverter> auxiliarQueue = _convertersQueue;
+	bool exist = false;
+	for( int i=0; i<_convertersQueue.size(); i++)
 	{
-	    if(_converters[i].name() == converterName)
+	    int converterIndex = auxiliarQueue.top()._converterIndex;
+	    if(_converters[converterIndex].name() == converterName)
 	    {
-		_converters[i].setFrequency(converterFrequency);
-		_convertersQueue.push(Helpers::ScheduledConverter(ros::Time::now(), i));
+		_converters[converterIndex].setFrequency(converterFrequency);
+		exist = true;
+		break;
 	    }
+	    auxiliarQueue.pop();
+	    
 	}
-	typedef std::map< std::string, Publisher::Publisher > publisherMap;
-	for_each( publisherMap::value_type &pub, _publisherMap )
+	if (!exist)
 	{
-	    if (pub.first.c_str() == converterName)
+	    for( int i=0; i<_converters.size(); i++ )
 	    {
-		pub.second.reset(*_nodeHandlerPtr);
+		if(_converters[i].name() == converterName)
+		{
+		    _converters[i].setFrequency(converterFrequency);
+		    _convertersQueue.push(Helpers::ScheduledConverter(ros::Time::now(), i));
+		}
 	    }
-	}
-	
+	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
+	    for_each( publisherMap::value_type &pub, _publisherMap )
+	    {
+		if (pub.first.c_str() == converterName)
+		{
+		    pub.second.reset(*_nodeHandlerPtr);
+		}
+	    }
+	}	
     }
   
     void RobotToolkit::unscheduleConverter(std::string converterName)
@@ -263,7 +295,7 @@ namespace Sinfonia
 	size_t converterIndex;
 	typedef std::map< std::string, Publisher::Publisher > publisherMap;
 	int queueSize = _convertersQueue.size();
-	for( int i = 0; i < queueSize; i++)
+	for( int i=0; i<queueSize; i++)
 	{
 	    converterIndex = _convertersQueue.top()._converterIndex;
 	    Converter::Converter& converter = _converters[converterIndex];

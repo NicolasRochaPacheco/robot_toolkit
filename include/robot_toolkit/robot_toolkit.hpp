@@ -115,6 +115,7 @@ namespace Sinfonia
 	    void registerDefaultConverter();
 	    void registerGroup(Sinfonia::Converter::Converter converter, Sinfonia::Publisher::Publisher publisher);
 	    void registerConverter(Sinfonia::Converter::Converter& converter);
+	    void printRegisteredConverters();
 	    void registerPublisher(const std::string& converterName, Sinfonia::Publisher::Publisher& publisher);
 	    void registerDefaultSubscriber();
 	    void registerSubscriber(Sinfonia::Subscriber::Subscriber subscriber);

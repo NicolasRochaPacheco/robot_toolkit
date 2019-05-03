@@ -43,7 +43,7 @@ namespace Sinfonia
 	    const float& velX = twistMsg->linear.x;
 	    const float& velY = twistMsg->linear.y;
 	    const float& velTh = twistMsg->angular.z;
-	    std::cout << "going to move x: " << velX << " y: " << velY << " th: " << velTh << std::endl;
+	    std::cout << BOLDCYAN << "[" << ros::Time::now().toSec() << "] " << "Going to move x: " << velX << " y: " << velY << " th: " << velTh << std::endl;
 	    _pMotion.async<void>("move", velX, velY, velTh );
 	}
 	

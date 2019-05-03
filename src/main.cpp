@@ -22,6 +22,7 @@
 
 #include <qi/applicationsession.hpp>
 #include <qi/anymodule.hpp>
+#include "robot_toolkit/tools.hpp"
 
 #include "robot_toolkit/robot_toolkit.hpp"
 
@@ -29,17 +30,14 @@
 #include <boost/program_options.hpp>
 #include "robot_toolkit/naoqi_environment.hpp"
 
-#include "robot_toolkit/tools.hpp"
 
 int main(int argc, char **argv)
 {
     std::cout << std::fixed << std::setprecision(3);
     qi::ApplicationSession app(argc, argv);
-    /* In case you launch via roslaunch/rosrun we remove the ros args */
     
-    
-    std::vector<std::string> args_out;
-    ros::removeROSArgs( argc, argv, args_out );
+    std::vector<std::string> argsOut;
+    ros::removeROSArgs( argc, argv, argsOut );
     
     namespace programOptions = boost::program_options;
     programOptions::options_description optionsDescription("Options");
@@ -56,18 +54,18 @@ int main(int argc, char **argv)
     }
     catch (boost::program_options::invalid_command_line_syntax& e)
     {
-	std::cout << "error " << e.what() << std::endl;
+	std::cout << "Error 0x01: Invialid Sintax" << e.what() << std::endl;
 	throw ros::Exception(e.what());
     }
     catch (boost::program_options::unknown_option& e)
     {
-	std::cout << "error 2 " << e.what() << std::endl;
+	std::cout << "Error 0x02: Unknown option" << e.what() << std::endl;
 	throw ros::Exception(e.what());
     }
 
     if( variablesMap.count("help") )
     {
-	std::cout << "This is the help message for the ROS-Driver C++ bridge" << std::endl << optionsDescription << std::endl;
+	std::cout << "This is the help message for the SinfonIA RobotToolkit" << std::endl << optionsDescription << std::endl;
 	exit(0);
     }
     #if LIBQI_VERSION>24

@@ -70,11 +70,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV)
 find_package(orocos_kdl)
  
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
-
 add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 
 catkin_package(LIBRARIES robot_toolkit_module robot_toolkit)
