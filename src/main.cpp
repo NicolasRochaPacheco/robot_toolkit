@@ -85,6 +85,7 @@ int main(int argc, char **argv)
 		    
 	robotToolkit->init();
 	robotToolkit->setMasterURINet( "http://"+roscoreIp+":11311", networkInterface); 
+	robotToolkit->startInitialTopics();
     }
     else
     {

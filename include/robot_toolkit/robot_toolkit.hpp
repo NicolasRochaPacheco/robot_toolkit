@@ -41,6 +41,9 @@
 
 #include "../../src/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
+#include "../../src/vision_tools/camera_converter.hpp"
+#include "../../src/vision_tools/camera_publisher.hpp"
+
 #include "robot_toolkit_msgs/navigation_tools_msg.h"
 #include "robot_toolkit_msgs/navigation_tools_srv.h"
 
@@ -70,7 +73,9 @@ namespace Sinfonia
 	    void stopService();
 	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
 	    void startPublishing();
-	 
+	    
+	    void startInitialTopics();
+	    
 	    bool navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
 
 	    

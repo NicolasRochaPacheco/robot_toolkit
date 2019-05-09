@@ -49,7 +49,7 @@ namespace Sinfonia
 
     RobotToolkit::~RobotToolkit()
     {
-	std::cout << "robot_toolkit is shutting down.." << std::endl;
+	std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "robot_toolkit is shutting down.." << std::endl;
 	if(_nodeHandlerPtr)
 	{
 	    _nodeHandlerPtr->shutdown();
@@ -67,7 +67,7 @@ namespace Sinfonia
 	ros::Time::init();
 	registerDefaultConverter();
 	registerDefaultSubscriber();
-	startRosLoop();
+	//startRosLoop();
     }
     
     void RobotToolkit::rosLoop()
@@ -136,14 +136,15 @@ namespace Sinfonia
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Going to reset the node Handle" << RESETCOLOR << std::endl;
 	    _nodeHandlerPtr.reset();
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "nodehandle reset " << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Nodehandle reset " << std::endl;
 	    Sinfonia::RosEnvironment::setMasterURI( uri, networkInterface );
 	    _nodeHandlerPtr.reset( new ros::NodeHandle("~") );
 	}
 	if(_converters.empty())
 	{
-	    std::cout << BOLDRED << "going to register converters" << RESETCOLOR << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Goiing to register converters" << RESETCOLOR << std::endl;
 	    registerDefaultConverter();
 	    registerDefaultSubscriber();
 
@@ -153,7 +154,7 @@ namespace Sinfonia
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "NOT going to re-register the converters" << std::endl;
 	    typedef std::map< std::string, Publisher::Publisher > publisherMap; 	    
 	    resetService(* _nodeHandlerPtr);
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready " << std::endl;
+//	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready " << std::endl;
 	}
 	startPublishing();
 	
@@ -164,11 +165,20 @@ namespace Sinfonia
     {
 	_publishEnabled = true;
     }
+    
+    void RobotToolkit::startInitialTopics()
+    {
+	scheduleConverter("front_camera", 10.0f);
+	startRosLoop();
+	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit " << std::endl;
+    }
 
 
     void RobotToolkit::stopService()
     {
 	stopRosLoop();
+	_converters.clear();
+	_subscribers.clear();
     }
 
     void RobotToolkit::registerDefaultConverter()
@@ -191,6 +201,11 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
+	
+	boost::shared_ptr<Publisher::CameraPublisher> frontCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/front/image_raw");
+	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>( "front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA );
+	frontCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, frontCameraPublisher, _1, _2) );
+	registerGroup( frontCameraConverter, frontCameraPublisher);
 	
 	printRegisteredConverters();
 	
@@ -354,6 +369,7 @@ namespace Sinfonia
 	    scheduleConverter("tf", 50.0f);
 	    scheduleConverter("odom", 10.0f);
 	    scheduleConverter("laser", 10.0f);
+	    //scheduleConverter("front_camera", 10.0f);
 	    startSubscriber("cmd_vel");
 	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;

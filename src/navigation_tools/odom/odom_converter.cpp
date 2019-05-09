@@ -33,7 +33,6 @@ namespace Sinfonia
 	BaseConverter( name, frequency, session )
 	{
 	    _pMotion =  session->service("ALMotion");
-
 	}
 	
 	void OdomConverter::registerCallback(MessageAction::MessageAction action, callbackT callback)

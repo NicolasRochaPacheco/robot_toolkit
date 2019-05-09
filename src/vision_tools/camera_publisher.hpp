@@ -18,45 +18,46 @@
 //======================================================================//
 
 
+#ifndef CAMERA_PUBLISHER_HPP
+#define CAMERA_PUBLISHER_HPP
 
-
-#ifndef FILESYSTEM_HELPERS_HPP
-#define FILESYSTEM_HELPERS_HPP
-
-#include <qi/session.hpp>
-
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
-#include "ros/ros.h"
-#ifdef CATKIN_BUILD
-#include <ros/package.h>
-#endif
+#include <image_transport/image_transport.h>
+#include "../helpers/vision_helpers.hpp"
 
 namespace Sinfonia
 {
-    namespace Helpers
+    namespace Publisher
     {
-	namespace FileSystem
+
+	class CameraPublisher
 	{
 
-	    static const long folderMaximumSize = 2000000000;
+	    public:
+		CameraPublisher(std::string topic);
+		std::string topic();
 
-	    inline std::string& getURDF( std::string fileName )
-	    {
-		#ifdef CATKIN_BUILD
-		    static std::string path = ros::package::getPath("robot_toolkit")+"/share/urdf/"+fileName;
-		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Found a catkin URDF " << path << std::endl;
-		return path;
-		#else
-		    static std::string path = qi::path::findData( "/urdf/", fileName );
-		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Found a qibuild URDF " << path << std::endl;
-		    return path;
-		#endif
-	    }
-	    
-	}
-    } 
-} 
+		bool isInitialized();
+		
+		virtual void publish(const sensor_msgs::ImagePtr& img, const sensor_msgs::CameraInfo& cameraInfo);
+		virtual void reset( ros::NodeHandle& nodeHandle );
+		virtual bool isSubscribed() const;
+		virtual void shutdown();
+		
+		void setCameraSource(int cameraSource);
+
+	    private:
+		
+		int _cameraSource;
+		
+		image_transport::CameraPublisher _publisher;
+
+		std::string _topic;
+
+		bool _isInitialized;
+
+	};
+
+    }
+}
+
 #endif

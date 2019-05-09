@@ -251,7 +251,7 @@ kill_process()
 	echo "${GREEN}robot_toolkit procceses killed successfully${NC}"
 }
 
-if [ ${MODE} = "compile" ] || [ ${MODE} = "install" ] || [ ${MODE} = "all" ]
+if [ ${MODE} = "compile" ] || [ ${MODE} = "all" ]
 	then :
 		echo "${YELLOW}Starting compilation ... ${NC}"
 		OUTPUT="$(sshpass -p ${VNPASS} ssh nao@${VNIP} 'pwd')"
@@ -263,7 +263,8 @@ if [ ${MODE} = "compile" ] || [ ${MODE} = "install" ] || [ ${MODE} = "all" ]
 		fi
 		clean_vn
 		sshpass -p ${VNPASS} scp -r ../robot_toolkit nao@${VNIP}:/home/nao/src/
-		sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao && sudo rm -rf .temp/ && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4 && sudo mkdir -p /home/nao/.temp && sudo mkdir -p /home/nao/.temp/lib && sudo mkdir -p /home/nao/.temp/lib/pkgconfig && sudo mkdir -p /home/nao/.temp/lib/robot_toolkit &&  sudo mkdir -p /home/nao/.temp/share && sudo mkdir -p /home/nao/.temp/share/robot_toolkit && sudo  mkdir -p /home/nao/.temp/share/robot_toolkit/cmake && sudo mkdir -p /home/nao/.temp/share/robot_toolkit/launch && sudo mkdir -p /home/nao/.temp/share/qi && sudo mkdir -p /home/nao/.temp/share/qi/module && sudo cp /home/nao/ros_toolchain_install/_setup_util.py /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/env.sh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.bash /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.sh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.zsh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/.rosinstall /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/lib/pkgconfig/robot_toolkit.pc /home/nao/.temp/lib/pkgconfig && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/cmake/robot_toolkitConfig.cmake /home/nao/.temp/share/robot_toolkit/cmake && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/cmake/robot_toolkitConfig-version.cmake /home/nao/.temp/share/robot_toolkit/cmake && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/package.xml /home/nao/.temp/share/robot_toolkit && sudo cp /home/nao/ros_toolchain_install/lib/librobot_toolkit_module.so /home/nao/.temp/lib && sudo cp /home/nao/ros_toolchain_install/lib/librobot_toolkit.so /home/nao/.temp/lib && sudo cp /home/nao/ros_toolchain_install/lib/robot_toolkit/robot_toolkit_node /home/nao/.temp/lib/robot_toolkit && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/launch/robot_toolkit.launch /home/nao/.temp/share/robot_toolkit/launch && sudo cp -r /home/nao/ros_toolchain_install/share/robot_toolkit/share/ /home/nao/.temp/share/robot_toolkit/ && sudo cp /home/nao/ros_toolchain_install/share/qi/module/robot_toolkit_module.mod /home/nao/.temp/share/qi/module'
+		sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao && sudo rm -rf .temp/ && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4'
+		sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao/build_isolated/robot_toolkit && sudo /home/nao/ros_toolchain_install/env.sh make -j4 && cd ../.. && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4'
 		echo "${GREEN}Compilation finished${NC}"
 fi
 if [ ${MODE} = "install" ] || [ ${MODE} = "all" ]
@@ -276,12 +277,13 @@ if [ ${MODE} = "install" ] || [ ${MODE} = "all" ]
 				exit	
 		fi
 		clean_robot
+		sshpass -p ${VNPASS} ssh nao@${VNIP} 'sudo mkdir -p /home/nao/.temp && sudo mkdir -p /home/nao/.temp/lib && sudo mkdir -p /home/nao/.temp/lib/pkgconfig && sudo mkdir -p /home/nao/.temp/lib/robot_toolkit &&  sudo mkdir -p /home/nao/.temp/share && sudo mkdir -p /home/nao/.temp/share/robot_toolkit && sudo  mkdir -p /home/nao/.temp/share/robot_toolkit/cmake && sudo mkdir -p /home/nao/.temp/share/robot_toolkit/launch && sudo mkdir -p /home/nao/.temp/share/qi && sudo mkdir -p /home/nao/.temp/share/qi/module && sudo cp /home/nao/ros_toolchain_install/_setup_util.py /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/env.sh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.bash /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.sh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/setup.zsh /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/.rosinstall /home/nao/.temp && sudo cp /home/nao/ros_toolchain_install/lib/pkgconfig/robot_toolkit.pc /home/nao/.temp/lib/pkgconfig && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/cmake/robot_toolkitConfig.cmake /home/nao/.temp/share/robot_toolkit/cmake && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/cmake/robot_toolkitConfig-version.cmake /home/nao/.temp/share/robot_toolkit/cmake && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/package.xml /home/nao/.temp/share/robot_toolkit && sudo cp /home/nao/ros_toolchain_install/lib/librobot_toolkit_module.so /home/nao/.temp/lib && sudo cp /home/nao/ros_toolchain_install/lib/librobot_toolkit.so /home/nao/.temp/lib && sudo cp /home/nao/ros_toolchain_install/lib/robot_toolkit/robot_toolkit_node /home/nao/.temp/lib/robot_toolkit && sudo cp /home/nao/ros_toolchain_install/share/robot_toolkit/launch/robot_toolkit.launch /home/nao/.temp/share/robot_toolkit/launch && sudo cp -r /home/nao/ros_toolchain_install/share/robot_toolkit/share/ /home/nao/.temp/share/robot_toolkit/ && sudo cp /home/nao/ros_toolchain_install/share/qi/module/robot_toolkit_module.mod /home/nao/.temp/share/qi/module'
 		sshpass -p ${VNPASS} scp -r nao@${VNIP}:/home/nao/.temp .temp
 		sshpass -p ${ROBOTPASS} scp -r .temp/* nao@${ROBOTIP}:/home/nao/ros
 		rm -r .temp
 		echo "${GREEN}Binaries installed successfully${NC}"
 fi
-if [ ${MODE} = "run" ] || [ ${MODE} = "all" ]
+if [ ${MODE} = "run" ]
 	then :
 		echo "${YELLOW}Trying to run on robot ... ${NC}"
 		OUTPUT="$(sshpass -p ${ROBOTPASS} ssh nao@${ROBOTIP} 'pwd')"

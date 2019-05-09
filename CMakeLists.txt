@@ -6,6 +6,8 @@ set(
     src/navigation_tools/laser/laser_converter.cpp
     src/navigation_tools/odom/odom_converter.cpp
     src/navigation_tools/tf/tf_converter.cpp
+    
+    src/vision_tools/camera_converter.cpp
   )
 set(
   TOOLS_SRC
@@ -18,6 +20,8 @@ set(
     src/navigation_tools/laser/laser_publisher.cpp
     src/navigation_tools/odom/odom_publisher.cpp
     src/navigation_tools/tf/tf_publisher.cpp
+    
+    src/vision_tools/camera_publisher.cpp
   )
 
 set(
