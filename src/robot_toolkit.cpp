@@ -154,7 +154,6 @@ namespace Sinfonia
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "NOT going to re-register the converters" << std::endl;
 	    typedef std::map< std::string, Publisher::Publisher > publisherMap; 	    
 	    resetService(* _nodeHandlerPtr);
-//	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready " << std::endl;
 	}
 	startPublishing();
 	
@@ -168,9 +167,10 @@ namespace Sinfonia
     
     void RobotToolkit::startInitialTopics()
     {
-	scheduleConverter("front_camera", 10.0f);
+	// Poner aqui el schedule de lso topicos que deben iniar desde el inicio 
+	//scheduleConverter("front_camera", 10.0f);  
 	startRosLoop();
-	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit " << std::endl;
+	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
     }
 
 
@@ -203,10 +203,20 @@ namespace Sinfonia
 	registerGroup( laserConverter, laserPublisher);
 	
 	boost::shared_ptr<Publisher::CameraPublisher> frontCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/front/image_raw");
-	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>( "front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA );
+	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>( "front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	frontCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, frontCameraPublisher, _1, _2) );
 	registerGroup( frontCameraConverter, frontCameraPublisher);
 	
+	boost::shared_ptr<Publisher::CameraPublisher> bottomCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/bottom/image_raw");
+	boost::shared_ptr<Converter::CameraConverter> bottomCameraConverter = boost::make_shared<Converter::CameraConverter>( "bottom_camera", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	bottomCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, bottomCameraPublisher, _1, _2) );
+	registerGroup( bottomCameraConverter, bottomCameraPublisher);
+	
+	boost::shared_ptr<Publisher::CameraPublisher> depthCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/depth/image_raw");
+	boost::shared_ptr<Converter::CameraConverter> depthCameraConverter = boost::make_shared<Converter::CameraConverter>( "depth_camera", 10, _sessionPtr, Helpers::VisionHelpers::kDepthCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRawDepthColorSpace);
+	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
+	registerGroup( depthCameraConverter, depthCameraPublisher);
+
 	printRegisteredConverters();
 	
     }
@@ -357,7 +367,8 @@ namespace Sinfonia
     
     void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
     {
-	_serviceTf = nodeHandle.advertiseService("/robot_tookit/navigation_tools_service" , &RobotToolkit::navigationToolsCallback, this);
+	_navigationToolsService = nodeHandle.advertiseService("/robot_tookit/navigation_tools_service" , &RobotToolkit::navigationToolsCallback, this);
+	_visionToolsService = nodeHandle.advertiseService("/robot_tookit/vision_tools_service" , &RobotToolkit::visionToolsCallback, this);
     }
     
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -369,7 +380,6 @@ namespace Sinfonia
 	    scheduleConverter("tf", 50.0f);
 	    scheduleConverter("odom", 10.0f);
 	    scheduleConverter("laser", 10.0f);
-	    //scheduleConverter("front_camera", 10.0f);
 	    startSubscriber("cmd_vel");
 	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -445,6 +455,246 @@ namespace Sinfonia
 	response.result =  responseMessage;
 	return true;
     }
+    
+    bool RobotToolkit::visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response)
+    {
+	std::string responseMessage;
+	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
+	if( request.data.camera_name != "front_camera" && request.data.camera_name != "bottom_camera" && request.data.camera_name != "depth_camera" ) 
+	{
+	    responseMessage = "ERROR: unknown camera name, possible values are: front_camera, bottom_camera, depth_camera";
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else
+	{
+	    if( request.data.command == "enable" )
+	    {
+		int converterIndex = getConverterIndex(request.data.camera_name);
+		if( converterIndex != -1 )
+		{
+		    std::vector<int> config;
+		    config.push_back(Helpers::VisionHelpers::kQVGA);
+		    config.push_back(10);
+		    if( request.data.camera_name == "depth_camera" )
+		    {
+			config.push_back(Helpers::VisionHelpers::kRawDepthColorSpace);
+		    }
+		    else
+		    {
+			config.push_back(Helpers::VisionHelpers::kRGBColorSpace);
+		    }
+		    _converters[converterIndex].setConfig(config);
+		    _converters[converterIndex].reset();
+		    if( request.data.camera_name != "depth_camera" )
+		    {
+			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setAllParametersToDefault());
+		    }
+		    scheduleConverter(request.data.camera_name, 10.0f); 
+		    responseMessage = "Starting: " + request.data.camera_name + " with default parameters";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting: " << request.data.camera_name << " with default parameters" << RESETCOLOR  << std::endl;		    
+		}
+		else
+		{
+		    responseMessage = "ERROR: converter missing ";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		}
+	    }   
+	    else if( request.data.command == "disable" )
+	    {
+		int converterIndex = getConverterIndex(request.data.camera_name);
+		if( converterIndex != -1 )
+		{	    
+		    unscheduleConverter(request.data.camera_name);   
+		    responseMessage = "Shutting down: " + request.data.camera_name;
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "]" << " Shutting down: " << request.data.camera_name << RESETCOLOR  << std::endl;
+		}
+		else
+		{
+		    responseMessage = "ERROR: converter missing ";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		    
+		}
+	    }   
+	    else if( request.data.command == "custom" )
+	    {
+		int converterIndex = getConverterIndex(request.data.camera_name);
+		if( converterIndex != -1 )
+		{
+		    std::vector<int> config;
+		    bool configOk = true;
+		    if( request.data.camera_name != "depth_camera" )
+		    {
+			if(!(request.data.resolution <= Helpers::VisionHelpers::k16VGA || request.data.resolution == Helpers::VisionHelpers::kQQQVGA || request.data.resolution == Helpers::VisionHelpers::kQQQQVGA ))
+			{
+			    responseMessage = "ERROR: Bad resolution configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+			else if( request.data.frame_rate < 1 || request.data.frame_rate > 30 || ((request.data.resolution == Helpers::VisionHelpers::k4VGA) && (request.data.frame_rate != 1)) || 
+			    ((request.data.resolution == Helpers::VisionHelpers::k16VGA) && (request.data.frame_rate != 1)))
+			{
+			    responseMessage = "ERROR: Bad frame rate configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+			else if( request.data.color_space > Helpers::VisionHelpers::kHSMixedColorSpace)
+			{
+			    responseMessage = "ERROR: Bad color space configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+		    }
+		    else 
+		    {
+			if(!(request.data.resolution <= Helpers::VisionHelpers::kQVGA || request.data.resolution == Helpers::VisionHelpers::kQQQVGA || request.data.resolution == Helpers::VisionHelpers::kQQQQVGA ))
+			{
+			    responseMessage = "ERROR: Bad resolution configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+			else if( request.data.frame_rate < 1 || request.data.frame_rate > 20 )
+			{
+			    responseMessage = "ERROR: Bad frame rate configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+			else if( !( request.data.color_space == Helpers::VisionHelpers::kYuvColorSpace ||  request.data.color_space == Helpers::VisionHelpers::kRGBColorSpace || request.data.color_space == Helpers::VisionHelpers::kDepthColorSpace ||
+			    request.data.color_space == Helpers::VisionHelpers::kXYZColorSpace || request.data.color_space == Helpers::VisionHelpers::kDistanceColorSpace || request.data.color_space == Helpers::VisionHelpers::kRawDepthColorSpace ) )
+			{
+			    responseMessage = "ERROR: Bad color space configuration for camera: " + request.data.camera_name;
+			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			    configOk = false;
+			}
+		    }
+		    if(configOk)
+		    {
+			std::vector<int> config;
+			config.push_back(request.data.resolution);
+			config.push_back(request.data.frame_rate);
+			config.push_back(request.data.color_space);
+			_converters[converterIndex].setConfig(config);
+			_converters[converterIndex].reset();
+			if( request.data.camera_name != "depth_camera" )
+			{
+			    currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setAllParametersToDefault());
+			}
+			scheduleConverter(request.data.camera_name, request.data.frame_rate);
+			responseMessage = "Starting: " + request.data.camera_name + " with custom configuration and parameters";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << responseMessage << RESETCOLOR  << std::endl;
+			
+		    }
+		}
+		else
+		{
+		    responseMessage = "ERROR: converter missing ";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		    
+		}
+	    }   
+	    else if( request.data.command == "set_parameters" && request.data.camera_name != "depth_camera")
+	    {
+		    int converterIndex = getConverterIndex(request.data.camera_name);
+		    if( converterIndex != -1 )
+		    {
+			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setParameters(toVector(request.data.camera_parameters)));  
+			responseMessage = "Setting Parameters of " + request.data.camera_name;
+			std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		    }
+		    else
+		    {
+			responseMessage = "ERROR: converter missing ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			
+		    }
+	    }
+	    else if( request.data.command == "get_parameters" && request.data.camera_name != "depth_camera")
+	    {
+		int converterIndex = getConverterIndex(request.data.camera_name);
+		if( converterIndex != -1 )
+		{
+		    currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].getParameters());  
+		    responseMessage = "Getting Parameters of " + request.data.camera_name;
+		    std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		}
+		else
+		{
+		    responseMessage = "ERROR: converter missing ";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		}
+	    }
+	    else
+	    {
+		responseMessage = "ERROR: unkown command in vision_tools service";
+		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	    }
+	}
+	response.result = responseMessage;
+	response.camera_parameters = currentParamsMessage;
+	return true;
+    }
+
+    int RobotToolkit::getConverterIndex(std::string name)
+    {
+	for( int i=0; i<_converters.size(); i++ )
+	{
+	    if(_converters[i].name() == name)
+	    {
+		return i;
+	    }
+	}
+	return -1;
+    }
+    
+    robot_toolkit_msgs::camera_parameters_msg RobotToolkit::toCameraParametersMsg(std::vector< int > params)
+    {
+	robot_toolkit_msgs::camera_parameters_msg result;
+	result.brightness = params[0];
+	result.contrast = params[1];
+	result.saturation = params[2];
+	result.hue = params[3];
+	result.horizontal_flip = params[4];
+	result.vertical_flip = params[5];
+	result.auto_exposition = params[6];
+	result.auto_white_balance = params[7];
+	result.auto_gain = params[8];
+	result.gain = params[9];
+	result.exposure = params[10];
+	result.reset_camera_registers = params[11];
+	result.blc_red_value = params[12];
+	result.blc_green_value = params[13];
+	result.blc_blue_value = params[14];
+	result.resolution = params[15];
+	result.fps = params[16];
+	result.average_luminance = params[17];
+	result.auto_focus = params[18];
+	return result;
+    }
+
+    std::vector< int > RobotToolkit::toVector(robot_toolkit_msgs::camera_parameters_msg params)
+    {
+	std::vector<int>  result; 
+	result.push_back(params.brightness);
+	result.push_back(params.contrast);
+	result.push_back(params.saturation);
+	result.push_back(params.hue);
+	result.push_back(params.horizontal_flip);
+	result.push_back(params.vertical_flip);
+	result.push_back(params.auto_exposition);
+	result.push_back(params.auto_white_balance);
+	result.push_back(params.auto_gain);
+	result.push_back(params.gain);
+	result.push_back(params.exposure);
+	result.push_back(params.reset_camera_registers);
+	result.push_back(params.blc_red_value);
+	result.push_back(params.blc_green_value);
+	result.push_back(params.blc_blue_value);
+	result.push_back(params.resolution);
+	result.push_back(params.fps);
+	result.push_back(params.average_luminance);
+	result.push_back(params.auto_focus);
+	return result;
+    }
+
     
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

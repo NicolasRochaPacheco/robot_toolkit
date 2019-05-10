@@ -47,6 +47,12 @@ namespace Sinfonia
 		void registerCallback( MessageAction::MessageAction action, callbackT callback );
 		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 		void reset( );
+		
+		void setConfig(std::vector<int> configs){}
+		
+		std::vector<int> setParameters(std::vector<int> parameters){}
+		std::vector<int> setAllParametersToDefault(){}
+		std::vector<int> getParameters(){}
 
 	    private:
 		qi::AnyObject _pMotion;

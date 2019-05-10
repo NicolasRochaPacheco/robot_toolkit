@@ -23,6 +23,17 @@
 #include <qi/session.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <tf2_ros/buffer.h>
+
+#include "ros/ros.h"
+
+#include "robot_toolkit_msgs/navigation_tools_msg.h"
+#include "robot_toolkit_msgs/navigation_tools_srv.h"
+
+#include "robot_toolkit_msgs/camera_parameters_msg.h"
+#include "robot_toolkit_msgs/vision_tools_msg.h"
+#include "robot_toolkit_msgs/vision_tools_srv.h"
+
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
 #include "robot_toolkit/publisher/publisher.hpp"
@@ -44,12 +55,6 @@
 #include "../../src/vision_tools/camera_converter.hpp"
 #include "../../src/vision_tools/camera_publisher.hpp"
 
-#include "robot_toolkit_msgs/navigation_tools_msg.h"
-#include "robot_toolkit_msgs/navigation_tools_srv.h"
-
-#include <tf2_ros/buffer.h>
-
-#include "ros/ros.h"
 
 
 
@@ -77,7 +82,7 @@ namespace Sinfonia
 	    void startInitialTopics();
 	    
 	    bool navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
-
+	    bool visionToolsCallback( robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
 	    
 	private:
 	    
@@ -106,7 +111,8 @@ namespace Sinfonia
 	    
 	    std::priority_queue<Helpers::ScheduledConverter> _convertersQueue;
 	    
-	    ros::ServiceServer _serviceTf;
+	    ros::ServiceServer _navigationToolsService;
+	    ros::ServiceServer _visionToolsService;
 	    
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    
@@ -129,6 +135,10 @@ namespace Sinfonia
 	    void unscheduleConverter(std::string converterName);
 	    void startSubscriber(std::string subscriberName);
 	    void stopSubscriber(std::string subscriberName);
+	    int getConverterIndex(std::string name);
+	    
+	    robot_toolkit_msgs::camera_parameters_msg toCameraParametersMsg(std::vector<int> params);
+	    std::vector<int> toVector(robot_toolkit_msgs::camera_parameters_msg params);
     };
 }
 

@@ -26,11 +26,16 @@ namespace Sinfonia
 {
     namespace Converter
     {
-	CameraConverter::CameraConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session, int cameraSource, int resolution): 
+	CameraConverter::CameraConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session, int cameraSource, int resolution, int colorSpace): 
 	  BaseConverter(name, frequency, session)
 	{	    
 	    _pVideo = session->service("ALVideoDevice");
-	    setCameraConfig(cameraSource, resolution, frequency);
+	    _cameraSource = cameraSource;
+	    std::vector<int> configs;
+	    configs.push_back(resolution);
+	    configs.push_back(frequency);
+	    configs.push_back(colorSpace);
+	    setConfig(configs);
 	}
 	
 	CameraConverter::~CameraConverter()
@@ -65,14 +70,70 @@ namespace Sinfonia
 	{
 	    if (!_handle.empty())
 	    {
-		std::cout << "_hanlde: " << _handle << std::endl;
 		_pVideo.call<qi::AnyValue>("unsubscribe", _handle);
 		_handle.clear();
 	    }
 	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);
-	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID, 200);
+	    
 	    
 	}
+	
+	std::vector<int> CameraConverter::setParameters(std::vector<int> parameters)
+	{
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID, parameters[0]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraContrastID, parameters[1]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraSaturationID, parameters[2]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraHueID, parameters[3]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraHFlipID, parameters[4]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraVFlipID, parameters[5]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoExpositionID, parameters[6]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoWhiteBalanceID, parameters[7]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoGainID, parameters[8]);
+	    if(!parameters[8])
+	    {
+		_pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraGainID, parameters[9]);
+	    }
+	    if(!parameters[6] )
+	    {
+		_pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraExposureID, parameters[10]);
+	    }
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraSetDefaultParamsID, parameters[11]);
+	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoFocusID, parameters[18]);
+	    
+	    return getParameters();
+	}
+	
+	std::vector<int> CameraConverter::setAllParametersToDefault()
+	{
+	    _pVideo.call<bool>("setAllParametersToDefault", _cameraSource);
+	    return getParameters();
+	}
+
+	std::vector<int> CameraConverter::getParameters()
+	{
+	    std::vector<int> result;
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraContrastID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraSaturationID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraHueID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraHFlipID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraVFlipID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoExpositionID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoWhiteBalanceID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoGainID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraGainID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraExposureID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraSetDefaultParamsID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBlcRedID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBlcGbID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBlcBlueID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraResolutionID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraFrameRateID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAverageLuminanceID));
+	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoFocusID));
+	    return result;
+	}
+	
 	void CameraConverter::callCamera()
 	{
 	    qi::AnyValue imageAnyValue = _pVideo.call<qi::AnyValue>("getImageRemote", _handle);
@@ -102,7 +163,7 @@ namespace Sinfonia
 
 	const sensor_msgs::CameraInfo& CameraConverter::getCameraInfo(int cameraSource, int resolution)
 	{
-	    if ( _cameraSource == Helpers::VisionHelpers::kTopCamera)
+	    if ( _cameraSource == Helpers::VisionHelpers::kTopCamera )
 	    {
 		if ( resolution == Helpers::VisionHelpers::kVGA )
 		{
@@ -118,6 +179,11 @@ namespace Sinfonia
 		{
 		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoTOPQQVGA();
 		    return camInfoMsg;
+		}
+		else
+		{
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
+		    return getEmptyInfo();
 		}
 	    }
 	    else if ( _cameraSource == Helpers::VisionHelpers::kBottomCamera )
@@ -136,6 +202,11 @@ namespace Sinfonia
 		{
 		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoBOTTOMQQVGA();
 		    return camInfoMsg;
+		}
+		else
+		{
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
+		    return getEmptyInfo();
 		}
 	    }
 	    else if ( _cameraSource == Helpers::VisionHelpers::kDepthCamera )
@@ -156,69 +227,65 @@ namespace Sinfonia
 		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoDEPTHQQVGA();
 		    return camInfoMsg;
 		}
+		else
+		{
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
+		    return getEmptyInfo();
+		}
 	    }
 	    else
 	    {
-		std::cout << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
+		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
 		return getEmptyInfo();
 	    }
 	}
 	
-	void CameraConverter::setCameraConfig(int cameraSource, int resolution, float frecuency)
+	void CameraConverter::setConfig(std::vector<int> configs)
 	{
-	    _cameraSource = cameraSource;
-	    _resolution = resolution;
-	    setFrequency(frecuency);
-	    
-	    if(cameraSource != Helpers::VisionHelpers::kDepthCamera)
+	    _resolution = configs[0];
+	    setFrequency(configs[1]);
+	    _colorSpace = configs[2];
+
+	    if( _colorSpace == Helpers::VisionHelpers::kYuvColorSpace || _colorSpace == Helpers::VisionHelpers::kyUvColorSpace || _colorSpace == Helpers::VisionHelpers::kyuVColorSpace || _colorSpace == Helpers::VisionHelpers::kRgbColorSpace ||
+		_colorSpace == Helpers::VisionHelpers::krGbColorSpace || _colorSpace == Helpers::VisionHelpers::krgBColorSpace || _colorSpace == Helpers::VisionHelpers::kHsyColorSpace || _colorSpace == Helpers::VisionHelpers::khSyColorSpace ||
+		_colorSpace == Helpers::VisionHelpers::khsYColorSpace )
 	    {
-		_colorSpace = Helpers::VisionHelpers::kRGBColorSpace;
+		_msgColorspace = "mono8";
+		_cvMatType = CV_8U;
 	    }
-	    else 
+	    else if( _colorSpace == Helpers::VisionHelpers::kYUV422ColorSpace || _colorSpace == Helpers::VisionHelpers::kYYCbCrColorSpace )
 	    {
-		_colorSpace = Helpers::VisionHelpers::kRawDepthColorSpace;
+		_msgColorspace = "mono16";
+		_cvMatType = CV_16UC2;
 	    }
-	    
-	    if(cameraSource != Helpers::VisionHelpers::kDepthCamera)
-	    {
-		_msgColorspace = "rgb8"; // "mono8";
-	    }
-	    else 
+	    else if( _colorSpace == Helpers::VisionHelpers::kDepthColorSpace || _colorSpace == Helpers::VisionHelpers::kDistanceColorSpace || _colorSpace == Helpers::VisionHelpers::kRawDepthColorSpace )
 	    {
 		_msgColorspace = "16UC1";
-	    }
-	    
-	    if(cameraSource != Helpers::VisionHelpers::kDepthCamera)
-	    {
-		_cvMatType = CV_8UC3; //CV_8U;
-	    }
-	    else 
-	    {
 		_cvMatType = CV_16U;
 	    }
-	
-	    _cameraInfo = getCameraInfo(cameraSource, resolution);
+	    else if ( _colorSpace == Helpers::VisionHelpers::kXYZColorSpace )
+	    {
+		_msgColorspace = "rgb8";
+		_cvMatType = CV_32FC3;
+	    }
+	    else
+	    {
+		_msgColorspace = "rgb8"; 
+		_cvMatType = CV_8UC3;
+	    }
+	    _cameraInfo = getCameraInfo(_cameraSource, _resolution);
 	    
-	    if ( cameraSource == Helpers::VisionHelpers::kTopCamera )
+	    if ( _cameraSource == Helpers::VisionHelpers::kTopCamera )
 	    {
 		_msgFrameid = "CameraTop_optical_frame";
 	    }
-	    else if (cameraSource == Helpers::VisionHelpers::kBottomCamera )
+	    else if (_cameraSource == Helpers::VisionHelpers::kBottomCamera )
 	    {
 		_msgFrameid = "CameraBottom_optical_frame";
 	    }
-	    else if (cameraSource == Helpers::VisionHelpers::kDepthCamera )
+	    else
 	    {
 		_msgFrameid = "CameraDepth_optical_frame";
-	    }
-	    else if (cameraSource == Helpers::VisionHelpers::kInfraredCamera )
-	    {
-		_cameraSource = Helpers::VisionHelpers::kDepthCamera;
-		_msgFrameid = "CameraDepth_optical_frame";
-		_colorSpace = Helpers::VisionHelpers::kInfraredColorSpace;
-		_msgColorspace = "16UC1";
-		_cvMatType = CV_16U;
-		_cameraInfo = getCameraInfo(cameraSource, resolution);
 	    }
 	}
 	
@@ -381,7 +448,6 @@ namespace Sinfonia
 
 	    cameraInfoMessage.width = 640;
 	    cameraInfoMessage.height = 480;
-//	    cameraInfoMessage.K = boost::array<double, 9>{{ 556.845054830986, 0, 309.366895338178, 0, 555.898679730161, 230.592233628776, 0, 0, 1 }};
 	   
 	    cameraInfoMessage.K[0] = 556.845054830986;
 	    cameraInfoMessage.K[1] = 0;
@@ -763,7 +829,7 @@ namespace Sinfonia
 
 	    cameraInfoMessage.width = 160;
 	    cameraInfoMessage.height = 120;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 141.611855886672, 0, 78.6494086288656, 0, 141.367163830175, 58.9220646201529, 0, 0, 1 }};
+	    
 	    cameraInfoMessage.K[0] = 141.611855886672;
 	    cameraInfoMessage.K[1] = 0;
 	    cameraInfoMessage.K[2] = 78.6494086288656;
@@ -777,7 +843,7 @@ namespace Sinfonia
 	    cameraInfoMessage.distortion_model = "plumb_bob";
 	    cameraInfoMessage.D = boost::assign::list_of(-0.0688388724945936)(0.0697453843669642)(0.00309518737071049)(-0.00570486993696543)(0).convert_to_container<std::vector<double> >();
 
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
+	    
 	    cameraInfoMessage.R[0] = 1;
 	    cameraInfoMessage.R[1] = 0;
 	    cameraInfoMessage.R[2] = 0;
@@ -788,7 +854,6 @@ namespace Sinfonia
 	    cameraInfoMessage.R[7] = 0;
 	    cameraInfoMessage.R[8] = 1;
 
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 138.705535888672, 0, 77.2544255212306, 0, 0, 138.954086303711, 58.7000861760043, 0, 0, 0, 1, 0 }};
 	    cameraInfoMessage.P[0] = 138.705535888672;
 	    cameraInfoMessage.P[1] = 0;
 	    cameraInfoMessage.P[2] = 77.2544255212306;

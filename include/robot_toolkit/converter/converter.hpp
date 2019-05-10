@@ -36,6 +36,7 @@ namespace Sinfonia
 	class Converter
 	{
 	    public:
+
 		template<typename T>
 		Converter( T converter ):
 		converterPtr(boost::make_shared<ConverterModel<T> >(converter))
@@ -70,25 +71,42 @@ namespace Sinfonia
 		    }
 
 		    ros::Time after = ros::Time::now();
-		    lapse_time = after - before;
+		    _lapseTime = after - before;
 		    before = after;
 		}
 
 		ros::Duration lapseTime() const
 		{
-		    return lapse_time;
+		    return _lapseTime;
 		}
-
+		
+		void setConfig(std::vector<int> configs)
+		{
+		    converterPtr->setConfig(configs);
+		}
+		
+		std::vector<int> setParameters(std::vector<int> parameters)
+		{
+		    return converterPtr->setParameters(parameters);
+		}
+		std::vector<int> setAllParametersToDefault()
+		{
+		    return converterPtr->setAllParametersToDefault();
+		}
+		std::vector<int> getParameters()
+		{
+		    return converterPtr->getParameters();
+		}
 		friend bool operator==( const Converter& lhs, const Converter& rhs )
 		{
 		    if ( lhs.name() == rhs.name() )
 			return true;
 		    return false;
 		}
-		
+
 	    private:
 		ros::Time before;
-		ros::Duration lapse_time;
+		ros::Duration _lapseTime;
 		struct ConverterConcept
 		{
 		    virtual ~ConverterConcept(){}
@@ -97,6 +115,10 @@ namespace Sinfonia
 		    virtual void setFrequency(float frequency)  = 0;
 		    virtual void reset() = 0;
 		    virtual void callAll( const std::vector<Sinfonia::MessageAction::MessageAction>& actions ) = 0;
+		    virtual void setConfig(std::vector<int> configs) = 0;
+		    virtual std::vector<int> setParameters(std::vector<int> parameters) = 0;
+		    virtual std::vector<int> setAllParametersToDefault() = 0;
+		    virtual std::vector<int> getParameters() = 0;
 		};
 
 		template<typename T>
@@ -131,10 +153,30 @@ namespace Sinfonia
 			converter_->callAll( actions );
 		    }
 
+		    void setConfig(std::vector<int> configs)
+		    {
+			converter_->setConfig(configs);
+		    }
+		    
+		    std::vector<int> setParameters(std::vector<int> parameters)
+		    {
+			return converter_->setParameters(parameters);
+		    }
+		    
+		    std::vector<int> setAllParametersToDefault()
+		    {
+			return converter_->setAllParametersToDefault();
+		    }
+		    
+		    std::vector<int> getParameters()
+		    {
+			return converter_->getParameters();
+		    }
+		    
 		    T converter_;
 		};
-
-		boost::shared_ptr<ConverterConcept> converterPtr;    
+	 
+	    boost::shared_ptr<ConverterConcept> converterPtr; 
 	};
     }
 }

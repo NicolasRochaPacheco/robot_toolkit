@@ -37,6 +37,8 @@
 
 #include <qi/anyvalue.hpp>
 
+#include "robot_toolkit_msgs/camera_parameters_msg.h"
+
 namespace Sinfonia
 {
     namespace Converter
@@ -48,7 +50,7 @@ namespace Sinfonia
 	    typedef boost::function<void(sensor_msgs::ImagePtr, sensor_msgs::CameraInfo)> CallbackT;
 
 	    public:
-		CameraConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution);
+		CameraConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution, int colorSpace);
 		~CameraConverter();
 
 		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
@@ -56,6 +58,14 @@ namespace Sinfonia
 		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 
 		void reset( );
+		
+		std::vector<int> setParameters(std::vector<int> parameters);
+		std::vector<int> setAllParametersToDefault();
+		std::vector<int> getParameters();
+		
+		
+		void setConfig(std::vector<int> configs);
+		
 
 	    private:
 		
@@ -78,8 +88,6 @@ namespace Sinfonia
 		void callCamera();
 		const sensor_msgs::CameraInfo& getCameraInfo( int cameraSource, int resolution );
 		const sensor_msgs::CameraInfo& getEmptyInfo();
-		
-		void setCameraConfig(int cameraSource, int resolution, float frecuency);
 		
 		Helpers::VisionHelpers::NaoqiImage fromAnyValueToNaoqiImage(qi::AnyValue& value);
 		
