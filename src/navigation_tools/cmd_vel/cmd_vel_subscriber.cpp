@@ -50,6 +50,7 @@ namespace Sinfonia
 	void CmdVelSubscriber::shutdown()
 	{
 	    _subscriberCmdVel.shutdown();
+	    _isInitialized = false;
 	}
 
     }

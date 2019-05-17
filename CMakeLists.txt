@@ -8,6 +8,8 @@ set(
     src/navigation_tools/tf/tf_converter.cpp
     
     src/vision_tools/camera_converter.cpp
+    src/audio_tools/mic/mic_converter.cpp
+    src/audio_tools/mic/mic_event.cpp
   )
 set(
   TOOLS_SRC
@@ -22,15 +24,18 @@ set(
     src/navigation_tools/tf/tf_publisher.cpp
     
     src/vision_tools/camera_publisher.cpp
+    src/audio_tools/mic/mic_publisher.cpp
   )
 
 set(
   SUBSCRIBER_SRC
     src/navigation_tools/cmd_vel/cmd_vel_subscriber.cpp
+    src/audio_tools/speech/speech_subscriber.cpp
   )
 
 set(
   SERVICES_SRC
+  
   )
 
 set(

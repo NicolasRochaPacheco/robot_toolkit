@@ -72,6 +72,21 @@ namespace Sinfonia
 		{
 		    _subscriberPtr->shutdown();
 		}
+		
+		std::vector<float> getParameters()
+		{
+		    return _subscriberPtr->getParameters();
+		}
+		
+		std::vector<float> setParameters(std::vector<float> parameters)
+		{
+		    return _subscriberPtr->setParameters(parameters);
+		}
+		
+		std::vector<float> setDefaultParameters()
+		{
+		    return _subscriberPtr->setDefaultParameters();
+		}
 
 		friend bool operator==( const Subscriber& lhs, const Subscriber& rhs )
 		{
@@ -89,6 +104,9 @@ namespace Sinfonia
 		    virtual std::string name() const = 0;
 		    virtual std::string topic() const = 0;
 		    virtual void shutdown() = 0;
+		    virtual std::vector<float> getParameters() = 0;
+		    virtual std::vector<float> setParameters(std::vector<float> parameters) = 0;
+		    virtual std::vector<float> setDefaultParameters() = 0;
 		};
 
 		template<typename T>
@@ -118,10 +136,27 @@ namespace Sinfonia
 		    {
 			_subscriber->reset( nodeHandle );
 		    }
+		    
 		    void shutdown()
 		    {
 			_subscriber->shutdown();
 		    }
+		    
+		    std::vector<float> getParameters()
+		    {
+			return _subscriber->getParameters();
+		    }
+		    
+		    std::vector<float> setParameters(std::vector<float> parameters)
+		    {
+			return _subscriber->setParameters(parameters);
+		    }
+		    
+		    std::vector<float> setDefaultParameters()
+		    {
+			return _subscriber->setDefaultParameters();
+		    }
+		    
 		    T _subscriber;
 		};
 

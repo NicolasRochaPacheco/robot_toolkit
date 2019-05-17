@@ -18,43 +18,43 @@
 //======================================================================//
 
 
-
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
-
+#ifndef SPEECH_SUBSCRIBER_HPP
+#define SPEECH_SUBSCRIBER_HPP
 
 #include "../../subscribers/base_subscriber.hpp"
-
 #include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
+
+#include "robot_toolkit_msgs/speech_msg.h"
+#include "robot_toolkit_msgs/speech_parameters_msg.h"
 
 namespace Sinfonia
 {
     namespace Subscriber
     {
-
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	class SpeechSubscriber: public BaseSubscriber<SpeechSubscriber>
 	{
 	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
+		SpeechSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
+		~SpeechSubscriber(){}
 
 		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
+		void speechCallback( const robot_toolkit_msgs::speech_msg& message );
 		void shutdown();
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		std::vector<float> getParameters();
+		std::vector<float> setParameters(std::vector<float> parameters);
+		std::vector<float> setDefaultParameters();
+		
+		void printSpeechParams(robot_toolkit_msgs::speech_parameters_msg parameters);
+		robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
+		
 
 	    private:
-		std::string _cmdVelTopic;
-
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
+		std::string _speechTopic;
+		qi::AnyObject _pTextToSpeech;
+		ros::Subscriber _subscriberSpeech;
+		std::string _language;
 	}; 
-
     }
 }
 #endif

@@ -73,9 +73,7 @@ namespace Sinfonia
 		_pVideo.call<qi::AnyValue>("unsubscribe", _handle);
 		_handle.clear();
 	    }
-	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);
-	    
-	    
+	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);	   	    
 	}
 	
 	std::vector<int> CameraConverter::setParameters(std::vector<int> parameters)

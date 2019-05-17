@@ -144,7 +144,7 @@ namespace Sinfonia
 	}
 	if(_converters.empty())
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Goiing to register converters" << RESETCOLOR << std::endl;
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Going to register converters" << RESETCOLOR << std::endl;
 	    registerDefaultConverter();
 	    registerDefaultSubscriber();
 
@@ -167,10 +167,9 @@ namespace Sinfonia
     
     void RobotToolkit::startInitialTopics()
     {
-	// Poner aqui el schedule de lso topicos que deben iniar desde el inicio 
-	//scheduleConverter("front_camera", 10.0f);  
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
+	
     }
 
 
@@ -216,6 +215,9 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::CameraConverter> depthCameraConverter = boost::make_shared<Converter::CameraConverter>( "depth_camera", 10, _sessionPtr, Helpers::VisionHelpers::kDepthCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRawDepthColorSpace);
 	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
 	registerGroup( depthCameraConverter, depthCameraPublisher);
+	
+	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<  Sinfonia::MicEventRegister >("mic", 0, _sessionPtr);
+	insertEventConverter("mic", audioEventRegister);
 
 	printRegisteredConverters();
 	
@@ -254,6 +256,7 @@ namespace Sinfonia
 	if (!_subscribers.empty())
 	    return;
 	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::SpeechSubscriber>("speech", "/speech", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -367,8 +370,9 @@ namespace Sinfonia
     
     void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
     {
-	_navigationToolsService = nodeHandle.advertiseService("/robot_tookit/navigation_tools_service" , &RobotToolkit::navigationToolsCallback, this);
-	_visionToolsService = nodeHandle.advertiseService("/robot_tookit/vision_tools_service" , &RobotToolkit::visionToolsCallback, this);
+	_navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
+	_visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
+	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
     }
     
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -695,6 +699,162 @@ namespace Sinfonia
 	return result;
     }
 
+    void RobotToolkit::insertEventConverter(const std::string& key, Event::Event event)
+    {
+	_eventMap.insert( std::map<std::string, Event::Event>::value_type(key, event));
+    }
+
+    bool RobotToolkit::audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response)
+    {
+	std::string responseMessage;
+	robot_toolkit_msgs::speech_parameters_msg currentSpeechParams;
+	std::string startedFunctionalities = "Functionalities started:";
+	std::string stoppedFunctionalities = "Functionalities stopped:";
+	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
+	if( request.data.command != "enable" && request.data.command != "disable" && request.data.command != "custom" && request.data.command != "enable_mic" && request.data.command != "disable_mic" &&
+	    request.data.command != "enable_tts" && request.data.command != "disable_tts" && request.data.command != "get_speech_params" && request.data.command != "set_speech_params" && request.data.command != "reset_speech_params" ) 
+	{
+	    responseMessage = "ERROR: unknown command, possible values are: enable, disable, custom, enable_mic, disable_mic, enable_tts, disable_tts, get_speech_params, set_speech_params, reset_speech_params";
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else
+	{
+		if( request.data.command == "enable" || request.data.command == "enable_mic") 
+		{
+		    _eventMap.find("mic")->second.setDefaultParameters();
+		    _eventMap.find("mic")->second.startProcess();
+		    _eventMap.find("mic")->second.resetPublisher(*_nodeHandlerPtr);
+		    startedFunctionalities += " mic stream";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting mic stream" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "disable" || request.data.command == "disable_mic")
+		{
+		    _eventMap.find("mic")->second.stopProcess();
+		    _eventMap.find("mic")->second.shutdownPublisher();
+		    stoppedFunctionalities += " mic stream";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Stopping mic stream" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "custom" )
+		{
+		    if( (request.data.frequency == 48000 || request.data.frequency == 16000) && ( request.data.channels >= 0 && request.data.channels <= 4) )
+		    {
+			std::vector<int> parameters;
+			parameters.push_back(request.data.frequency);
+			parameters.push_back(request.data.channels);
+			if(_eventMap.find("mic")->second.isStarted())
+			{
+			    _eventMap.find("mic")->second.stopProcess();
+			    _eventMap.find("mic")->second.shutdownPublisher();
+			};
+			_eventMap.find("mic")->second.setParameters(parameters);
+			_eventMap.find("mic")->second.startProcess();
+			_eventMap.find("mic")->second.resetPublisher(*_nodeHandlerPtr);
+			startedFunctionalities += " mic stream with custom parameters";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting mic stream with custom Parameters" << RESETCOLOR  << std::endl;
+		    }
+		    else
+		    {
+			responseMessage = "ERROR: invalid mic parameters";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			response.result = responseMessage;
+			return true;
+		    }
+		}
+		
+		if( request.data.command == "enable" || request.data.command == "enable_tts") 
+		{
+		    startSubscriber("speech");
+		    startedFunctionalities += " tts";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting tts" << RESETCOLOR  << std::endl;
+		    int subscriberIndex = getSubscriberIndex("speech");
+		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
+		    
+		}
+		
+		if( request.data.command == "disable" || request.data.command == "disable_tts")
+		{
+		    stopSubscriber("speech");
+		    stoppedFunctionalities += " tts";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Stopping tts" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "get_speech_params") 
+		{
+		    int subscriberIndex = getSubscriberIndex("speech");
+		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Getting tts parameters" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "set_speech_params") 
+		{
+		    int subscriberIndex = getSubscriberIndex("speech");
+		    std::vector<float> speechParameters;
+		    if( ( (request.data.speech_parameters.pitch_shift >= 1.0 && request.data.speech_parameters.pitch_shift <=4.0) || (request.data.speech_parameters.pitch_shift == 0.0) ) && 
+			( (request.data.speech_parameters.double_voice >= 1.0 && request.data.speech_parameters.double_voice <=4.0) || (request.data.speech_parameters.double_voice == 0.0) )  &&
+			  (request.data.speech_parameters.double_voice_level >= 0.0 && request.data.speech_parameters.double_voice_level <=4.0) && 
+			  (request.data.speech_parameters.double_voice_time_shift >= 0.0 && request.data.speech_parameters.double_voice_time_shift <=0.5) &&
+			  (request.data.speech_parameters.speed >= 50.0 && request.data.speech_parameters.speed <=400.0) )
+		    {
+			speechParameters.push_back(request.data.speech_parameters.pitch_shift);
+			speechParameters.push_back(request.data.speech_parameters.double_voice);
+			speechParameters.push_back(request.data.speech_parameters.double_voice_level);
+			speechParameters.push_back(request.data.speech_parameters.double_voice_time_shift);
+			speechParameters.push_back(request.data.speech_parameters.speed);
+			_subscribers[subscriberIndex].setParameters(speechParameters);
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Setting speech parameters" << RESETCOLOR  << std::endl;
+			currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
+		    }
+		    else
+		    {
+			responseMessage = "ERROR: invalid speech parameters";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+			response.result = responseMessage;
+			return true;
+		    }
+		}
+		
+		if( request.data.command == "reset_speech_params") 
+		{
+		    int subscriberIndex = getSubscriberIndex("speech");
+		    _subscribers[subscriberIndex].setDefaultParameters();
+		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Resseting tts parameters" << RESETCOLOR  << std::endl;
+		}
+		
+		responseMessage = startedFunctionalities + stoppedFunctionalities;
+	}
+	
+	response.result = responseMessage;
+	response.speech_parameters = currentSpeechParams;
+	return true;
+    }
     
+    int RobotToolkit::getSubscriberIndex(std::string name)
+    {
+	for(int i=0; i<_subscribers.size(); i++)
+	{
+	    if(_subscribers[i].name() == name)
+	    {
+		return i;
+	    }
+	}
+    }
+
+    robot_toolkit_msgs::speech_parameters_msg RobotToolkit::toSpeechParameters(std::vector< float > params)
+    {
+	robot_toolkit_msgs::speech_parameters_msg result;
+	
+	result.pitch_shift = params[0];
+	result.double_voice = params[1];
+	result.double_voice_level = params[2];
+	result.double_voice_time_shift = params[3];
+	result.speed = params[4];
+	
+	return result;
+    }
+
+
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

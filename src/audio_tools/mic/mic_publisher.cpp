@@ -18,43 +18,48 @@
 //======================================================================//
 
 
-
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
-
-
-#include "../../subscribers/base_subscriber.hpp"
-
-#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
+#include "mic_publisher.hpp"
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Publisher
     {
-
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	
+	MicPublisher::MicPublisher()
 	{
-	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
-
-		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
-		void shutdown();
-		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
-
-	    private:
-		std::string _cmdVelTopic;
-
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
-	}; 
-
+	    _isInitialized = false;
+	    _topic = "/mic";
+	}
+	
+	bool MicPublisher::isInitialized() const
+	{
+	    return _isInitialized;
+	}
+	
+	std::string MicPublisher::topic()
+	{
+	    return _topic;
+	}
+	
+	bool MicPublisher::isSubscribed() const
+	{
+	    if (!_isInitialized) 
+		return false;
+	    return _publisher.getNumSubscribers() > 0;
+	}
+	void MicPublisher::publish(naoqi_bridge_msgs::AudioBuffer& message)
+	{
+	    _publisher.publish( message );
+	}
+	void MicPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _publisher = nodeHandle.advertise<naoqi_bridge_msgs::AudioBuffer>( _topic, 10 );
+	    _isInitialized = true;
+	}
+	void MicPublisher::shutdown()
+	{
+	    _publisher.shutdown();
+	}
     }
 }
-#endif
+    

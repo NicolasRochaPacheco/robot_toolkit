@@ -19,42 +19,44 @@
 
 
 
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
+#ifndef AUDIO_PUBLISHER_HPP
+#define AUDIO_PUBLISHER_HPP
 
+#include <string>
 
-#include "../../subscribers/base_subscriber.hpp"
-
+#include <naoqi_bridge_msgs/AudioBuffer.h>
 #include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Publisher
     {
-
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	class MicPublisher
 	{
+
 	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
+		MicPublisher();
+		virtual ~MicPublisher() {}
+		std::string topic();
+
+
+		bool isInitialized() const;
+
+		bool isSubscribed() const;
+
+		void publish( naoqi_bridge_msgs::AudioBuffer& message );
 
 		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
-		void shutdown();
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		void shutdown();
 
-	    private:
-		std::string _cmdVelTopic;
+	    protected:
+		bool _isInitialized;
+		ros::Publisher _publisher;
+		std::string _topic;
+	};
 
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
-	}; 
+    } 
+} 
 
-    }
-}
 #endif

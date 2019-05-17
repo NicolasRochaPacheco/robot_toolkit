@@ -18,43 +18,52 @@
 //======================================================================//
 
 
+#ifndef AUDIO_CONVERTER_HPP
+#define AUDIO_CONVERTER_HPP
 
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
+#include <boost/foreach.hpp>
+
+#include "../../converters/converter_base.hpp"
+#include "robot_toolkit/message_actions.h"
 
 
-#include "../../subscribers/base_subscriber.hpp"
-
-#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
+#include <naoqi_bridge_msgs/AudioBuffer.h>
+#include <qi/anymodule.hpp>
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Converter
     {
 
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	class MicConverter : public BaseConverter<MicConverter>
 	{
+
+	    typedef boost::function<void( naoqi_bridge_msgs::AudioBuffer& )> CallbackT;
+
 	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
-
-		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
-		void shutdown();
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		MicConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+		~MicConverter();
 
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
+
+		void callAll( const std::vector<MessageAction::MessageAction>& actions, naoqi_bridge_msgs::AudioBuffer& message );
+
+		void reset();
+		
+		void setConfig(std::vector<int> configs){}
+		
+		std::vector<int> setParameters(std::vector<int> parameters){}
+		std::vector<int> setAllParametersToDefault(){}
+		std::vector<int> getParameters(){}
+		
 	    private:
-		std::string _cmdVelTopic;
+		
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		naoqi_bridge_msgs::AudioBuffer _message;
+	};
 
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
-	}; 
+    } 
+} 
 
-    }
-}
 #endif

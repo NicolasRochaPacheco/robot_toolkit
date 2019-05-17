@@ -33,12 +33,16 @@
 #include "robot_toolkit_msgs/camera_parameters_msg.h"
 #include "robot_toolkit_msgs/vision_tools_msg.h"
 #include "robot_toolkit_msgs/vision_tools_srv.h"
+#include "robot_toolkit_msgs/audio_tools_msg.h"
+#include "robot_toolkit_msgs/audio_tools_srv.h"
+#include "robot_toolkit_msgs/speech_parameters_msg.h"
 
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
 #include "robot_toolkit/publisher/publisher.hpp"
 #include "robot_toolkit/recorder/recorder.hpp"
 #include "robot_toolkit/subscriber/subscriber.hpp"
+#include "robot_toolkit/event/event.hpp"
 
 #include "../../src/helpers/scheduled_conveter.hpp"
 
@@ -55,6 +59,8 @@
 #include "../../src/vision_tools/camera_converter.hpp"
 #include "../../src/vision_tools/camera_publisher.hpp"
 
+#include "../../src/audio_tools/mic/mic_event.hpp"
+#include "../../src/audio_tools/speech/speech_subscriber.hpp"
 
 
 
@@ -81,8 +87,9 @@ namespace Sinfonia
 	    
 	    void startInitialTopics();
 	    
-	    bool navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
-	    bool visionToolsCallback( robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
+	    bool navigationToolsCallback(robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
+	    bool visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
+	    bool audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response );
 	    
 	private:
 	    
@@ -113,10 +120,11 @@ namespace Sinfonia
 	    
 	    ros::ServiceServer _navigationToolsService;
 	    ros::ServiceServer _visionToolsService;
+	    ros::ServiceServer _audioToolsService;
 	    
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
+	    std::map< std::string, Event::Event> _eventMap;
 	    
-	    //std::map< std::string, int > _converterIndex;
 	    
 	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   
 	    
@@ -136,9 +144,11 @@ namespace Sinfonia
 	    void startSubscriber(std::string subscriberName);
 	    void stopSubscriber(std::string subscriberName);
 	    int getConverterIndex(std::string name);
-	    
+	    void insertEventConverter( const std::string& key, Event::Event event);	    
 	    robot_toolkit_msgs::camera_parameters_msg toCameraParametersMsg(std::vector<int> params);
 	    std::vector<int> toVector(robot_toolkit_msgs::camera_parameters_msg params);
+	    int getSubscriberIndex(std::string name);
+	    robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
     };
 }
 

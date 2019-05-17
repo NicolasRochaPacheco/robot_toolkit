@@ -17,44 +17,45 @@
 //                                                                      //
 //======================================================================//
 
+#include "mic_converter.hpp"
 
-
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
-
-
-#include "../../subscribers/base_subscriber.hpp"
-
-#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
+#define for_each BOOST_FOREACH
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Converter
     {
-
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	MicConverter::MicConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session):
+	  BaseConverter( name, frequency, session )
 	{
-	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
+	    
+	}
+	
+	MicConverter::~MicConverter()
+	{
 
-		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
-		void shutdown();
-		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+	}
 
-	    private:
-		std::string _cmdVelTopic;
+	
+	void MicConverter::registerCallback(MessageAction::MessageAction action, MicConverter::CallbackT callback)
+	{
+	    _callbacks[action] = callback;
+	}
+	
+	void MicConverter::callAll(const std::vector< MessageAction::MessageAction >& actions, naoqi_bridge_msgs::AudioBuffer& message)
+	{
+	    _message = message;
+	    for_each(MessageAction::MessageAction action, actions )
+	    {
+		_callbacks[action](_message);
+	    }
+	}
+	
+	void MicConverter::reset()
+	{
 
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
-	}; 
+	}
 
+	
     }
 }
-#endif
