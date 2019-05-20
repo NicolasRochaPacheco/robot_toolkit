@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "mic_converter.hpp"
+#include "robot_toolkit/audio_tools/mic/mic_converter.hpp"
 
 #define for_each BOOST_FOREACH
 

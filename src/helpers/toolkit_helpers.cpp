@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "toolkit_helpers.hpp"
+#include "robot_toolkit/helpers/toolkit_helpers.hpp"
 
 namespace Sinfonia
 {

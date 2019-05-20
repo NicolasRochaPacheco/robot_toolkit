@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "laser_publisher.hpp"
+#include "robot_toolkit/navigation_tools/laser/laser_publisher.hpp"
 
 namespace Sinfonia
 {

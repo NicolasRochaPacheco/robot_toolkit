@@ -18,46 +18,55 @@
 //======================================================================//
 
 
-#ifndef CAMERA_PUBLISHER_HPP
-#define CAMERA_PUBLISHER_HPP
+#ifndef LASER_CONVERTER_HPP
+#define LASER_CONVERTER_HPP
 
-#include <image_transport/image_transport.h>
-#include "../helpers/vision_helpers.hpp"
+#include <boost/foreach.hpp>
+
+#include "robot_toolkit/converter/converter_base.hpp"
+#include "robot_toolkit/message_actions.h"
+
+
+#include <sensor_msgs/LaserScan.h>
 
 namespace Sinfonia
 {
-    namespace Publisher
+    namespace Converter
     {
 
-	class CameraPublisher
+	class LaserConverter : public BaseConverter<LaserConverter>
 	{
 
-	    public:
-		CameraPublisher(std::string topic);
-		std::string topic();
+	    typedef boost::function<void(sensor_msgs::LaserScan&)> CallbackT;
 
-		bool isInitialized();
+	    public:
+		LaserConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
+
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+
+		void reset( );
 		
-		virtual void publish(const sensor_msgs::ImagePtr& img, const sensor_msgs::CameraInfo& cameraInfo);
-		virtual void reset( ros::NodeHandle& nodeHandle );
-		virtual bool isSubscribed() const;
-		virtual void shutdown();
+		void setConfig(std::vector<int> configs){}
 		
-		void setCameraSource(int cameraSource);
+		std::vector<int> setParameters(std::vector<int> parameters){}
+		std::vector<int> setAllParametersToDefault(){}
+		std::vector<int> getParameters(){}
+		
+		
 
 	    private:
+		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
 		
-		int _cameraSource;
+		qi::AnyObject _pMemory;
 		
-		image_transport::CameraPublisher _publisher;
-
-		std::string _topic;
-
-		bool _isInitialized;
-
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		sensor_msgs::LaserScan _message;
+		void callLaser();
 	};
 
-    }
-}
+    } 
+} 
 
 #endif

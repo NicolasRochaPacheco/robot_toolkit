@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "speech_subscriber.hpp"
+#include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
 
 namespace Sinfonia 
 {

@@ -27,13 +27,13 @@
 #include <cv_bridge/cv_bridge.h>
 #include <ros/console.h>
 
-#include "../converters/converter_base.hpp"
+#include "robot_toolkit/converter/converter_base.hpp"
 #include "robot_toolkit/message_actions.h"
 
 #include <boost/assign/list_of.hpp>
 
 #include <image_transport/image_transport.h>
-#include "../helpers/vision_helpers.hpp"
+#include "robot_toolkit/helpers/vision_helpers.hpp"
 
 #include <qi/anyvalue.hpp>
 

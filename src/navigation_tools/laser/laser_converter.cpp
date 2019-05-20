@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "laser_converter.hpp"
+#include "robot_toolkit/navigation_tools/laser/laser_converter.hpp"
 
 #define for_each BOOST_FOREACH
 

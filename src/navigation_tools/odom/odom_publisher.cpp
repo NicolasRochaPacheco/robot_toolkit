@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "odom_publisher.hpp"
+#include "robot_toolkit/navigation_tools/odom/odom_publisher.hpp"
 
 namespace Sinfonia 
 {

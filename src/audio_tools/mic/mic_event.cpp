@@ -19,7 +19,7 @@
 
 
 
-#include "mic_event.hpp"
+#include "robot_toolkit/audio_tools/mic/mic_event.hpp"
 
 namespace Sinfonia
 {

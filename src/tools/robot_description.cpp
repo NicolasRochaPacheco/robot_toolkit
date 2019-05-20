@@ -18,8 +18,8 @@
 //======================================================================//
 
 
-#include "robot_description.hpp"
-#include "../helpers/filesystem_helpers.hpp"
+#include "robot_toolkit/tools/robot_description.hpp"
+#include "robot_toolkit/helpers/filesystem_helpers.hpp"
 
 
 namespace Sinfonia

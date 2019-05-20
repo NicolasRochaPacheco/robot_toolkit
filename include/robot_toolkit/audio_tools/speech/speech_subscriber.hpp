@@ -18,51 +18,43 @@
 //======================================================================//
 
 
-#ifndef ODOM_CONVERTER_HPP
-#define ODOM_CONVERTER_HPP
+#ifndef SPEECH_SUBSCRIBER_HPP
+#define SPEECH_SUBSCRIBER_HPP
 
-#include "../../converters/converter_base.hpp"
-#include "../../tools/robot_description.hpp"
+#include "robot_toolkit/subscriber/base_subscriber.hpp"
+#include <ros/ros.h>
 
-
-#include "robot_toolkit/message_actions.h"
-
-#include <urdf/model.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <tf2_ros/buffer.h>
-#include <robot_state_publisher/robot_state_publisher.h>
+#include "robot_toolkit_msgs/speech_msg.h"
+#include "robot_toolkit_msgs/speech_parameters_msg.h"
 
 namespace Sinfonia
 {
-    namespace Converter
+    namespace Subscriber
     {
-
-	class OdomConverter : public BaseConverter<OdomConverter>
+	class SpeechSubscriber: public BaseSubscriber<SpeechSubscriber>
 	{
-	    typedef boost::function<void(nav_msgs::Odometry&)> callbackT;
-
 	    public:
-		OdomConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
-		void registerCallback( MessageAction::MessageAction action, callbackT callback );
-		void callAll( const std::vector<MessageAction::MessageAction>& actions );
-		void reset( );
+		SpeechSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
+		~SpeechSubscriber(){}
+
+		void reset( ros::NodeHandle& nodeHandle );
+		void speechCallback( const robot_toolkit_msgs::speech_msg& message );
+		void shutdown();
 		
-		void setConfig(std::vector<int> configs){}
+		std::vector<float> getParameters();
+		std::vector<float> setParameters(std::vector<float> parameters);
+		std::vector<float> setDefaultParameters();
 		
-		std::vector<int> setParameters(std::vector<int> parameters){}
-		std::vector<int> setAllParametersToDefault(){}
-		std::vector<int> getParameters(){}
+		void printSpeechParams(robot_toolkit_msgs::speech_parameters_msg parameters);
+		robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
+		
 
 	    private:
-		qi::AnyObject _pMotion;
-		std::map<MessageAction::MessageAction, callbackT> _callbacks;
-		nav_msgs::Odometry _msgOdom;
-		
-		void callOdom();
-	};
-
+		std::string _speechTopic;
+		qi::AnyObject _pTextToSpeech;
+		ros::Subscriber _subscriberSpeech;
+		std::string _language;
+	}; 
     }
 }
-
 #endif

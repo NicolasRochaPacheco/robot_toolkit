@@ -18,57 +18,46 @@
 //======================================================================//
 
 
-#ifndef BASE_SUBSCRIBER_HPP
-#define BASE_SUBSCRIBER_HPP
+#ifndef CAMERA_PUBLISHER_HPP
+#define CAMERA_PUBLISHER_HPP
 
-#include <qi/session.hpp>
-
-#include "robot_toolkit/tools.hpp"
-
-#include "../helpers/toolkit_helpers.hpp"
+#include <image_transport/image_transport.h>
+#include "robot_toolkit/helpers/vision_helpers.hpp"
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Publisher
     {
-	template<class T>
-	class BaseSubscriber
+
+	class CameraPublisher
 	{
+
 	    public:
-		BaseSubscriber( const std::string& name, const std::string& topic, qi::SessionPtr session )
-		{
-		    _name = name ;
-		    _topic =  topic;
-		    _isInitialized = false;
-		    _session = session;
-		}
+		CameraPublisher(std::string topic);
+		std::string topic();
 
-		virtual ~BaseSubscriber() {}
+		bool isInitialized();
+		
+		virtual void publish(const sensor_msgs::ImagePtr& img, const sensor_msgs::CameraInfo& cameraInfo);
+		virtual void reset( ros::NodeHandle& nodeHandle );
+		virtual bool isSubscribed() const;
+		virtual void shutdown();
+		
+		void setCameraSource(int cameraSource);
 
-		inline std::string name() const
-		{
-		    return _name;
-		}
+	    private:
+		
+		int _cameraSource;
+		
+		image_transport::CameraPublisher _publisher;
 
-		inline std::string topic() const
-		{
-		    return _topic;
-		}
-
-		inline bool isInitialized() const
-		{
-		    return _isInitialized;
-		}
-
-	    protected:
-		std::string _name, _topic;
+		std::string _topic;
 
 		bool _isInitialized;
 
-		qi::SessionPtr _session;
 	};
 
-    } 
+    }
 }
 
 #endif

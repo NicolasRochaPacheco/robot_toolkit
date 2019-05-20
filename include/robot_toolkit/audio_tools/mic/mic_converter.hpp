@@ -23,7 +23,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "../../converters/converter_base.hpp"
+#include "robot_toolkit/converter/converter_base.hpp"
 #include "robot_toolkit/message_actions.h"
 
 

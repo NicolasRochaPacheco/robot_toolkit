@@ -18,32 +18,56 @@
 //======================================================================//
 
 
-#ifndef TOOLKIT_HELPERS_HPP
-#define TOOLKIT_HELPERS_HPP
+#ifndef BASE_SUBSCRIBER_HPP
+#define BASE_SUBSCRIBER_HPP
 
-#include "robot_toolkit/tools.hpp"
+#include <qi/session.hpp>
 
-#include <naoqi_bridge_msgs/RobotInfo.h>
+#include "robot_toolkit/tools/tools.hpp"
 
-#include <naoqi_bridge_msgs/SetString.h>
-
-#include <qi/applicationsession.hpp>
-
+#include "robot_toolkit/helpers/toolkit_helpers.hpp"
 namespace Sinfonia
 {
-    namespace Helpers
+    namespace Subscriber
     {
-	namespace Toolkit
-	{	    
+	template<class T>
+	class BaseSubscriber
+	{
+	    public:
+		BaseSubscriber( const std::string& name, const std::string& topic, qi::SessionPtr session )
+		{
+		    _name = name ;
+		    _topic =  topic;
+		    _isInitialized = false;
+		    _session = session;
+		}
 
-	    const naoqi_bridge_msgs::RobotInfo& getRobotInfo(const qi::SessionPtr& session);
+		virtual ~BaseSubscriber() {}
 
-	    bool& setLanguage(const qi::SessionPtr& session, naoqi_bridge_msgs::SetStringRequest request);
+		inline std::string name() const
+		{
+		    return _name;
+		}
 
-	    std::string& getLanguage(const qi::SessionPtr& session);
+		inline std::string topic() const
+		{
+		    return _topic;
+		}
 
-	}
-    }
+		inline bool isInitialized() const
+		{
+		    return _isInitialized;
+		}
+
+	    protected:
+		std::string _name, _topic;
+
+		bool _isInitialized;
+
+		qi::SessionPtr _session;
+	};
+
+    } 
 }
 
 #endif

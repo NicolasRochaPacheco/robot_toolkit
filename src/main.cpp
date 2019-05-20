@@ -22,7 +22,7 @@
 
 #include <qi/applicationsession.hpp>
 #include <qi/anymodule.hpp>
-#include "robot_toolkit/tools.hpp"
+#include "robot_toolkit/tools/tools.hpp"
 
 #include "robot_toolkit/robot_toolkit.hpp"
 

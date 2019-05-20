@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "odom_converter.hpp"
+#include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"
 
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH

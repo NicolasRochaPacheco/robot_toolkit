@@ -21,8 +21,8 @@
 #ifndef TF_CONVERTER_HPP
 #define TF_CONVERTER_HPP
 
-#include "../../converters/converter_base.hpp"
-#include "../../tools/robot_description.hpp"
+#include "robot_toolkit/converter/converter_base.hpp"
+#include "robot_toolkit/tools/robot_description.hpp"
 #include "robot_toolkit/message_actions.h"
 
 

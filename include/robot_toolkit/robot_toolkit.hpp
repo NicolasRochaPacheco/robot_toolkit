@@ -22,6 +22,9 @@
 
 #include <qi/session.hpp>
 #include <boost/thread/mutex.hpp>
+#include <string>
+
+#include <queue>
 
 #include <tf2_ros/buffer.h>
 
@@ -40,27 +43,27 @@
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
 #include "robot_toolkit/publisher/publisher.hpp"
-#include "robot_toolkit/recorder/recorder.hpp"
 #include "robot_toolkit/subscriber/subscriber.hpp"
 #include "robot_toolkit/event/event.hpp"
 
-#include "../../src/helpers/scheduled_conveter.hpp"
+#include "robot_toolkit/helpers/scheduled_conveter.hpp"
 
-#include "../../src/navigation_tools/tf/tf_publisher.hpp"
-#include "../../src/navigation_tools/odom/odom_publisher.hpp"
-#include "../../src/navigation_tools/laser/laser_publisher.hpp"
 
-#include "../../src/navigation_tools/tf/tf_converter.hpp"
-#include "../../src/navigation_tools/odom/odom_converter.hpp"
-#include "../../src/navigation_tools/laser/laser_converter.hpp"
+#include "robot_toolkit/navigation_tools/tf/tf_publisher.hpp"
+#include "robot_toolkit/navigation_tools/odom/odom_publisher.hpp"
+#include "robot_toolkit//navigation_tools/laser/laser_publisher.hpp"
 
-#include "../../src/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
+#include "robot_toolkit/navigation_tools/tf/tf_converter.hpp"
+#include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"
+#include "robot_toolkit//navigation_tools/laser/laser_converter.hpp"
 
-#include "../../src/vision_tools/camera_converter.hpp"
-#include "../../src/vision_tools/camera_publisher.hpp"
+#include "robot_toolkit/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
-#include "../../src/audio_tools/mic/mic_event.hpp"
-#include "../../src/audio_tools/speech/speech_subscriber.hpp"
+#include "robot_toolkit/vision_tools/camera_converter.hpp"
+#include "robot_toolkit/vision_tools/camera_publisher.hpp"
+
+#include "robot_toolkit/audio_tools/mic/mic_event.hpp"
+#include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
 
 
 
@@ -105,7 +108,7 @@ namespace Sinfonia
 	    
 	    
 	    boost::scoped_ptr<ros::NodeHandle> _nodeHandlerPtr;
-	    boost::shared_ptr<Recorder::GlobalRecorder> _recorder;
+	    
 	    
 	    boost::mutex _mutexRecorders;
 	    boost::mutex _mutexConvertersQueue;

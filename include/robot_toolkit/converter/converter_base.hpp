@@ -17,44 +17,61 @@
 //                                                                      //
 //======================================================================//
 
+#ifndef BASE_CONVERTER_HPP
+#define BASE_CONVERTER_HPP
 
+#include "robot_toolkit/tools/tools.hpp"
 
-#ifndef CMD_VEL_SUBSCRIBER_HPP
-#define CMD_VEL_SUBSCRIBER_HPP
+#include "robot_toolkit/helpers/toolkit_helpers.hpp"
 
-
-#include "../../subscribers/base_subscriber.hpp"
-
-#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-#include <naoqi_bridge_msgs/JointAnglesWithSpeed.h>
+#include <qi/session.hpp>
+#include <qi/anyobject.hpp>
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Converter
     {
-
-	class CmdVelSubscriber: public BaseSubscriber<CmdVelSubscriber>
+	template<class T>
+	class BaseConverter
 	{
+
 	    public:
-		CmdVelSubscriber( const std::string& name, const std::string& cmdVelTopic, const qi::SessionPtr& session );
-		~CmdVelSubscriber(){}
+		BaseConverter(const std::string& name, float frequency, qi::SessionPtr session)
+		{
+		    _name = name;
+		    _frequency = frequency;
+		    _session = session;
+		    _recordEnabled = false;
+		}
 
-		void reset( ros::NodeHandle& nodeHandle );
-		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
-		void shutdown();
+		virtual ~BaseConverter(){}
+
+		inline std::string name() const
+		{
+		    return _name;
+		}
+
+		inline float getFrequency() const
+		{
+		    return _frequency;
+		}
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		inline void setFrequency(float frequency)
+		{
+		    _frequency = frequency;
+		}
 
-	    private:
-		std::string _cmdVelTopic;
+	    protected:
+		std::string _name;
 
-		qi::AnyObject _pMotion;
-		ros::Subscriber _subscriberCmdVel;
+		float _frequency;
+		
+		qi::SessionPtr _session;
+
+		bool _recordEnabled;
 	}; 
 
     }
-}
+} 
+
 #endif

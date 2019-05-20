@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "camera_publisher.hpp"
+#include "robot_toolkit/vision_tools/camera_publisher.hpp"
 
 namespace Sinfonia
 {

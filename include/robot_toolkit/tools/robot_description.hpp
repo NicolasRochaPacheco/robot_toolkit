@@ -17,61 +17,24 @@
 //                                                                      //
 //======================================================================//
 
-#ifndef BASE_CONVERTER_HPP
-#define BASE_CONVERTER_HPP
 
-#include "robot_toolkit/tools.hpp"
+#ifndef ROBOT_DESCRIPTION_HPP
+#define ROBOT_DESCRIPTION_HPP
 
-#include "../helpers/toolkit_helpers.hpp"
 
-#include <qi/session.hpp>
-#include <qi/anyobject.hpp>
+#include "robot_toolkit/tools/tools.hpp"
 
-namespace Sinfonia
+#include <string>
+#include <fstream>
+
+
+namespace Sinfonia 
 {
-    namespace Converter
+    namespace Tools
     {
-	template<class T>
-	class BaseConverter
-	{
-
-	    public:
-		BaseConverter(const std::string& name, float frequency, qi::SessionPtr session)
-		{
-		    _name = name;
-		    _frequency = frequency;
-		    _session = session;
-		    _recordEnabled = false;
-		}
-
-		virtual ~BaseConverter(){}
-
-		inline std::string name() const
-		{
-		    return _name;
-		}
-
-		inline float getFrequency() const
-		{
-		    return _frequency;
-		}
-		
-		inline void setFrequency(float frequency)
-		{
-		    _frequency = frequency;
-		}
-
-	    protected:
-		std::string _name;
-
-		float _frequency;
-		
-		qi::SessionPtr _session;
-
-		bool _recordEnabled;
-	}; 
-
+	std::string getRobotDescription();
     }
-} 
+
+}
 
 #endif

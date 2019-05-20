@@ -17,67 +17,52 @@
 //                                                                      //
 //======================================================================//
 
-#ifndef GLOBALRECORDER_HPP
-#define GLOBALRECORDER_HPP
 
-#include "robot_toolkit/tools.hpp"
+#ifndef ODOM_CONVERTER_HPP
+#define ODOM_CONVERTER_HPP
 
-#include <string>
-
-#include <boost/thread/mutex.hpp>
+#include "robot_toolkit/converter/converter_base.hpp"
+#include "robot_toolkit/tools/robot_description.hpp"
 
 
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <geometry_msgs/TransformStamped.h>
+#include "robot_toolkit/message_actions.h"
+
+#include <urdf/model.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/JointState.h>
+#include <tf2_ros/buffer.h>
+#include <robot_state_publisher/robot_state_publisher.h>
 
 namespace Sinfonia
 {
-    namespace Recorder
+    namespace Converter
     {
-	class GlobalRecorder
+
+	class OdomConverter : public BaseConverter<OdomConverter>
 	{
+	    typedef boost::function<void(nav_msgs::Odometry&)> callbackT;
 
 	    public:
-
-		GlobalRecorder(const std::string& prefixTopic);
-		void startRecord(const std::string& prefixBag = "");
-		std::string stopRecord(const std::string& robotIp = "<ROBOT_IP>");
-
-		template <class T>
-		void write(const std::string& topic, const T& message, const ros::Time& time = ros::Time::now() )
-		{
-		    std::string rosTopic;
-		    if (topic[0]!='/')
-		    {
-			rosTopic = _prefixTopic+topic;
-		    }
-		    else
-		    {
-			rosTopic = topic;
-		    }
-		    ros::Time timeMessage = time;
-		    boost::mutex::scoped_lock writeLock( _processMutex );
-		    if (_isStarted)
-		    {
-			_bag.write(rosTopic, timeMessage, message);
-		    }
-		}
-
-		void write(const std::string& topic, const std::vector<geometry_msgs::TransformStamped>& messsagetf);
-		bool isStarted();
+		OdomConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+		void registerCallback( MessageAction::MessageAction action, callbackT callback );
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
+		void reset( );
+		
+		void setConfig(std::vector<int> configs){}
+		
+		std::vector<int> setParameters(std::vector<int> parameters){}
+		std::vector<int> setAllParametersToDefault(){}
+		std::vector<int> getParameters(){}
 
 	    private:
-		std::string _prefixTopic;
-		boost::mutex _processMutex;
-		rosbag::Bag _bag;
-		std::string _nameBag;
-		bool _isStarted;
-
-		std::vector<Topics> _topics;
-
+		qi::AnyObject _pMotion;
+		std::map<MessageAction::MessageAction, callbackT> _callbacks;
+		nav_msgs::Odometry _msgOdom;
+		
+		void callOdom();
 	};
+
     }
-} 
+}
 
 #endif

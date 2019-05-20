@@ -46,7 +46,7 @@ set(
   ROBOT_TOOLKIT_SRC
   src/robot_toolkit.cpp
   src/helpers/toolkit_helpers.cpp
-  src/recorders/global_recorder.cpp
+  ##src/recorders/global_recorder.cpp
   )
   
 

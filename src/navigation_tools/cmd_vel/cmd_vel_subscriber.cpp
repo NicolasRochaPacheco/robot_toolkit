@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "cmd_vel_subscriber.hpp"
+#include "robot_toolkit/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
 namespace Sinfonia 
 {

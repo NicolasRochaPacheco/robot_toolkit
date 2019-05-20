@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "mic_publisher.hpp"
+#include "robot_toolkit/audio_tools/mic/mic_publisher.hpp"
 
 namespace Sinfonia
 {

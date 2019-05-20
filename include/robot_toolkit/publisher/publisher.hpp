@@ -28,7 +28,7 @@
 
 #include <ros/ros.h>
 
-#include "robot_toolkit/tools.hpp"
+#include "robot_toolkit/tools/tools.hpp"
 
 namespace Sinfonia
 {

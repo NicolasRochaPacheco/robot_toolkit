@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "camera_converter.hpp"
+#include "robot_toolkit/vision_tools/camera_converter.hpp"
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
 

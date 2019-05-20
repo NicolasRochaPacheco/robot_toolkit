@@ -18,23 +18,32 @@
 //======================================================================//
 
 
-#ifndef ROBOT_DESCRIPTION_HPP
-#define ROBOT_DESCRIPTION_HPP
+#ifndef TOOLKIT_HELPERS_HPP
+#define TOOLKIT_HELPERS_HPP
 
+#include "robot_toolkit/tools/tools.hpp"
 
-#include "robot_toolkit/tools.hpp"
+#include <naoqi_bridge_msgs/RobotInfo.h>
 
-#include <string>
-#include <fstream>
+#include <naoqi_bridge_msgs/SetString.h>
 
+#include <qi/applicationsession.hpp>
 
-namespace Sinfonia 
+namespace Sinfonia
 {
-    namespace Tools
+    namespace Helpers
     {
-	std::string getRobotDescription();
-    }
+	namespace Toolkit
+	{	    
 
+	    const naoqi_bridge_msgs::RobotInfo& getRobotInfo(const qi::SessionPtr& session);
+
+	    bool& setLanguage(const qi::SessionPtr& session, naoqi_bridge_msgs::SetStringRequest request);
+
+	    std::string& getLanguage(const qi::SessionPtr& session);
+
+	}
+    }
 }
 
 #endif
