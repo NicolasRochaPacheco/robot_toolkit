@@ -51,7 +51,8 @@
 
 #include "robot_toolkit/navigation_tools/tf/tf_publisher.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_publisher.hpp"
-#include "robot_toolkit//navigation_tools/laser/laser_publisher.hpp"
+#include "robot_toolkit/navigation_tools/laser/laser_publisher.hpp"
+#include "robot_toolkit/navigation_tools/move_to/move_to.hpp"
 
 #include "robot_toolkit/navigation_tools/tf/tf_converter.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"

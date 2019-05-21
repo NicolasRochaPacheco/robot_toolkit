@@ -67,7 +67,6 @@ namespace Sinfonia
 	ros::Time::init();
 	registerDefaultConverter();
 	registerDefaultSubscriber();
-	//startRosLoop();
     }
     
     void RobotToolkit::rosLoop()
@@ -169,7 +168,7 @@ namespace Sinfonia
     {
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
-	
+	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Update 3!" << std::endl;
     }
 
 
@@ -257,6 +256,7 @@ namespace Sinfonia
 	    return;
 	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SpeechSubscriber>("speech", "/speech", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::MoveToSubscriber>("moveto", "/move_base_simple/goal", _sessionPtr, _tf2Buffer));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -385,7 +385,8 @@ namespace Sinfonia
 	    scheduleConverter("odom", 10.0f);
 	    scheduleConverter("laser", 10.0f);
 	    startSubscriber("cmd_vel");
-	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel";
+	    startSubscriber("moveto");
+	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel, move_to";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "disable_all" )
@@ -395,7 +396,8 @@ namespace Sinfonia
 	    unscheduleConverter("odom");
 	    unscheduleConverter("laser");
 	    stopSubscriber("cmd_vel");
-	    responseMessage = "Functionalities stopped: tf, odom, laser, cmd_vel";
+	    stopSubscriber("moveto");
+	    responseMessage = "Functionalities stopped: tf, odom, laser, cmd_vel, move_to";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "custom" )
@@ -446,6 +448,17 @@ namespace Sinfonia
 	    {
 		stopSubscriber("cmd_vel");
 		stoppedFunctionalities += "cmd_vel, ";
+	    }
+	    
+	    if( request.data.move_base_enable )
+	    {
+		startSubscriber("moveto");
+		startedFunctionalities += "move_to ";
+	    }
+	    else
+	    {
+		stopSubscriber("moveto");
+		stoppedFunctionalities += "move_to ";
 	    }
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << startedFunctionalities << RESETCOLOR  << std::endl;
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << stoppedFunctionalities << RESETCOLOR  << std::endl;
