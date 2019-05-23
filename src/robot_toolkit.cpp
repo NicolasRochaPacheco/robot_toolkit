@@ -399,7 +399,12 @@ namespace Sinfonia
 		_converters[converterIndex].reset();
 		scheduleConverter("depth_to_laser", 10.0f);
 	    }
-	    startSubscriber("cmd_vel");
+	    int subscriberIndex = getSubscriberIndex("cmd_vel");
+	    if( subscriberIndex != -1)
+	    {
+		_subscribers[subscriberIndex].setDefaultParameters();
+		startSubscriber("cmd_vel");
+	    }
 	    startSubscriber("moveto");
 	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -467,15 +472,10 @@ namespace Sinfonia
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_min);
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_max);
 		    parameters.push_back(request.data.depth_to_laser_parameters.scan_height);
-		    std::cout << "Aqui toy 0"  << std::endl;
 		    _converters[converterIndex].setConfig(config);
-		    std::cout << "Aqui toy 1"  << std::endl;
 		    _converters[converterIndex].setParameters(parameters);
-		    std::cout << "Aqui toy 2"  << std::endl;
 		    _converters[converterIndex].reset();
-		    std::cout << "Aqui toy 3"  << std::endl;
 		    scheduleConverter("depth_to_laser", 10.0f);
-		    std::cout << "Aqui toy 4"  << std::endl;
 		}
 		startedFunctionalities += "depth_to_laser@10Hz";
 		
@@ -488,6 +488,19 @@ namespace Sinfonia
 	    
 	    if( request.data.cmd_vel_enable )
 	    {
+		int securityTime;
+		std::vector<float> parameters;
+		if( request.data.security_timer <= 0 )
+		{
+		    securityTime = -1;
+		}
+		else
+		{
+		    securityTime = request.data.security_timer;
+		}
+		parameters.push_back(securityTime);
+		int subscriberIndex = getSubscriberIndex("cmd_vel");
+		_subscribers[subscriberIndex].setParameters(parameters);
 		startSubscriber("cmd_vel");
 		startedFunctionalities += "cmd_vel, ";
 	    }

@@ -63,7 +63,7 @@ namespace Sinfonia
 		{
 		    _tf2Buffer->transform( *poseMessage, poseMessageBf, "base_footprint", ros::Time(0), poseMessage->header.frame_id );
 		    double yaw = Helpers::Transform::getYaw(poseMessageBf.pose);
-		    std::cout << "odom to move x: " <<  poseMessageBf.pose.position.x << " y: " << poseMessageBf.pose.position.y << " z: " << poseMessageBf.pose.position.z << " yaw: " << yaw << std::endl;
+		    std::cout << BOLDCYAN << "[" << ros::Time::now().toSec() << "] " << "Odom to move x: " <<  poseMessageBf.pose.position.x << " y: " << poseMessageBf.pose.position.y << " z: " << poseMessageBf.pose.position.z << " yaw: " << yaw << std::endl;
 		    _pMotion.async<void>("moveTo", poseMessageBf.pose.position.x, poseMessageBf.pose.position.y, yaw );
 		} 
 		catch( const tf2::LookupException& e)

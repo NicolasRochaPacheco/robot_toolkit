@@ -43,15 +43,18 @@ namespace Sinfonia
 		void cmdVelCallback( const geometry_msgs::TwistConstPtr& twistMsg );
 		void shutdown();
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		std::vector<float> getParameters();
+		std::vector<float> setParameters(std::vector<float> parameters);
+		std::vector<float> setDefaultParameters();
 
 	    private:
 		std::string _cmdVelTopic;
 
 		qi::AnyObject _pMotion;
 		ros::Subscriber _subscriberCmdVel;
+		ros::Timer _timer;
+		float _securityTime;
+		void timerCallback(const ros::TimerEvent& event);
 	}; 
 
     }
