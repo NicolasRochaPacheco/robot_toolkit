@@ -36,16 +36,16 @@ namespace Sinfonia
 	{
 
 	    public:
-		LaserPublisher();
+		LaserPublisher(std::string topicName);
 		virtual ~LaserPublisher() {}
-		std::string topic();
+		std::string getTopicName();
 
 
 		bool isInitialized() const;
 
 		bool isSubscribed() const;
 
-		void publish( sensor_msgs::LaserScan& message );
+		void publish( sensor_msgs::LaserScanPtr message );
 
 		void reset( ros::NodeHandle& nodeHandle );
 		
@@ -54,9 +54,8 @@ namespace Sinfonia
 	    protected:
 		bool _isInitialized;
 		ros::Publisher _publisher;
-		std::string _topic;
+		std::string _topicName;
 	};
-
     } 
 } 
 

@@ -57,14 +57,14 @@ namespace Sinfonia
 
 		void reset( ros::NodeHandle& nodeHandle )
 		{
-		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << topic() << " is resetting" << RESETCOLOR <<std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << getTopicName() << " is resetting" << RESETCOLOR <<std::endl;
 		    _publisherPtr->reset( nodeHandle );
-		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << topic() << " reset" << RESETCOLOR << std::endl;
+		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << getTopicName() << " reset" << RESETCOLOR << std::endl;
 		}
 
-		std::string topic() const
+		std::string getTopicName() const
 		{
-		    return _publisherPtr->topic();
+		    return _publisherPtr->getTopicName();
 		}
 		
 		void shutdown() const
@@ -73,7 +73,7 @@ namespace Sinfonia
 		}
 		friend bool operator==( const Publisher& lhs, const Publisher& rhs )
 		{
-		    if (lhs.topic() == rhs.topic())
+		    if (lhs.getTopicName() == rhs.getTopicName())
 			return true;
 		    return false;
 		}
@@ -91,7 +91,7 @@ namespace Sinfonia
 		    virtual bool isInitialized() const = 0;
 		    virtual bool isSubscribed() const = 0;
 		    virtual void reset( ros::NodeHandle& nh ) = 0;
-		    virtual std::string topic() const = 0;
+		    virtual std::string getTopicName() const = 0;
 		    virtual void shutdown() = 0;
 		};
 
@@ -103,9 +103,9 @@ namespace Sinfonia
 			_publisher = other;
 		    }
 
-		    std::string topic() const
+		    std::string getTopicName() const
 		    {
-			return _publisher->topic();
+			return _publisher->getTopicName();
 		    }
 
 		    bool isInitialized() const

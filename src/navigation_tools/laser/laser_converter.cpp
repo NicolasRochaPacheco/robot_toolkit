@@ -125,6 +125,7 @@ namespace Sinfonia
 	    BaseConverter( name, frequency, session )
 	{
 	    _pMemory = _session->service("ALMemory");
+	    _laserMessage = boost::make_shared<sensor_msgs::LaserScan>();
 	}
 	
 	void LaserConverter::registerCallback(MessageAction::MessageAction action, LaserConverter::CallbackT callback)
@@ -138,7 +139,7 @@ namespace Sinfonia
 	    callLaser();
 	    for_each(MessageAction::MessageAction action, actions)
 	    {
-		_callbacks[action](_message);
+		_callbacks[action](_laserMessage);
 	    }
 	    //std::cout << BOLDYELLOW << "Topic: /laser " << BOLDCYAN << "elapsed time (s): "<< std::fixed << std::setprecision(8) << ros::Time::now().toSec() - init << std::endl;
 	}
@@ -157,7 +158,7 @@ namespace Sinfonia
 		std::cerr << "Exception caught in LaserConverter: " << e.what() << std::endl;
 		return;
 	    }
-	    _message.header.stamp = ros::Time::now();
+	    _laserMessage->header.stamp = ros::Time::now();
 	    
 	    size_t pos = 0;
 
@@ -168,7 +169,7 @@ namespace Sinfonia
 		float bx = lx*std::cos(-1.757) - ly*std::sin(-1.757) - 0.018;
 		float by = lx*std::sin(-1.757) + ly*std::cos(-1.757) - 0.090;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_message.ranges[pos] = dist;
+		_laserMessage->ranges[pos] = dist;
 	    }
 
 	    pos = pos+8;
@@ -180,7 +181,7 @@ namespace Sinfonia
 		float bx = lx + 0.056 ;
 		float by = ly;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_message.ranges[pos] = dist;
+		_laserMessage->ranges[pos] = dist;
 	    }
 
 	    pos = pos+8;
@@ -192,19 +193,19 @@ namespace Sinfonia
 		float bx = lx*std::cos(1.757) - ly*std::sin(1.757) - 0.018;
 		float by = lx*std::sin(1.757) + ly*std::cos(1.757) + 0.090;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_message.ranges[pos] = dist;
+		_laserMessage->ranges[pos] = dist;
 	    }
 	}
 	
 	void LaserConverter::reset()
 	{
-	    _message.header.frame_id = "base_footprint";
-	    _message.angle_min = -2.0944;
-	    _message.angle_max = 2.0944;   
-	    _message.angle_increment = (2*2.0944) / (15+15+15+8+8); 
-	    _message.range_min = 0.1;
-	    _message.range_max = 1.5;
-	    _message.ranges = std::vector<float>(61, -1.0f);
+	    _laserMessage->header.frame_id = "base_footprint";
+	    _laserMessage->angle_min = -2.0944;
+	    _laserMessage->angle_max = 2.0944;   
+	    _laserMessage->angle_increment = (2*2.0944) / (15+15+15+8+8); 
+	    _laserMessage->range_min = 0.1;
+	    _laserMessage->range_max = 1.5;
+	    _laserMessage->ranges = std::vector<float>(61, -1.0f);
 	}
 
 	std::vector< float > LaserConverter::fromAnyValueToFloatVector(qi::AnyValue& value, std::vector< float >& result)

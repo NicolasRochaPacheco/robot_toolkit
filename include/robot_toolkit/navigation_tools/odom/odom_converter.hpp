@@ -40,7 +40,7 @@ namespace Sinfonia
 
 	class OdomConverter : public BaseConverter<OdomConverter>
 	{
-	    typedef boost::function<void(nav_msgs::Odometry&)> callbackT;
+	    typedef boost::function<void(nav_msgs::OdometryPtr)> callbackT;
 
 	    public:
 		OdomConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
@@ -48,16 +48,16 @@ namespace Sinfonia
 		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 		void reset( );
 		
-		void setConfig(std::vector<int> configs){}
+		void setConfig(std::vector<float> configs){}
 		
-		std::vector<int> setParameters(std::vector<int> parameters){}
-		std::vector<int> setAllParametersToDefault(){}
-		std::vector<int> getParameters(){}
+		std::vector<float> setParameters(std::vector<float> parameters){}
+		std::vector<float> setAllParametersToDefault(){}
+		std::vector<float> getParameters(){}
 
 	    private:
 		qi::AnyObject _pMotion;
 		std::map<MessageAction::MessageAction, callbackT> _callbacks;
-		nav_msgs::Odometry _msgOdom;
+		boost::shared_ptr<nav_msgs::Odometry> _msgOdom;
 		
 		void callOdom();
 	};

@@ -23,14 +23,19 @@ namespace Sinfonia
 {
     namespace Publisher 
     {
-	OdomPublisher::OdomPublisher()
+	OdomPublisher::OdomPublisher(std::string topicName)
 	{
-	    _topic = "/odom";
+	    _topicName = topicName;
 	}
 	
-	std::string OdomPublisher::topic()
+	OdomPublisher::~OdomPublisher()
 	{
-	    return _topic;
+
+	}
+	
+	std::string OdomPublisher::getTopicName()
+	{
+	    return _topicName;
 	}
 	
 	bool OdomPublisher::isInitialized()
@@ -38,16 +43,17 @@ namespace Sinfonia
 	    return _isInitialized;
 	}
 	
-	void OdomPublisher::publish(const nav_msgs::Odometry odomMessage)
+	void OdomPublisher::publish(const nav_msgs::OdometryPtr odomMessage)
 	{
-	    _publisher.publish(odomMessage);
-	}
-	void OdomPublisher::reset(ros::NodeHandle& nodeHandle)
-	{
-	    _publisher = nodeHandle.advertise<nav_msgs::Odometry>(_topic, 10 );
-	    _isInitialized = true;
+	    _publisher.publish(*odomMessage);
 	}
 	
+	void OdomPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _publisher = nodeHandle.advertise<nav_msgs::Odometry>(_topicName, 10 );
+	    _isInitialized = true;   
+	}
+
 	bool OdomPublisher::isSubscribed() const
 	{
 	    if (!_isInitialized) 

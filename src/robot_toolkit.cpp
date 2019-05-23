@@ -166,9 +166,9 @@ namespace Sinfonia
     
     void RobotToolkit::startInitialTopics()
     {
+	// Poner aqui el schedule de los topicos que deben inciar desde el inicio  
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
-	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Update 3!" << std::endl;
     }
 
 
@@ -184,21 +184,26 @@ namespace Sinfonia
 	_tf2Buffer.reset<tf2_ros::Buffer>( new tf2_ros::Buffer() );
 	_tf2Buffer->setUsingDedicatedThread(true);
 
-	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>();
+	boost::shared_ptr<Publisher::TfPublisher> tfPublisher = boost::make_shared<Publisher::TfPublisher>("/tf");
 	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 50, _tf2Buffer, _sessionPtr );
 	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
 	registerGroup( tfConverter, tfPublisher);
 	
 	
-	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>();
-	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>( "odom", 10, _sessionPtr );
+	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>("/odom");
+	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>("odom", 10, _sessionPtr );
 	odomConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomPublisher::publish, odomPublisher, _1) );
 	registerGroup( odomConverter, odomPublisher);
 	
-	boost::shared_ptr<Publisher::LaserPublisher> laserPublisher = boost::make_shared<Publisher::LaserPublisher>();
+	boost::shared_ptr<Publisher::LaserPublisher> laserPublisher = boost::make_shared<Publisher::LaserPublisher>("/laser");
 	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
+	
+	boost::shared_ptr<Publisher::LaserPublisher> depthToLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/depth_to_laser");
+	boost::shared_ptr<Converter::DepthToLaserConverter> depthToLaserConverter = boost::make_shared<Converter::DepthToLaserConverter>( "depth_to_laser", 10, _sessionPtr, Helpers::VisionHelpers::kQVGA);
+	depthToLaserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, depthToLaserPublisher, _1) );
+	registerGroup( depthToLaserConverter, depthToLaserPublisher);
 	
 	boost::shared_ptr<Publisher::CameraPublisher> frontCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/front/image_raw");
 	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>( "front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
@@ -384,9 +389,19 @@ namespace Sinfonia
 	    scheduleConverter("tf", 50.0f);
 	    scheduleConverter("odom", 10.0f);
 	    scheduleConverter("laser", 10.0f);
+	    int converterIndex = getConverterIndex("depth_to_laser");
+	    if( converterIndex != -1 )
+	    {
+		std::vector<float> config;
+		config.push_back(Helpers::VisionHelpers::kQVGA);
+		_converters[converterIndex].setConfig(config);
+		_converters[converterIndex].setAllParametersToDefault();
+		_converters[converterIndex].reset();
+		scheduleConverter("depth_to_laser", 10.0f);
+	    }
 	    startSubscriber("cmd_vel");
 	    startSubscriber("moveto");
-	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, cmd_vel, move_to";
+	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "disable_all" )
@@ -395,9 +410,10 @@ namespace Sinfonia
 	    unscheduleConverter("tf");
 	    unscheduleConverter("odom");
 	    unscheduleConverter("laser");
+	    unscheduleConverter("depth_to_laser");
 	    stopSubscriber("cmd_vel");
 	    stopSubscriber("moveto");
-	    responseMessage = "Functionalities stopped: tf, odom, laser, cmd_vel, move_to";
+	    responseMessage = "Functionalities stopped: tf, odom, laser, depth_to_laser, cmd_vel, move_to";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "custom" )
@@ -437,6 +453,37 @@ namespace Sinfonia
 	    {
 		unscheduleConverter("laser");
 		stoppedFunctionalities += "laser, ";
+	    }
+	    
+	    if( request.data.depth_to_laser_enable )
+	    {
+		int converterIndex = getConverterIndex("depth_to_laser");
+		if( converterIndex != -1 )
+		{
+		    std::vector<float> config;
+		    config.push_back(request.data.depth_to_laser_parameters.resolution);
+		    std::vector<float> parameters;
+		    parameters.push_back(request.data.depth_to_laser_parameters.scan_time);
+		    parameters.push_back(request.data.depth_to_laser_parameters.range_min);
+		    parameters.push_back(request.data.depth_to_laser_parameters.range_max);
+		    parameters.push_back(request.data.depth_to_laser_parameters.scan_height);
+		    std::cout << "Aqui toy 0"  << std::endl;
+		    _converters[converterIndex].setConfig(config);
+		    std::cout << "Aqui toy 1"  << std::endl;
+		    _converters[converterIndex].setParameters(parameters);
+		    std::cout << "Aqui toy 2"  << std::endl;
+		    _converters[converterIndex].reset();
+		    std::cout << "Aqui toy 3"  << std::endl;
+		    scheduleConverter("depth_to_laser", 10.0f);
+		    std::cout << "Aqui toy 4"  << std::endl;
+		}
+		startedFunctionalities += "depth_to_laser@10Hz";
+		
+	    }
+	    else
+	    {
+		unscheduleConverter("depth_to_laser");
+		stoppedFunctionalities += "depth_to_laser, ";
 	    }
 	    
 	    if( request.data.cmd_vel_enable )
@@ -489,7 +536,7 @@ namespace Sinfonia
 		int converterIndex = getConverterIndex(request.data.camera_name);
 		if( converterIndex != -1 )
 		{
-		    std::vector<int> config;
+		    std::vector<float> config;
 		    config.push_back(Helpers::VisionHelpers::kQVGA);
 		    config.push_back(10);
 		    if( request.data.camera_name == "depth_camera" )
@@ -585,7 +632,7 @@ namespace Sinfonia
 		    }
 		    if(configOk)
 		    {
-			std::vector<int> config;
+			std::vector<float> config;
 			config.push_back(request.data.resolution);
 			config.push_back(request.data.frame_rate);
 			config.push_back(request.data.color_space);
@@ -596,7 +643,7 @@ namespace Sinfonia
 			    currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setAllParametersToDefault());
 			}
 			scheduleConverter(request.data.camera_name, request.data.frame_rate);
-			responseMessage = "Starting: " + request.data.camera_name + " with custom configuration and parameters";
+			responseMessage = " Starting: " + request.data.camera_name + " with custom configuration and parameters";
 			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << responseMessage << RESETCOLOR  << std::endl;
 			
 		    }
@@ -662,7 +709,7 @@ namespace Sinfonia
 	return -1;
     }
     
-    robot_toolkit_msgs::camera_parameters_msg RobotToolkit::toCameraParametersMsg(std::vector< int > params)
+    robot_toolkit_msgs::camera_parameters_msg RobotToolkit::toCameraParametersMsg(std::vector< float > params)
     {
 	robot_toolkit_msgs::camera_parameters_msg result;
 	result.brightness = params[0];
@@ -687,9 +734,9 @@ namespace Sinfonia
 	return result;
     }
 
-    std::vector< int > RobotToolkit::toVector(robot_toolkit_msgs::camera_parameters_msg params)
+    std::vector< float > RobotToolkit::toVector(robot_toolkit_msgs::camera_parameters_msg params)
     {
-	std::vector<int>  result; 
+	std::vector<float>  result; 
 	result.push_back(params.brightness);
 	result.push_back(params.contrast);
 	result.push_back(params.saturation);

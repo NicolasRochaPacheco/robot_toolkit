@@ -4,6 +4,7 @@ project(robot_toolkit)
 set(
   CONVERTERS_SRC
     src/navigation_tools/laser/laser_converter.cpp
+    src/navigation_tools/laser/depth_to_laser_converter.cpp
     src/navigation_tools/odom/odom_converter.cpp
     src/navigation_tools/tf/tf_converter.cpp
     
@@ -47,7 +48,6 @@ set(
   ROBOT_TOOLKIT_SRC
   src/robot_toolkit.cpp
   src/helpers/toolkit_helpers.cpp
-  ##src/recorders/global_recorder.cpp
   )
   
 
@@ -74,6 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   tf2_msgs
   tf2_ros
+  image_geometry
   robot_toolkit_msgs
 )
 

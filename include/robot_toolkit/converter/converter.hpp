@@ -80,20 +80,20 @@ namespace Sinfonia
 		    return _lapseTime;
 		}
 		
-		void setConfig(std::vector<int> configs)
+		void setConfig(std::vector<float> configs)
 		{
 		    converterPtr->setConfig(configs);
 		}
 		
-		std::vector<int> setParameters(std::vector<int> parameters)
+		std::vector<float> setParameters(std::vector<float> parameters)
 		{
 		    return converterPtr->setParameters(parameters);
 		}
-		std::vector<int> setAllParametersToDefault()
+		std::vector<float> setAllParametersToDefault()
 		{
 		    return converterPtr->setAllParametersToDefault();
 		}
-		std::vector<int> getParameters()
+		std::vector<float> getParameters()
 		{
 		    return converterPtr->getParameters();
 		}
@@ -115,10 +115,10 @@ namespace Sinfonia
 		    virtual void setFrequency(float frequency)  = 0;
 		    virtual void reset() = 0;
 		    virtual void callAll( const std::vector<Sinfonia::MessageAction::MessageAction>& actions ) = 0;
-		    virtual void setConfig(std::vector<int> configs) = 0;
-		    virtual std::vector<int> setParameters(std::vector<int> parameters) = 0;
-		    virtual std::vector<int> setAllParametersToDefault() = 0;
-		    virtual std::vector<int> getParameters() = 0;
+		    virtual void setConfig(std::vector<float> configs) = 0;
+		    virtual std::vector<float> setParameters(std::vector<float> parameters) = 0;
+		    virtual std::vector<float> setAllParametersToDefault() = 0;
+		    virtual std::vector<float> getParameters() = 0;
 		};
 
 		template<typename T>
@@ -153,22 +153,22 @@ namespace Sinfonia
 			converter_->callAll( actions );
 		    }
 
-		    void setConfig(std::vector<int> configs)
+		    void setConfig(std::vector<float> configs)
 		    {
 			converter_->setConfig(configs);
 		    }
 		    
-		    std::vector<int> setParameters(std::vector<int> parameters)
+		    std::vector<float> setParameters(std::vector<float> parameters)
 		    {
 			return converter_->setParameters(parameters);
 		    }
 		    
-		    std::vector<int> setAllParametersToDefault()
+		    std::vector<float> setAllParametersToDefault()
 		    {
 			return converter_->setAllParametersToDefault();
 		    }
 		    
-		    std::vector<int> getParameters()
+		    std::vector<float> getParameters()
 		    {
 			return converter_->getParameters();
 		    }

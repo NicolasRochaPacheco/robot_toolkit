@@ -36,12 +36,11 @@ namespace Sinfonia
     namespace Converter
     {
 
-	TfConverter::TfConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session ):
-	BaseConverter( name, frequency, session ),
-	_tf2Buffer(tf2Buffer)
+		TfConverter::TfConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session ):
+	BaseConverter( name, frequency, session )
 	{
 	    _pMotion =  session->service("ALMotion");
-	    //_tf2Buffer = tf2Buffer;
+	    _tf2Buffer = tf2Buffer;
 	    _robotDescription = Tools::getRobotDescription();
     
 	}
@@ -118,10 +117,9 @@ namespace Sinfonia
 		    tfTransform.child_frame_id = seg->second.tip;
 
 		    _tfTransforms.push_back(tfTransform);
+
 		    if (_tf2Buffer)
-		    {
 			_tf2Buffer->setTransform(tfTransform, "naoqiconverter", false);
-		    }
 		}
 	    }
 
@@ -145,11 +143,9 @@ namespace Sinfonia
 		tfTransform.child_frame_id = seg->second.tip;
 
 		_tfTransforms.push_back(tfTransform);
+
 		if (_tf2Buffer)
-		{
-		    _tf2Buffer->setTransform(tfTransform, "naoqiconverter", true);
-		}
-		    
+		_tf2Buffer->setTransform(tfTransform, "naoqiconverter", true);
 	    }
 	 }
 

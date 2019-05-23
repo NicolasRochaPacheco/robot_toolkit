@@ -31,6 +31,9 @@
 #include "robot_toolkit/message_actions.h"
 
 #include <boost/assign/list_of.hpp>
+#include <ros/package.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <image_transport/image_transport.h>
 #include "robot_toolkit/helpers/vision_helpers.hpp"
@@ -47,7 +50,7 @@ namespace Sinfonia
 	class CameraConverter : public BaseConverter<CameraConverter>
 	{
 
-	    typedef boost::function<void(sensor_msgs::ImagePtr, sensor_msgs::CameraInfo)> CallbackT;
+	    typedef boost::function<void(sensor_msgs::ImagePtr, sensor_msgs::CameraInfoPtr)> CallbackT;
 
 	    public:
 		CameraConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution, int colorSpace);
@@ -59,12 +62,12 @@ namespace Sinfonia
 
 		void reset( );
 		
-		std::vector<int> setParameters(std::vector<int> parameters);
-		std::vector<int> setAllParametersToDefault();
-		std::vector<int> getParameters();
+		std::vector<float> setParameters(std::vector<float> parameters);
+		std::vector<float> setAllParametersToDefault();
+		std::vector<float> getParameters();
 		
 		
-		void setConfig(std::vector<int> configs);
+		void setConfig(std::vector<float> configs);
 		
 
 	    private:
@@ -82,24 +85,15 @@ namespace Sinfonia
 		int _cvMatType;
 		
 		std::string _msgFrameid;
-		sensor_msgs::CameraInfo _cameraInfo;
+		sensor_msgs::CameraInfoPtr _cameraInfo;
 		sensor_msgs::ImagePtr _imageMsg;
 		
 		void callCamera();
-		const sensor_msgs::CameraInfo& getCameraInfo( int cameraSource, int resolution );
-		const sensor_msgs::CameraInfo& getEmptyInfo();
+		sensor_msgs::CameraInfoPtr loadCameraInfo();
+		const sensor_msgs::CameraInfoPtr getEmptyInfo();
 		
 		Helpers::VisionHelpers::NaoqiImage fromAnyValueToNaoqiImage(qi::AnyValue& value);
 		
-		sensor_msgs::CameraInfo createCameraInfoTOPVGA();
-		sensor_msgs::CameraInfo createCameraInfoTOPQVGA();
-		sensor_msgs::CameraInfo createCameraInfoTOPQQVGA();
-		sensor_msgs::CameraInfo createCameraInfoBOTTOMVGA();
-		sensor_msgs::CameraInfo createCameraInfoBOTTOMQVGA();
-		sensor_msgs::CameraInfo createCameraInfoBOTTOMQQVGA();
-		sensor_msgs::CameraInfo createCameraInfoDEPTHVGA();
-		sensor_msgs::CameraInfo createCameraInfoDEPTHQVGA();
-		sensor_msgs::CameraInfo createCameraInfoDEPTHQQVGA();
 		
 	};
 

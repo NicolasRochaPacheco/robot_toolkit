@@ -24,14 +24,14 @@ namespace Sinfonia
     namespace Publisher
     {
 	
-	CameraPublisher::CameraPublisher(std::string topic)
+	CameraPublisher::CameraPublisher(std::string topicName)
 	{
-	    _topic = topic;
+	    _topicName = topicName;
 	}
 	
-	std::string CameraPublisher::topic()
+	std::string CameraPublisher::getTopicName()
 	{
-	    return _topic;
+	    return _topicName;
 	}
 	
 	bool CameraPublisher::isInitialized()
@@ -39,15 +39,15 @@ namespace Sinfonia
 	    return _isInitialized;
 	}
 
-	void CameraPublisher::publish(const sensor_msgs::ImagePtr& img, const sensor_msgs::CameraInfo& cameraInfo)
+	void CameraPublisher::publish(const sensor_msgs::ImagePtr img, const sensor_msgs::CameraInfoPtr cameraInfo)
 	{
-	    _publisher.publish(*img, cameraInfo);
+	    _publisher.publish(*img, *cameraInfo);
 	}
 	
 	void CameraPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
 	    image_transport::ImageTransport it( nodeHandle );
-	    _publisher = it.advertiseCamera( _topic, 1 );
+	    _publisher = it.advertiseCamera( _topicName, 1 );
 
 	    if ( _cameraSource != Helpers::VisionHelpers::kDepthCamera)
 	    {
@@ -59,9 +59,9 @@ namespace Sinfonia
 		args[2] = result[2];
 		
 		std::vector<std::string> topicList;
-		topicList.push_back(std::string("/") + nodeName + "/" + _topic + std::string("/compressedDepth"));
-		topicList.push_back(std::string("/") + nodeName + "/" + _topic + std::string("/compressedDepth/parameter_updates"));
-		topicList.push_back(std::string("/") + nodeName + "/" + _topic + std::string("/compressedDepth/parameter_descriptions"));
+		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth"));
+		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth/parameter_updates"));
+		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth/parameter_descriptions"));
 
 		for(std::vector<std::string>::const_iterator topic = topicList.begin(); topic != topicList.end(); ++topic)
 		{
@@ -69,9 +69,7 @@ namespace Sinfonia
 		    ros::master::execute("unregisterPublisher", args, result, payload, false);
 		}
 	    }
-
 	    _isInitialized = true;
-
 	}
 
 	bool CameraPublisher::isSubscribed() const
@@ -90,6 +88,5 @@ namespace Sinfonia
 	{
 	    _cameraSource = cameraSource;
 	}
-
     }
 }

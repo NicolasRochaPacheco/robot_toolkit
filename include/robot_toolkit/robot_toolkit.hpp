@@ -57,6 +57,7 @@
 #include "robot_toolkit/navigation_tools/tf/tf_converter.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"
 #include "robot_toolkit//navigation_tools/laser/laser_converter.hpp"
+#include "robot_toolkit//navigation_tools/laser/depth_to_laser_converter.hpp"
 
 #include "robot_toolkit/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
@@ -149,8 +150,8 @@ namespace Sinfonia
 	    void stopSubscriber(std::string subscriberName);
 	    int getConverterIndex(std::string name);
 	    void insertEventConverter( const std::string& key, Event::Event event);	    
-	    robot_toolkit_msgs::camera_parameters_msg toCameraParametersMsg(std::vector<int> params);
-	    std::vector<int> toVector(robot_toolkit_msgs::camera_parameters_msg params);
+	    robot_toolkit_msgs::camera_parameters_msg toCameraParametersMsg(std::vector<float> params);
+	    std::vector<float> toVector(robot_toolkit_msgs::camera_parameters_msg params);
 	    int getSubscriberIndex(std::string name);
 	    robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
     };

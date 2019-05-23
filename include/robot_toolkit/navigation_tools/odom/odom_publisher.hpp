@@ -34,12 +34,13 @@ namespace Sinfonia
 	{
 
 	    public:
-		OdomPublisher();
-		std::string topic();
+		OdomPublisher(std::string topicName);
+		~OdomPublisher();
+		std::string getTopicName();
 
 		bool isInitialized();
 		
-		virtual void publish(const nav_msgs::Odometry odomMessage);
+		virtual void publish(const nav_msgs::OdometryPtr odomMessage);
 		virtual void reset( ros::NodeHandle& nodeHandle );
 		virtual bool isSubscribed() const;
 		virtual void shutdown();
@@ -47,10 +48,9 @@ namespace Sinfonia
 	    private:
 		ros::Publisher _publisher;
 
-		std::string _topic;
+		std::string _topicName;
 
 		bool _isInitialized;
-
 	};
 
     }

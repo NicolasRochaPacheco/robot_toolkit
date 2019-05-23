@@ -47,9 +47,9 @@ namespace Sinfonia
 		return false;
 	    return _publisher.getNumSubscribers() > 0;
 	}
-	void MicPublisher::publish(naoqi_bridge_msgs::AudioBuffer& message)
+	void MicPublisher::publish(naoqi_bridge_msgs::AudioBufferPtr message)
 	{
-	    _publisher.publish( message );
+	    _publisher.publish( *message );
 	}
 	void MicPublisher::reset(ros::NodeHandle& nodeHandle)
 	{

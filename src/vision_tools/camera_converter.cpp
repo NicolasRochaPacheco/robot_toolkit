@@ -31,10 +31,10 @@ namespace Sinfonia
 	{	    
 	    _pVideo = session->service("ALVideoDevice");
 	    _cameraSource = cameraSource;
-	    std::vector<int> configs;
-	    configs.push_back(resolution);
-	    configs.push_back(frequency);
-	    configs.push_back(colorSpace);
+	    std::vector<float> configs;
+	    configs.push_back((float)resolution);
+	    configs.push_back((float)frequency);
+	    configs.push_back((float)colorSpace);
 	    setConfig(configs);
 	}
 	
@@ -73,10 +73,10 @@ namespace Sinfonia
 		_pVideo.call<qi::AnyValue>("unsubscribe", _handle);
 		_handle.clear();
 	    }
-	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);	   	    
+	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);  
 	}
 	
-	std::vector<int> CameraConverter::setParameters(std::vector<int> parameters)
+	std::vector<float> CameraConverter::setParameters(std::vector<float> parameters)
 	{
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID, parameters[0]);
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraContrastID, parameters[1]);
@@ -101,15 +101,15 @@ namespace Sinfonia
 	    return getParameters();
 	}
 	
-	std::vector<int> CameraConverter::setAllParametersToDefault()
+	std::vector<float> CameraConverter::setAllParametersToDefault()
 	{
 	    _pVideo.call<bool>("setAllParametersToDefault", _cameraSource);
 	    return getParameters();
 	}
 
-	std::vector<int> CameraConverter::getParameters()
+	std::vector<float> CameraConverter::getParameters()
 	{
-	    std::vector<int> result;
+	    std::vector<float> result;
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID));
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraContrastID));
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraSaturationID));
@@ -150,99 +150,139 @@ namespace Sinfonia
 	    _imageMsg->header.frame_id = _msgFrameid;
 
 	    _imageMsg->header.stamp = ros::Time::now();
-	    _cameraInfo.header.stamp = _imageMsg->header.stamp;
+	    _cameraInfo->header.stamp = _imageMsg->header.stamp;
 	}
 	
-	const sensor_msgs::CameraInfo& CameraConverter::getEmptyInfo()
+	const sensor_msgs::CameraInfoPtr CameraConverter::getEmptyInfo()
 	{
-	    static const sensor_msgs::CameraInfo camInfoMsg;
+	    static const boost::shared_ptr<sensor_msgs::CameraInfo> camInfoMsg = boost::make_shared<sensor_msgs::CameraInfo>();
 	    return camInfoMsg;
 	}
-
-	const sensor_msgs::CameraInfo& CameraConverter::getCameraInfo(int cameraSource, int resolution)
+	
+	sensor_msgs::CameraInfoPtr CameraConverter::loadCameraInfo()
 	{
-	    if ( _cameraSource == Helpers::VisionHelpers::kTopCamera )
+	    std::string resolutionName;
+	    if(_resolution == Helpers::VisionHelpers::kQVGA)
 	    {
-		if ( resolution == Helpers::VisionHelpers::kVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoTOPVGA();
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoTOPQVGA();
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoTOPQQVGA();
-		    return camInfoMsg;
-		}
-		else
-		{
-		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
-		    return getEmptyInfo();
-		}
+		resolutionName = "kQVGA";
 	    }
-	    else if ( _cameraSource == Helpers::VisionHelpers::kBottomCamera )
+	    else if(_resolution == Helpers::VisionHelpers::kQQVGA)
 	    {
-		if ( resolution == Helpers::VisionHelpers::kVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoBOTTOMVGA();
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoBOTTOMQVGA();
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoBOTTOMQQVGA();
-		    return camInfoMsg;
-		}
-		else
-		{
-		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
-		    return getEmptyInfo();
-		}
+		resolutionName = "kQQVGA";
 	    }
-	    else if ( _cameraSource == Helpers::VisionHelpers::kDepthCamera )
+	    else if(_resolution == Helpers::VisionHelpers::kQQQVGA)
 	    {
-		if ( resolution == Helpers::VisionHelpers::kVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoDEPTHVGA();
-		    ROS_WARN("VGA resolution is not supported for the depth camera, use QVGA or lower");
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoDEPTHQVGA();
-		    return camInfoMsg;
-		}
-		else if( resolution == Helpers::VisionHelpers::kQQVGA )
-		{
-		    static const sensor_msgs::CameraInfo camInfoMsg = createCameraInfoDEPTHQQVGA();
-		    return camInfoMsg;
-		}
-		else
-		{
-		    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
-		    return getEmptyInfo();
-		}
+		resolutionName = "kQQQVGA";
+	    }
+	    else if(_resolution == Helpers::VisionHelpers::kQQQQVGA)
+	    {
+		resolutionName = "kQQQQVGA";
+	    }
+	    else if(_resolution == Helpers::VisionHelpers::kVGA && _cameraSource != Helpers::VisionHelpers::kBottomCamera )
+	    {
+		resolutionName = "kVGA";
+	    }
+	    else if(_resolution == Helpers::VisionHelpers::k4VGA && _cameraSource != Helpers::VisionHelpers::kBottomCamera)
+	    {
+		resolutionName = "k4VGA";
+	    }
+	    else if(_resolution == Helpers::VisionHelpers::k16VGA && _cameraSource != Helpers::VisionHelpers::kBottomCamera)
+	    {
+		resolutionName = "k16VGA";
 	    }
 	    else
 	    {
-		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "no camera information found for camera source " << _cameraSource << " and res: " << resolution << std::endl;
+		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "Resolution not supported " << _cameraSource << " and res: " << _resolution << std::endl;
 		return getEmptyInfo();
 	    }
+	    
+	    boost::property_tree::ptree config;
+	    std::string path;
+	    static const boost::shared_ptr<sensor_msgs::CameraInfo> cameraInfoMessage = boost::make_shared<sensor_msgs::CameraInfo>();
+	    if(_cameraSource == Helpers::VisionHelpers::kTopCamera )
+	    {
+		path = ros::package::getPath("robot_toolkit")+"/share/camera_info/top_camera_info.json";
+		cameraInfoMessage->header.frame_id = "Camera_top_optical_frame";
+	    }
+	    else if(_cameraSource == Helpers::VisionHelpers::kBottomCamera)
+	    {
+		path = ros::package::getPath("robot_toolkit")+"/share/camera_info/bottom_camera_info.json";
+		cameraInfoMessage->header.frame_id = "Camera_bottom_optical_frame";
+	    }
+	    else
+	    {
+		path = ros::package::getPath("robot_toolkit")+"/share/camera_info/depth_camera_info.json";
+		cameraInfoMessage->header.frame_id = "Camera_depth_optical_frame";
+	    }
+	    
+	    try
+	    {
+		boost::property_tree::read_json(path, config);
+	    }
+	    catch(std::exception& e)
+	    {
+		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << "Not Found  camera info json " << path << std::endl;
+		return getEmptyInfo();
+	    }
+	    
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Found a camera info JSON " << path << std::endl;
+	    
+	    cameraInfoMessage->width = config.get<int>(resolutionName + ".width", 0);
+	    cameraInfoMessage->height = config.get<int>(resolutionName + ".height", 0);
+	    cameraInfoMessage->distortion_model = config.get<std::string>(resolutionName + ".distortion_model", "None");
+	    
+	    cameraInfoMessage->D = boost::assign::list_of(config.get<double>(resolutionName + ".D.0", 0))(config.get<double>(resolutionName + ".D.1", 0))(config.get<double>(resolutionName + ".D.2", 0))(config.get<double>(resolutionName + ".D.3", 0))(config.get<double>(resolutionName + ".D.4", 0)).convert_to_container<std::vector<double> >();
+	   
+	    cameraInfoMessage->K[0] = config.get<double>(resolutionName + ".K.0", 0);
+	    cameraInfoMessage->K[1] = config.get<double>(resolutionName + ".K.1", 0);
+	    cameraInfoMessage->K[2] = config.get<double>(resolutionName + ".K.2", 0);
+	    cameraInfoMessage->K[3] = config.get<double>(resolutionName + ".K.3", 0);
+	    cameraInfoMessage->K[4] = config.get<double>(resolutionName + ".K.4", 0);
+	    cameraInfoMessage->K[5] = config.get<double>(resolutionName + ".K.5", 0);
+	    cameraInfoMessage->K[6] = config.get<double>(resolutionName + ".K.6", 0);
+	    cameraInfoMessage->K[7] = config.get<double>(resolutionName + ".K.7", 0);
+	    cameraInfoMessage->K[8] = config.get<double>(resolutionName + ".K.8", 0);
+	    
+	    cameraInfoMessage->R[0] = config.get<double>(resolutionName + ".R.0", 0);
+	    cameraInfoMessage->R[1] = config.get<double>(resolutionName + ".R.1", 0);
+	    cameraInfoMessage->R[2] = config.get<double>(resolutionName + ".R.2", 0);
+	    cameraInfoMessage->R[3] = config.get<double>(resolutionName + ".R.3", 0);
+	    cameraInfoMessage->R[4] = config.get<double>(resolutionName + ".R.4", 0);
+	    cameraInfoMessage->R[5] = config.get<double>(resolutionName + ".R.5", 0);
+	    cameraInfoMessage->R[6] = config.get<double>(resolutionName + ".R.6", 0);
+	    cameraInfoMessage->R[7] = config.get<double>(resolutionName + ".R.7", 0);
+	    cameraInfoMessage->R[8] = config.get<double>(resolutionName + ".R.8", 0);
+	    
+	    cameraInfoMessage->P[0] = config.get<double>(resolutionName + ".P.0", 0);
+	    cameraInfoMessage->P[1] = config.get<double>(resolutionName + ".P.1", 0);
+	    cameraInfoMessage->P[2] = config.get<double>(resolutionName + ".P.2", 0);
+	    cameraInfoMessage->P[3] = config.get<double>(resolutionName + ".P.3", 0);
+	    cameraInfoMessage->P[4] = config.get<double>(resolutionName + ".P.4", 0);
+	    cameraInfoMessage->P[5] = config.get<double>(resolutionName + ".P.5", 0);
+	    cameraInfoMessage->P[6] = config.get<double>(resolutionName + ".P.6", 0);
+	    cameraInfoMessage->P[7] = config.get<double>(resolutionName + ".P.7", 0);
+	    cameraInfoMessage->P[8] = config.get<double>(resolutionName + ".P.8", 0);
+	    cameraInfoMessage->P[9] = config.get<double>(resolutionName + ".P.9", 0);
+	    cameraInfoMessage->P[10] = config.get<double>(resolutionName + ".P.10", 0);
+	    cameraInfoMessage->P[11] = config.get<double>(resolutionName + ".P.11", 0);
+	    /*
+	    cameraInfoMessage->binning_x = config.get<int>(resolutionName + ".binning_x", 0);
+	    cameraInfoMessage->binning_y = config.get<int>(resolutionName + ".binning_y", 0);
+	    
+	    cameraInfoMessage->roi.x_offset = config.get<int>(resolutionName + ".roi.x_offset", 0);
+	    cameraInfoMessage->roi.y_offset = config.get<int>(resolutionName + ".roi.y_offset", 0);
+	    cameraInfoMessage->roi.height = config.get<int>(resolutionName + ".roi.height", 0);
+	    cameraInfoMessage->roi.width = config.get<int>(resolutionName + ".roi.width", 0);
+	    cameraInfoMessage->roi.do_rectify = config.get<bool>(resolutionName + ".roi.do_rectify", 0);*/
+	    
+	    return cameraInfoMessage;
 	}
 	
-	void CameraConverter::setConfig(std::vector<int> configs)
+	void CameraConverter::setConfig(std::vector<float> configs)
 	{
-	    _resolution = configs[0];
-	    setFrequency(configs[1]);
-	    _colorSpace = configs[2];
+	    _resolution = (int)configs[0];
+	    setFrequency((int)configs[1]);
+	    _colorSpace = (int)configs[2];
 
 	    if( _colorSpace == Helpers::VisionHelpers::kYuvColorSpace || _colorSpace == Helpers::VisionHelpers::kyUvColorSpace || _colorSpace == Helpers::VisionHelpers::kyuVColorSpace || _colorSpace == Helpers::VisionHelpers::kRgbColorSpace ||
 		_colorSpace == Helpers::VisionHelpers::krGbColorSpace || _colorSpace == Helpers::VisionHelpers::krgBColorSpace || _colorSpace == Helpers::VisionHelpers::kHsyColorSpace || _colorSpace == Helpers::VisionHelpers::khSyColorSpace ||
@@ -271,8 +311,7 @@ namespace Sinfonia
 		_msgColorspace = "rgb8"; 
 		_cvMatType = CV_8UC3;
 	    }
-	    _cameraInfo = getCameraInfo(_cameraSource, _resolution);
-	    
+	    _cameraInfo = loadCameraInfo();
 	    if ( _cameraSource == Helpers::VisionHelpers::kTopCamera )
 	    {
 		_msgFrameid = "CameraTop_optical_frame";
@@ -437,436 +476,5 @@ namespace Sinfonia
 	    }
 	    return result;
 	}
-
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoTOPVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraTop_optical_frame";
-
-	    cameraInfoMessage.width = 640;
-	    cameraInfoMessage.height = 480;
-	   
-	    cameraInfoMessage.K[0] = 556.845054830986;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 309.366895338178;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 555.898679730161;
-	    cameraInfoMessage.K[5] = 230.592233628776;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-	     
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0545211535376379)(0.0691973423510287)(-0.00241094929163055)(-0.00112245009306511)(0).convert_to_container<std::vector<double> >();
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 551.589721679688, 0, 308.271132841983, 0, 0, 550.291320800781, 229.20143668168, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 551.589721679688;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 308.271132841983;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 550.291320800781;
-	    cameraInfoMessage.P[6] = 229.20143668168;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoTOPQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraTop_optical_frame";
-
-	    cameraInfoMessage.width = 320;
-	    cameraInfoMessage.height = 240;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 274.139508945831, 0, 141.184472810944, 0, 275.741846757374, 106.693773654172, 0, 0, 1 }};
-	    cameraInfoMessage.K[0] = 274.139508945831;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 141.184472810944;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 275.741846757374;
-	    cameraInfoMessage.K[5] = 106.693773654172;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0870160932911717)(0.128210165050533)(0.003379500659424)(-0.00106205540818586)(0).convert_to_container<std::vector<double> >();
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 272.423675537109, 0, 141.131930791285, 0, 0, 273.515747070312, 107.391746054313, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 272.423675537109;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 141.131930791285;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 273.515747070312;
-	    cameraInfoMessage.P[6] = 107.391746054313;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoTOPQQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraTop_optical_frame";
-
-	    cameraInfoMessage.width = 160;
-	    cameraInfoMessage.height = 120;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 139.424539568966, 0, 76.9073669920582, 0, 139.25542782325, 59.5554242026743, 0, 0, 1 }};
-	    cameraInfoMessage.K[0] = 139.424539568966;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 76.9073669920582;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 139.25542782325;
-	    cameraInfoMessage.K[5] = 59.5554242026743;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0843564504845967)(0.125733083790192)(0.00275901756247071)(-0.00138645823460527)(0).convert_to_container<std::vector<double> >();
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 137.541534423828, 0, 76.3004646597892, 0, 0, 136.815216064453, 59.3909799751191, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 272.423675537109;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 141.131930791285;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 273.515747070312;
-	    cameraInfoMessage.P[6] = 107.391746054313;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoDEPTHVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraDepth_optical_frame";
-
-	    cameraInfoMessage.width = 640;
-	    cameraInfoMessage.height = 480;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 525, 0, 319.5000000, 0, 525, 239.5000000000000, 0, 0, 1  }};
-	    cameraInfoMessage.K[0] = 525;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 319.5000000;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 525;
-	    cameraInfoMessage.K[5] = 239.5000000000000;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 525, 0, 319.500000, 0, 0, 525, 239.5000000000, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 525;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 319.500000;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 525;
-	    cameraInfoMessage.P[6] = 239.5000000000;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoDEPTHQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraDepth_optical_frame";
-
-	    cameraInfoMessage.width = 320;
-	    cameraInfoMessage.height = 240;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 525/2.0f, 0, 319.5000000/2.0f, 0, 525/2.0f, 239.5000000000000/2.0f, 0, 0, 1  }};
-	    cameraInfoMessage.K[0] = 525/2.0f;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 319.5000000/2.0f;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 525/2.0f;
-	    cameraInfoMessage.K[5] = 239.5000000000000/2.0f;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 525/2.0f, 0, 319.500000/2.0f, 0, 0, 525/2.0f, 239.5000000000/2.0f, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 525/2.0f;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 319.500000/2.0f;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 525/2.0f;
-	    cameraInfoMessage.P[6] = 239.5000000000/2.0f;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoDEPTHQQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraDepth_optical_frame";
-
-	    cameraInfoMessage.width = 160;
-	    cameraInfoMessage.height = 120;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 525/4.0f, 0, 319.5000000/4.0f, 0, 525/4.0f, 239.5000000000000/4.0f, 0, 0, 1  }};
-	    cameraInfoMessage.K[0] = 525/4.0f;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 319.5000000/4.0f;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 525/4.0f;
-	    cameraInfoMessage.K[5] = 239.5000000000000/4.0f;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 525/4.0f, 0, 319.500000/4.0f, 0, 0, 525/4.0f, 239.5000000000/4.0f, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 525/4.0f;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 319.5000000/4.0f;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 525/4.0f;
-	    cameraInfoMessage.P[6] = 239.5000000000000/4.0f;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoBOTTOMVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraBottom_optical_frame";
-
-	    cameraInfoMessage.width = 640;
-	    cameraInfoMessage.height = 480;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 558.570339530768, 0, 308.885375457296, 0, 556.122943034837, 247.600724811385, 0, 0, 1 }};
-	    cameraInfoMessage.K[0] = 558.570339530768;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 308.885375457296;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 556.122943034837;
-	    cameraInfoMessage.K[5] = 247.600724811385;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;	
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0648763971625288)(0.0612520196884308)(0.0038281538281731)(-0.00551104078371959)(0).convert_to_container<std::vector<double> >();
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 549.571655273438, 0, 304.799679526441, 0, 0, 549.687316894531, 248.526959297022, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 549.571655273438;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 304.799679526441;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 549.687316894531;
-	    cameraInfoMessage.P[6] = 248.526959297022;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoBOTTOMQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraBottom_optical_frame";
-
-	    cameraInfoMessage.width = 320;
-	    cameraInfoMessage.height = 240;
-	    //cameraInfoMessage.K = boost::array<double, 9>{{ 278.236008818534, 0, 156.194471689706, 0, 279.380102992049, 126.007123836447, 0, 0, 1 }};
-	    cameraInfoMessage.K[0] = 278.236008818534;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 156.194471689706;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 279.380102992049;
-	    cameraInfoMessage.K[5] = 126.007123836447;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0481869853715082)(0.0201858398559121)(0.0030362056699177)(-0.00172241952442813)(0).convert_to_container<std::vector<double> >();
-
-	    //cameraInfoMessage.R = boost::array<double, 9>{{ 1, 0, 0, 0, 1, 0, 0, 0, 1 }};
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    //cameraInfoMessage.P = boost::array<double, 12>{{ 273.491455078125, 0, 155.112454709117, 0, 0, 275.743133544922, 126.057357467223, 0, 0, 0, 1, 0 }};
-	    cameraInfoMessage.P[0] = 273.491455078125;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 155.112454709117;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 275.743133544922;
-	    cameraInfoMessage.P[6] = 126.057357467223;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-	sensor_msgs::CameraInfo CameraConverter::createCameraInfoBOTTOMQQVGA()
-	{
-	    sensor_msgs::CameraInfo cameraInfoMessage;
-
-	    cameraInfoMessage.header.frame_id = "CameraBottom_optical_frame";
-
-	    cameraInfoMessage.width = 160;
-	    cameraInfoMessage.height = 120;
-	    
-	    cameraInfoMessage.K[0] = 141.611855886672;
-	    cameraInfoMessage.K[1] = 0;
-	    cameraInfoMessage.K[2] = 78.6494086288656;
-	    cameraInfoMessage.K[3] = 0;
-	    cameraInfoMessage.K[4] = 141.367163830175;
-	    cameraInfoMessage.K[5] = 58.9220646201529;
-	    cameraInfoMessage.K[6] = 0;
-	    cameraInfoMessage.K[7] = 0;
-	    cameraInfoMessage.K[8] = 1;
-
-	    cameraInfoMessage.distortion_model = "plumb_bob";
-	    cameraInfoMessage.D = boost::assign::list_of(-0.0688388724945936)(0.0697453843669642)(0.00309518737071049)(-0.00570486993696543)(0).convert_to_container<std::vector<double> >();
-
-	    
-	    cameraInfoMessage.R[0] = 1;
-	    cameraInfoMessage.R[1] = 0;
-	    cameraInfoMessage.R[2] = 0;
-	    cameraInfoMessage.R[3] = 0;
-	    cameraInfoMessage.R[4] = 1;
-	    cameraInfoMessage.R[5] = 0;
-	    cameraInfoMessage.R[6] = 0;
-	    cameraInfoMessage.R[7] = 0;
-	    cameraInfoMessage.R[8] = 1;
-
-	    cameraInfoMessage.P[0] = 138.705535888672;
-	    cameraInfoMessage.P[1] = 0;
-	    cameraInfoMessage.P[2] = 77.2544255212306;
-	    cameraInfoMessage.P[3] = 0;
-	    cameraInfoMessage.P[4] = 0;
-	    cameraInfoMessage.P[5] = 138.954086303711;
-	    cameraInfoMessage.P[6] = 58.7000861760043;
-	    cameraInfoMessage.P[7] = 0;
-	    cameraInfoMessage.P[8] = 0;
-	    cameraInfoMessage.P[9] = 0;
-	    cameraInfoMessage.P[10] = 1;
-	    cameraInfoMessage.P[11] = 0;
-
-	    return cameraInfoMessage;
-	}
-
     }
 }

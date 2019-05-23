@@ -37,8 +37,9 @@ namespace Sinfonia
 	{
 
 	    public:
-		TfPublisher();
-		std::string topic();
+		TfPublisher(std::string topicName);
+		~TfPublisher();
+		std::string getTopicName();
 
 		bool isInitialized();
 		
@@ -50,11 +51,10 @@ namespace Sinfonia
 	    private:
 		ros::Publisher _publisher;
 
-		std::string _topic;
+		std::string _topicName;
 
 		bool _isInitialized;
 		
-
 	};
 
     }

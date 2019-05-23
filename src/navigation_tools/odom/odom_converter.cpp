@@ -74,23 +74,24 @@ namespace Sinfonia
 	    tf2::Quaternion tfQuaternion;
 	    tfQuaternion.setRPY( odomWX, odomWY, odomWZ );
 	    geometry_msgs::Quaternion odomQuaternion = tf2::toMsg( tfQuaternion );
-
-	    _msgOdom.header.frame_id = "odom";
-	    _msgOdom.child_frame_id = "base_link";
-	    _msgOdom.header.stamp = odom_stamp;
-
-	    _msgOdom.pose.pose.orientation = odomQuaternion;
-	    _msgOdom.pose.pose.position.x = odomX;
-	    _msgOdom.pose.pose.position.y = odomY;
-	    _msgOdom.pose.pose.position.z = odomZ;
 	    
-	    _msgOdom.twist.twist.linear.x = dX;
-	    _msgOdom.twist.twist.linear.y = dY;
-	    _msgOdom.twist.twist.linear.z = 0;
+	    _msgOdom = boost::make_shared<nav_msgs::Odometry>();
+	    _msgOdom->header.frame_id = "odom";
+	    _msgOdom->child_frame_id = "base_link";
+	    _msgOdom->header.stamp = odom_stamp;
+
+	    _msgOdom->pose.pose.orientation = odomQuaternion;
+	    _msgOdom->pose.pose.position.x = odomX;
+	    _msgOdom->pose.pose.position.y = odomY;
+	    _msgOdom->pose.pose.position.z = odomZ;
 	    
-	    _msgOdom.twist.twist.angular.x = 0;
-	    _msgOdom.twist.twist.angular.y = 0;
-	    _msgOdom.twist.twist.angular.z = dWZ;
+	    _msgOdom->twist.twist.linear.x = dX;
+	    _msgOdom->twist.twist.linear.y = dY;
+	    _msgOdom->twist.twist.linear.z = 0;
+	    
+	    _msgOdom->twist.twist.angular.x = 0;
+	    _msgOdom->twist.twist.angular.y = 0;
+	    _msgOdom->twist.twist.angular.z = dWZ;
 	}
 	
 	void OdomConverter::reset()

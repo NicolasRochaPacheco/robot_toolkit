@@ -38,7 +38,7 @@ namespace Sinfonia
 	class MicConverter : public BaseConverter<MicConverter>
 	{
 
-	    typedef boost::function<void( naoqi_bridge_msgs::AudioBuffer& )> CallbackT;
+	    typedef boost::function<void( naoqi_bridge_msgs::AudioBufferPtr )> CallbackT;
 
 	    public:
 		
@@ -47,20 +47,20 @@ namespace Sinfonia
 
 		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 
-		void callAll( const std::vector<MessageAction::MessageAction>& actions, naoqi_bridge_msgs::AudioBuffer& message );
+		void callAll( const std::vector<MessageAction::MessageAction>& actions, naoqi_bridge_msgs::AudioBufferPtr message );
 
 		void reset();
 		
-		void setConfig(std::vector<int> configs){}
+		void setConfig(std::vector<float> configs){}
 		
-		std::vector<int> setParameters(std::vector<int> parameters){}
-		std::vector<int> setAllParametersToDefault(){}
-		std::vector<int> getParameters(){}
+		std::vector<float> setParameters(std::vector<float> parameters){}
+		std::vector<float> setAllParametersToDefault(){}
+		std::vector<float> getParameters(){}
 		
 	    private:
 		
 		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
-		naoqi_bridge_msgs::AudioBuffer _message;
+		naoqi_bridge_msgs::AudioBufferPtr _message;
 	};
 
     } 

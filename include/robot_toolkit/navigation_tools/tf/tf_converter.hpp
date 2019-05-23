@@ -54,11 +54,11 @@ namespace Sinfonia
 	    void registerCallback( const MessageAction::MessageAction action, callbackT callBack );
 	    void callAll( const std::vector<MessageAction::MessageAction>& actions );
 	    
-	    void setConfig(std::vector<int> configs){}
+	    void setConfig(std::vector<float> configs){}
 	    
-	    std::vector<int> setParameters(std::vector<int> parameters){}
-	    std::vector<int> setAllParametersToDefault(){}
-	    std::vector<int> getParameters(){}
+	    std::vector<float> setParameters(std::vector<float> parameters){}
+	    std::vector<float> setAllParametersToDefault(){}
+	    std::vector<float> getParameters(){}
 
 	private:    
 	    void setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix);
@@ -83,6 +83,7 @@ namespace Sinfonia
 	    
 
 	};
+
 
     } 
 } 

@@ -44,7 +44,7 @@ namespace Sinfonia
 
 		bool isSubscribed() const;
 
-		void publish( naoqi_bridge_msgs::AudioBuffer& message );
+		void publish( naoqi_bridge_msgs::AudioBufferPtr message );
 
 		void reset( ros::NodeHandle& nodeHandle );
 		

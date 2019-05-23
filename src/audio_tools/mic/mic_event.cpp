@@ -133,16 +133,19 @@ namespace Sinfonia
 
     void Sinfonia::MicEventRegister::processRemote(int numberOfChannels, int samplesByChannel, qi::AnyValue timestamp, qi::AnyValue buffer)
     {
-	naoqi_bridge_msgs::AudioBuffer message = naoqi_bridge_msgs::AudioBuffer();
-	message.header.stamp = ros::Time::now();
-	message.frequency = 48000;
-	message.channelMap = _channelMap;
+	//naoqi_bridge_msgs::AudioBufferPtr message = naoqi_bridge_msgs::AudioBufferPtr();
+	
+	static const boost::shared_ptr<naoqi_bridge_msgs::AudioBuffer> message = boost::make_shared<naoqi_bridge_msgs::AudioBuffer>();
+	
+	message->header.stamp = ros::Time::now();
+	message->frequency = 48000;
+	message->channelMap = _channelMap;
 
 	std::pair<char*, size_t> bufferPointer = buffer.asRaw();
 
 	int16_t* remoteBuffer = (int16_t*)bufferPointer.first;
 	int bufferSize = numberOfChannels * samplesByChannel;
-	message.data = std::vector<int16_t>(remoteBuffer, remoteBuffer+bufferSize);
+	message->data = std::vector<int16_t>(remoteBuffer, remoteBuffer+bufferSize);
 
 	std::vector<MessageAction::MessageAction> actions;
 	boost::mutex::scoped_lock callback_lock(_processingMutex);

@@ -24,16 +24,20 @@ namespace Sinfonia
 {
     namespace Publisher
     {
-
-	TfPublisher::TfPublisher()
+	TfPublisher::TfPublisher(std::string topicName)
 	{
 	    _isInitialized = false;
-	    _topic = "/tf";
+	    _topicName = topicName;
 	}
 	
-	std::string TfPublisher::topic()
+	TfPublisher::~TfPublisher()
 	{
-	    return _topic;
+
+	}
+	
+	std::string TfPublisher::getTopicName()
+	{
+	    return _topicName;
 	}
 	
 	bool TfPublisher::isInitialized()
@@ -55,7 +59,7 @@ namespace Sinfonia
 	void TfPublisher::reset( ros::NodeHandle& nodeHandle )
 	{
 	    
-	    _publisher = nodeHandle.advertise<tf2_msgs::TFMessage>(_topic, 100 );
+	    _publisher = nodeHandle.advertise<tf2_msgs::TFMessage>(_topicName, 100);
 	    _isInitialized = true;
 	}
 

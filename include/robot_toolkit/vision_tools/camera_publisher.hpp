@@ -33,12 +33,12 @@ namespace Sinfonia
 	{
 
 	    public:
-		CameraPublisher(std::string topic);
-		std::string topic();
+		CameraPublisher(std::string topicName);
+		std::string getTopicName();
 
 		bool isInitialized();
 		
-		virtual void publish(const sensor_msgs::ImagePtr& img, const sensor_msgs::CameraInfo& cameraInfo);
+		virtual void publish(const sensor_msgs::ImagePtr img, const sensor_msgs::CameraInfoPtr cameraInfo);
 		virtual void reset( ros::NodeHandle& nodeHandle );
 		virtual bool isSubscribed() const;
 		virtual void shutdown();
@@ -51,7 +51,7 @@ namespace Sinfonia
 		
 		image_transport::CameraPublisher _publisher;
 
-		std::string _topic;
+		std::string _topicName;
 
 		bool _isInitialized;
 

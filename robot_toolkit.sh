@@ -264,7 +264,7 @@ if [ ${MODE} = "compile" ] || [ ${MODE} = "all" ]
 		clean_vn
 		sshpass -p ${VNPASS} scp -r ../robot_toolkit nao@${VNIP}:/home/nao/src/
 		sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao && sudo rm -rf .temp/ && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4'
-		sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao/build_isolated/robot_toolkit && sudo /home/nao/ros_toolchain_install/env.sh make -j4 && cd ../.. && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4'
+		#sshpass -p ${VNPASS} ssh nao@${VNIP} 'cd /home/nao/build_isolated/robot_toolkit && sudo /home/nao/ros_toolchain_install/env.sh make -j4 && cd ../.. && sudo src/catkin/bin/catkin_make_isolated --pkg robot_toolkit --install -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/home/nao/ros_toolchain_install -j4'
 		echo "${GREEN}Compilation finished${NC}"
 fi
 if [ ${MODE} = "install" ] || [ ${MODE} = "all" ]

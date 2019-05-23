@@ -42,7 +42,7 @@ namespace Sinfonia
 	    _callbacks[action] = callback;
 	}
 	
-	void MicConverter::callAll(const std::vector< MessageAction::MessageAction >& actions, naoqi_bridge_msgs::AudioBuffer& message)
+	void MicConverter::callAll(const std::vector< MessageAction::MessageAction >& actions, naoqi_bridge_msgs::AudioBufferPtr message)
 	{
 	    _message = message;
 	    for_each(MessageAction::MessageAction action, actions )

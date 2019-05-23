@@ -33,11 +33,10 @@ namespace Sinfonia
 {
     namespace Converter
     {
-
 	class LaserConverter : public BaseConverter<LaserConverter>
 	{
 
-	    typedef boost::function<void(sensor_msgs::LaserScan&)> CallbackT;
+	    typedef boost::function<void(sensor_msgs::LaserScanPtr)> CallbackT;
 
 	    public:
 		LaserConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
@@ -48,24 +47,21 @@ namespace Sinfonia
 
 		void reset( );
 		
-		void setConfig(std::vector<int> configs){}
+		void setConfig(std::vector<float> configs){}
 		
-		std::vector<int> setParameters(std::vector<int> parameters){}
-		std::vector<int> setAllParametersToDefault(){}
-		std::vector<int> getParameters(){}
+		std::vector<float> setParameters(std::vector<float> parameters){}
+		std::vector<float> setAllParametersToDefault(){}
+		std::vector<float> getParameters(){}
 		
 		
 
 	    private:
 		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
-		
 		qi::AnyObject _pMemory;
-		
 		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
-		sensor_msgs::LaserScan _message;
+		boost::shared_ptr<sensor_msgs::LaserScan> _laserMessage;
 		void callLaser();
 	};
-
     } 
 } 
 

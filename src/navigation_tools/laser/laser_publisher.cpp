@@ -24,10 +24,10 @@ namespace Sinfonia
     namespace Publisher
     {
 	
-	LaserPublisher::LaserPublisher()
+	LaserPublisher::LaserPublisher(std::string topicName)
 	{
 	    _isInitialized = false;
-	     _topic = "/laser";
+	     _topicName = topicName;
 	}
 
 	bool LaserPublisher::isInitialized() const
@@ -35,9 +35,9 @@ namespace Sinfonia
 	    return _isInitialized;
 	}
 	
-	std::string LaserPublisher::topic()
+	std::string LaserPublisher::getTopicName()
 	{
-	    return _topic;
+	    return _topicName;
 	}
 
 	bool LaserPublisher::isSubscribed() const
@@ -47,14 +47,14 @@ namespace Sinfonia
 	    return _publisher.getNumSubscribers() > 0;
 	}
 
-	void LaserPublisher::publish(sensor_msgs::LaserScan& message)
+	void LaserPublisher::publish(sensor_msgs::LaserScanPtr message)
 	{
-	    _publisher.publish( message );
+	    _publisher.publish( *message );
 	}
 	
 	void LaserPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
-	    _publisher = nodeHandle.advertise<sensor_msgs::LaserScan>( _topic, 10 );
+	    _publisher = nodeHandle.advertise<sensor_msgs::LaserScan>( _topicName, 10 );
 	    _isInitialized = true;
 	}
 	
