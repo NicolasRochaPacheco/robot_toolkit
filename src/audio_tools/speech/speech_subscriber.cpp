@@ -28,6 +28,7 @@ namespace Sinfonia
 	{
 	    _speechTopic = topic;
 	    _pTextToSpeech = session->service("ALTextToSpeech");
+	    _pTextToSpeechAnimated = session->service("ALAnimatedSpeech");
 	    _isInitialized = false;
 	    _language = "English";
 	    _pTextToSpeech.call<void>("setLanguage", _language);
@@ -49,7 +50,14 @@ namespace Sinfonia
 		    _pTextToSpeech.call<void>("setLanguage", message.language);
 		    
 		}
-		_pTextToSpeech.async<void>("say", message.text);
+		if ( message.animated )
+		{
+		    _pTextToSpeechAnimated.async<void>("say", message.text);
+		}
+		else
+		{
+		    _pTextToSpeech.async<void>("say", message.text);
+		}
 	    }
 	    else
 	    {

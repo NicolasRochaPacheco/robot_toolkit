@@ -17,45 +17,50 @@
 //                                                                      //
 //======================================================================//
 
+#include "robot_toolkit/audio_tools/mic/mic_localization_publisher.hpp"
 
-#ifndef SPEECH_SUBSCRIBER_HPP
-#define SPEECH_SUBSCRIBER_HPP
-
-#include "robot_toolkit/subscriber/base_subscriber.hpp"
-#include <ros/ros.h>
-
-#include "robot_toolkit_msgs/speech_msg.h"
-#include "robot_toolkit_msgs/speech_parameters_msg.h"
-
-namespace Sinfonia
+namespace Sinfonia 
 {
-    namespace Subscriber
+    namespace Publisher 
     {
-	class SpeechSubscriber: public BaseSubscriber<SpeechSubscriber>
+	
+	MicLocalizationPublisher::MicLocalizationPublisher(std::string topic)
 	{
-	    public:
-		SpeechSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
-		~SpeechSubscriber(){}
+	    _topic = topic;
+	    _isInitialized = false;
+	}
 
-		void reset( ros::NodeHandle& nodeHandle );
-		void speechCallback( const robot_toolkit_msgs::speech_msg& message );
-		void shutdown();
-		
-		std::vector<float> getParameters();
-		std::vector<float> setParameters(std::vector<float> parameters);
-		std::vector<float> setDefaultParameters();
-		
-		void printSpeechParams(robot_toolkit_msgs::speech_parameters_msg parameters);
-		robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
-		
-
-	    private:
-		std::string _speechTopic;
-		qi::AnyObject _pTextToSpeech;
-		qi::AnyObject _pTextToSpeechAnimated;
-		ros::Subscriber _subscriberSpeech;
-		std::string _language;
-	}; 
+	std::string MicLocalizationPublisher::topic()
+	{
+	    return _topic; 
+	}
+	
+	bool MicLocalizationPublisher::isInitialized() const
+	{
+	    return _isInitialized;
+	}
+	
+	bool MicLocalizationPublisher::isSubscribed() const
+	{
+	    if (!_isInitialized) 
+		return false;
+	    return _publisher.getNumSubscribers() > 0;
+	}
+	
+	void MicLocalizationPublisher::publish( robot_toolkit_msgs::audio_localization_msgPtr message )
+	{
+	    _publisher.publish( *message );
+	}
+	
+	void MicLocalizationPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _publisher = nodeHandle.advertise< robot_toolkit_msgs::audio_localization_msg>( _topic, 10 );
+	    _isInitialized = true;
+	}
+	
+	void MicLocalizationPublisher::shutdown()
+	{
+	    _publisher.shutdown();
+	}
     }
 }
-#endif

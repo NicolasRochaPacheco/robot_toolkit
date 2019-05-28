@@ -18,44 +18,47 @@
 //======================================================================//
 
 
-#ifndef SPEECH_SUBSCRIBER_HPP
-#define SPEECH_SUBSCRIBER_HPP
 
-#include "robot_toolkit/subscriber/base_subscriber.hpp"
+#ifndef AUDIO_LOCALIZATION_PUBLISHER_HPP
+#define AUDIO_LOCALIZATION_PUBLISHER_HPP
+
+#include <string>
+
+#include <naoqi_bridge_msgs/AudioBuffer.h>
 #include <ros/ros.h>
 
-#include "robot_toolkit_msgs/speech_msg.h"
-#include "robot_toolkit_msgs/speech_parameters_msg.h"
+#include "robot_toolkit_msgs/audio_localization_msg.h"
 
 namespace Sinfonia
 {
-    namespace Subscriber
+    namespace Publisher
     {
-	class SpeechSubscriber: public BaseSubscriber<SpeechSubscriber>
+	class MicLocalizationPublisher
 	{
+
 	    public:
-		SpeechSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
-		~SpeechSubscriber(){}
+		MicLocalizationPublisher(std::string topic);
+		virtual ~MicLocalizationPublisher() {}
+		std::string topic();
+
+
+		bool isInitialized() const;
+
+		bool isSubscribed() const;
+
+		void publish( robot_toolkit_msgs::audio_localization_msgPtr message );
 
 		void reset( ros::NodeHandle& nodeHandle );
-		void speechCallback( const robot_toolkit_msgs::speech_msg& message );
+		
 		void shutdown();
-		
-		std::vector<float> getParameters();
-		std::vector<float> setParameters(std::vector<float> parameters);
-		std::vector<float> setDefaultParameters();
-		
-		void printSpeechParams(robot_toolkit_msgs::speech_parameters_msg parameters);
-		robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
-		
 
-	    private:
-		std::string _speechTopic;
-		qi::AnyObject _pTextToSpeech;
-		qi::AnyObject _pTextToSpeechAnimated;
-		ros::Subscriber _subscriberSpeech;
-		std::string _language;
-	}; 
-    }
-}
+	    protected:
+		bool _isInitialized;
+		ros::Publisher _publisher;
+		std::string _topic;
+	};
+
+    } 
+} 
+
 #endif

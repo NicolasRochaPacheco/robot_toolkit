@@ -11,6 +11,8 @@ set(
     src/vision_tools/camera_converter.cpp
     src/audio_tools/mic/mic_converter.cpp
     src/audio_tools/mic/mic_event.cpp
+    
+    src/audio_tools/mic/mic_localization_event.cpp
   )
 set(
   TOOLS_SRC
@@ -26,6 +28,7 @@ set(
     
     src/vision_tools/camera_publisher.cpp
     src/audio_tools/mic/mic_publisher.cpp
+    src/audio_tools/mic/mic_localization_publisher.cpp
   )
 
 set(

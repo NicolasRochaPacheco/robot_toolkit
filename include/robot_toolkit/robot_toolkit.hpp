@@ -67,6 +67,8 @@
 #include "robot_toolkit/audio_tools/mic/mic_event.hpp"
 #include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
 
+#include "robot_toolkit/audio_tools/mic/mic_localization_event.hpp"
+
 
 
 namespace tf2_ros

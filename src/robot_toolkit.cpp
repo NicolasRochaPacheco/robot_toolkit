@@ -220,9 +220,11 @@ namespace Sinfonia
 	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
 	registerGroup( depthCameraConverter, depthCameraPublisher);
 	
-	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<  Sinfonia::MicEventRegister >("mic", 0, _sessionPtr);
+	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<Sinfonia::MicEventRegister>("mic", 0, _sessionPtr);
 	insertEventConverter("mic", audioEventRegister);
-
+	boost::shared_ptr< Sinfonia::MicLocalizationEvent > micLocalizationEvent = boost::make_shared<Sinfonia::MicLocalizationEvent>("miclocalization", 0, _sessionPtr);
+	insertEventConverter("miclocalization", micLocalizationEvent);
+	
 	printRegisteredConverters();
 	
     }
@@ -785,7 +787,8 @@ namespace Sinfonia
 	std::string stoppedFunctionalities = "Functionalities stopped:";
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
 	if( request.data.command != "enable" && request.data.command != "disable" && request.data.command != "custom" && request.data.command != "enable_mic" && request.data.command != "disable_mic" &&
-	    request.data.command != "enable_tts" && request.data.command != "disable_tts" && request.data.command != "get_speech_params" && request.data.command != "set_speech_params" && request.data.command != "reset_speech_params" ) 
+	    request.data.command != "enable_tts" && request.data.command != "disable_tts" && request.data.command != "get_speech_params" && request.data.command != "set_speech_params" && request.data.command != "reset_speech_params" &&
+	    request.data.command != "enable_localization" && request.data.command != "disable_localization" ) 
 	{
 	    responseMessage = "ERROR: unknown command, possible values are: enable, disable, custom, enable_mic, disable_mic, enable_tts, disable_tts, get_speech_params, set_speech_params, reset_speech_params";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -851,6 +854,22 @@ namespace Sinfonia
 		    stopSubscriber("speech");
 		    stoppedFunctionalities += " tts";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Stopping tts" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "enable" || request.data.command == "enable_localization") 
+		{
+		    _eventMap.find("miclocalization")->second.startProcess();
+		    _eventMap.find("miclocalization")->second.resetPublisher(*_nodeHandlerPtr);
+		    startedFunctionalities += " audio_localization";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting audio_localization" << RESETCOLOR  << std::endl;		    
+		}
+		
+		if( request.data.command == "disable" || request.data.command == "disable_localization")
+		{
+		    _eventMap.find("miclocalization")->second.stopProcess();
+		    _eventMap.find("miclocalization")->second.shutdownPublisher();
+		    stoppedFunctionalities += " audio_localization";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping audio_localization" << RESETCOLOR  << std::endl;
 		}
 		
 		if( request.data.command == "get_speech_params") 
