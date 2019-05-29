@@ -264,6 +264,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::CmdVelSubscriber>("cmd_vel", "/cmd_vel", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SpeechSubscriber>("speech", "/speech", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::MoveToSubscriber>("moveto", "/move_base_simple/goal", _sessionPtr, _tf2Buffer));
+	registerSubscriber(boost::make_shared<Subscriber::AnimationSubscriber>("animation", "/animations", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -380,6 +381,7 @@ namespace Sinfonia
 	_navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
 	_visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
 	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
+	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
     }
     
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -922,6 +924,40 @@ namespace Sinfonia
 	response.speech_parameters = currentSpeechParams;
 	return true;
     }
+    
+    bool RobotToolkit::motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response)
+    {
+	std::string responseMessage;
+	std::string startedFunctionalities = "Functionalities started:";
+	std::string stoppedFunctionalities = "Functionalities stopped:";
+	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
+	if( request.data.command != "enable" && request.data.command != "disable") 
+	{
+	    responseMessage = "ERROR: unknown command, possible values are: enable";
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else
+	{
+		if( request.data.command == "enable") 
+		{
+		    startSubscriber("animation");
+		    startedFunctionalities += " animations ";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting animations" << RESETCOLOR  << std::endl;
+		}
+		
+		if( request.data.command == "disable")
+		{
+		    stopSubscriber("animation");
+		    stoppedFunctionalities += " animations";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping animations" << RESETCOLOR  << std::endl;
+		}
+		responseMessage = startedFunctionalities + stoppedFunctionalities;
+	}
+	
+	response.result = responseMessage;
+	return true;
+    }
+
     
     int RobotToolkit::getSubscriberIndex(std::string name)
     {

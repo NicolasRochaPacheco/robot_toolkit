@@ -39,6 +39,8 @@
 #include "robot_toolkit_msgs/audio_tools_msg.h"
 #include "robot_toolkit_msgs/audio_tools_srv.h"
 #include "robot_toolkit_msgs/speech_parameters_msg.h"
+#include "robot_toolkit_msgs/motion_tools_msg.h"
+#include "robot_toolkit_msgs/motion_tools_srv.h"
 
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
@@ -48,17 +50,14 @@
 
 #include "robot_toolkit/helpers/scheduled_conveter.hpp"
 
-
 #include "robot_toolkit/navigation_tools/tf/tf_publisher.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_publisher.hpp"
 #include "robot_toolkit/navigation_tools/laser/laser_publisher.hpp"
 #include "robot_toolkit/navigation_tools/move_to/move_to.hpp"
-
 #include "robot_toolkit/navigation_tools/tf/tf_converter.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"
 #include "robot_toolkit//navigation_tools/laser/laser_converter.hpp"
 #include "robot_toolkit//navigation_tools/laser/depth_to_laser_converter.hpp"
-
 #include "robot_toolkit/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 
 #include "robot_toolkit/vision_tools/camera_converter.hpp"
@@ -66,8 +65,9 @@
 
 #include "robot_toolkit/audio_tools/mic/mic_event.hpp"
 #include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
-
 #include "robot_toolkit/audio_tools/mic/mic_localization_event.hpp"
+
+#include "robot_toolkit/motion_tools/animation_subscriber.hpp"
 
 
 
@@ -97,6 +97,7 @@ namespace Sinfonia
 	    bool navigationToolsCallback(robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
 	    bool visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
 	    bool audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response );
+	    bool motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response);
 	    
 	private:
 	    
@@ -128,6 +129,7 @@ namespace Sinfonia
 	    ros::ServiceServer _navigationToolsService;
 	    ros::ServiceServer _visionToolsService;
 	    ros::ServiceServer _audioToolsService;
+	    ros::ServiceServer _motionToolsService;
 	    
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
