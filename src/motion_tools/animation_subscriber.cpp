@@ -36,17 +36,32 @@ namespace Sinfonia
 	    _subscriberSpeech = nodeHandle.subscribe(_topic, 10, &AnimationSubscriber::animationCallback, this);
 	    _isInitialized = true;
 	}
-	void AnimationSubscriber::animationCallback(const std_msgs::String message)
+	void AnimationSubscriber::animationCallback(const robot_toolkit_msgs::animation_msg message)
 	{
-	    std::string animationPath = "animations_sinfonia/animations/" + message.data;
-	    std::string pathToCheck = "/home/nao/.local/share/PackageManager/apps/" + animationPath;
-	    if( boost::filesystem::exists(pathToCheck) )
+	    if ( message.family == "animations" || message.family == "animations_sinfonia")
 	    {
-		_pBehaviour.async<void>("startBehavior", animationPath);
+		std::string animationPath;
+		if ( message.family == "animations" )
+		{
+		    animationPath = "animations/Stand/" + message.animation_name;
+		}
+		else
+		{
+		    animationPath = "animations_sinfonia/animations/" + message.animation_name;
+		}
+		std::string pathToCheck = "/home/nao/.local/share/PackageManager/apps/" + animationPath;
+		if( boost::filesystem::exists(pathToCheck) )
+		{
+		    _pBehaviour.async<void>("startBehavior", animationPath);
+		}
+		else
+		{
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Error: The animation does not exists " << RESETCOLOR  << std::endl;
+		}
 	    }
 	    else
 	    {
-		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Error: The animation does not exists " << RESETCOLOR  << std::endl;
+		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Error: Unkown animation family " << RESETCOLOR  << std::endl;
 	    }
 	}
 	void AnimationSubscriber::shutdown()

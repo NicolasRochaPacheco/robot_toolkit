@@ -476,6 +476,7 @@ namespace Sinfonia
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_min);
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_max);
 		    parameters.push_back(request.data.depth_to_laser_parameters.scan_height);
+		    		    
 		    _converters[converterIndex].setConfig(config);
 		    _converters[converterIndex].setParameters(parameters);
 		    _converters[converterIndex].reset();

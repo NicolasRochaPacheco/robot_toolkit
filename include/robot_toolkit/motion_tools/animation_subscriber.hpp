@@ -25,6 +25,7 @@
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include "boost/filesystem.hpp"
+#include "robot_toolkit_msgs/animation_msg.h"
 
 namespace Sinfonia
 {
@@ -37,7 +38,7 @@ namespace Sinfonia
 		~AnimationSubscriber(){}
 
 		void reset( ros::NodeHandle& nodeHandle );
-		void animationCallback( const std_msgs::String message );
+		void animationCallback( const robot_toolkit_msgs::animation_msg message );
 		void shutdown();
 		
 		std::vector<float> getParameters();
