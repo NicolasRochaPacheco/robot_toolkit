@@ -24,6 +24,7 @@
 #include "robot_toolkit/subscriber/base_subscriber.hpp"
 #include <ros/ros.h>
 #include "std_msgs/String.h"
+#include "boost/filesystem.hpp"
 
 namespace Sinfonia
 {

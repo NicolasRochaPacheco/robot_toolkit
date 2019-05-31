@@ -39,8 +39,15 @@ namespace Sinfonia
 	void AnimationSubscriber::animationCallback(const std_msgs::String message)
 	{
 	    std::string animationPath = "animations_sinfonia/animations/" + message.data;
-	 //   std::cout << "Path: " << animationPath << std::endl;
-	    _pBehaviour.async<void>("startBehavior", animationPath);
+	    std::string pathToCheck = "/home/nao/.local/share/PackageManager/apps/" + animationPath;
+	    if( boost::filesystem::exists(pathToCheck) )
+	    {
+		_pBehaviour.async<void>("startBehavior", animationPath);
+	    }
+	    else
+	    {
+		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Error: The animation does not exists " << RESETCOLOR  << std::endl;
+	    }
 	}
 	void AnimationSubscriber::shutdown()
 	{
