@@ -132,7 +132,7 @@ namespace Sinfonia
 	    
 	    sensor_msgs::ImagePtr imageMsg;
 	    imageMsg = cv_bridge::CvImage(std_msgs::Header(), _msgColorspace, cvImage).toImageMsg();
-	    imageMsg->header.frame_id = "Camera_depth_optical_frame";
+	    imageMsg->header.frame_id = "CameraDepth_frame";
 
 	    imageMsg->header.stamp = ros::Time::now();
 	    _cameraInfo->header.stamp = imageMsg->header.stamp;    
