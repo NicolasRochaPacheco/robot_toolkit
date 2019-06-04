@@ -17,28 +17,26 @@
 //                                                                      //
 //======================================================================//
 
-
-#ifndef ANIMATION_SUBSCRIBER_HPP
-#define ANIMATION_SUBSCRIBER_HPP
+#ifndef SET_ANGLES_SUBSCRIBER_HPP
+#define SET_ANGLES_SUBSCRIBER_HPP
 
 #include "robot_toolkit/subscriber/base_subscriber.hpp"
 #include <ros/ros.h>
 #include "std_msgs/String.h"
-#include "boost/filesystem.hpp"
-#include "robot_toolkit_msgs/animation_msg.h"
+#include "robot_toolkit_msgs/set_angles_msg.h"
 
 namespace Sinfonia
 {
     namespace Subscriber
     {
-	class AnimationSubscriber: public BaseSubscriber<AnimationSubscriber>
+	class SetAnglesSubscriber: public BaseSubscriber<SetAnglesSubscriber>
 	{
 	    public:
-		AnimationSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
-		~AnimationSubscriber(){}
+		SetAnglesSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
+		~SetAnglesSubscriber(){}
 
 		void reset( ros::NodeHandle& nodeHandle );
-		void animationCallback( const robot_toolkit_msgs::animation_msg message );
+		void setAnglesCallback( const robot_toolkit_msgs::set_angles_msg message );
 		void shutdown();
 		
 		std::vector<float> getParameters();
@@ -48,8 +46,11 @@ namespace Sinfonia
 
 	    private:
 		std::string _topic;
-		qi::AnyObject _pBehaviour;
-		ros::Subscriber _subscriberAnimation;
+		qi::AnyObject _pMotion;
+		ros::Subscriber _subscriberSetAngles;
+		std::vector<std::string> _jointNames;
+		
+		bool checkJointName(std::string name);
 	}; 
     }
 }

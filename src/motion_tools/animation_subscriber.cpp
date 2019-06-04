@@ -31,11 +31,13 @@ namespace Sinfonia
 	    _pBehaviour = session->service("ALBehaviorManager");
 	    _isInitialized = false;
 	}
+	
 	void AnimationSubscriber::reset(ros::NodeHandle& nodeHandle)
 	{
-	    _subscriberSpeech = nodeHandle.subscribe(_topic, 10, &AnimationSubscriber::animationCallback, this);
+	    _subscriberAnimation = nodeHandle.subscribe(_topic, 10, &AnimationSubscriber::animationCallback, this);
 	    _isInitialized = true;
 	}
+	
 	void AnimationSubscriber::animationCallback(const robot_toolkit_msgs::animation_msg message)
 	{
 	    if ( message.family == "animations" || message.family == "animations_sinfonia")
@@ -64,11 +66,13 @@ namespace Sinfonia
 		std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Error: Unkown animation family " << RESETCOLOR  << std::endl;
 	    }
 	}
+	
 	void AnimationSubscriber::shutdown()
 	{
-	    _subscriberSpeech.shutdown();
+	    _subscriberAnimation.shutdown();
 	    _isInitialized = false;
 	}
+	
 	std::vector< float > AnimationSubscriber::getParameters()
 	{
 	    std::vector<float> result;

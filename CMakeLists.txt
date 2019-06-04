@@ -34,9 +34,12 @@ set(
 set(
   SUBSCRIBER_SRC
     src/navigation_tools/cmd_vel/cmd_vel_subscriber.cpp
-    src/audio_tools/speech/speech_subscriber.cpp
     src/navigation_tools/move_to/move_to.cpp
+    
+    src/audio_tools/speech/speech_subscriber.cpp
+        
     src/motion_tools/animation_subscriber.cpp
+    src/motion_tools/set_angles_subscriber.cpp
   )
 
 set(

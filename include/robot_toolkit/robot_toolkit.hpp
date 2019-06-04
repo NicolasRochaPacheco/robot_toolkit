@@ -68,6 +68,7 @@
 #include "robot_toolkit/audio_tools/mic/mic_localization_event.hpp"
 
 #include "robot_toolkit/motion_tools/animation_subscriber.hpp"
+#include "robot_toolkit/motion_tools/set_angles_subscriber.hpp"
 
 
 

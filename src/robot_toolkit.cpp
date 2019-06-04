@@ -265,6 +265,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::SpeechSubscriber>("speech", "/speech", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::MoveToSubscriber>("moveto", "/move_base_simple/goal", _sessionPtr, _tf2Buffer));
 	registerSubscriber(boost::make_shared<Subscriber::AnimationSubscriber>("animation", "/animations", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::SetAnglesSubscriber>("set_angles", "/set_angles", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -930,29 +931,65 @@ namespace Sinfonia
     {
 	std::string responseMessage;
 	std::string startedFunctionalities = "Functionalities started:";
-	std::string stoppedFunctionalities = "Functionalities stopped:";
+	std::string stoppedFunctionalities = " Functionalities stopped:";
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.command != "enable" && request.data.command != "disable") 
+	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom") 
 	{
-	    responseMessage = "ERROR: unknown command, possible values are: enable";
+	    responseMessage = "ERROR: unknown command: " + request.data.command +  " possible values are: enable_all, disable_all, custom";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-		if( request.data.command == "enable") 
+		if( request.data.command == "enable_all") 
 		{
 		    startSubscriber("animation");
-		    startedFunctionalities += " animations ";
-		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting animations" << RESETCOLOR  << std::endl;
+		    startSubscriber("set_angles");
+		    responseMessage = "Starting Animations and Set Angles";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		    
 		}
 		
-		if( request.data.command == "disable")
+		if( request.data.command == "disable_all")
 		{
 		    stopSubscriber("animation");
-		    stoppedFunctionalities += " animations";
-		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping animations" << RESETCOLOR  << std::endl;
+		    stopSubscriber("set_angles");
+		    responseMessage = "Stopping Animations and Set Angles";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
-		responseMessage = startedFunctionalities + stoppedFunctionalities;
+		
+		else
+		{
+		    if(request.data.animation == "enable")
+		    {
+			startSubscriber("animation");
+			startedFunctionalities += " Animation, ";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting animations" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    else if(request.data.animation == "disable")
+		    {
+			stopSubscriber("animation");
+			stoppedFunctionalities += " Animation, ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping animations" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    if(request.data.set_angles == "enable")
+		    {
+			startSubscriber("set_angles");
+			startedFunctionalities += " Set Angles, ";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting set angles" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    else if(request.data.set_angles == "disable")
+		    {
+			stopSubscriber("set_angles");
+			stoppedFunctionalities += " Set Angles, ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping set angles" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    responseMessage = startedFunctionalities + stoppedFunctionalities;
+		}
+		
 	}
 	
 	response.result = responseMessage;
