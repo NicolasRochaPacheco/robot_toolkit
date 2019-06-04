@@ -38,7 +38,7 @@ namespace Sinfonia
 	    _cameraSource = Helpers::VisionHelpers::kDepthCamera;
 	    _cameraInfo = loadCameraInfo();
 	    setAllParametersToDefault(); 
-	    setOutputFrame("camera_depth_frame");
+	    setOutputFrame("CameraDepth_frame");
 	   
 	}
 	
