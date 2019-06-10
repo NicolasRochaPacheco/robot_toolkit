@@ -167,6 +167,7 @@ namespace Sinfonia
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
+	scheduleConverter("sonar", 50.0f);
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
     }
@@ -222,9 +223,19 @@ namespace Sinfonia
 	
 	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<Sinfonia::MicEventRegister>("mic", 0, _sessionPtr);
 	insertEventConverter("mic", audioEventRegister);
+	
 	boost::shared_ptr< Sinfonia::MicLocalizationEvent > micLocalizationEvent = boost::make_shared<Sinfonia::MicLocalizationEvent>("miclocalization", 0, _sessionPtr);
 	insertEventConverter("miclocalization", micLocalizationEvent);
 	
+	std::vector<std::string> sonarTopics;
+	sonarTopics.push_back("sonar/front");
+	sonarTopics.push_back("sonar/back");
+	
+	boost::shared_ptr<Publisher::SonarPublisher> sonarPublisher = boost::make_shared<Publisher::SonarPublisher>(sonarTopics);
+	boost::shared_ptr<Converter::SonarConverter> sonarConverter = boost::make_shared<Converter::SonarConverter>( "sonar", 10, _sessionPtr);
+	sonarConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::SonarPublisher::publish, sonarPublisher, _1) );
+	registerGroup( sonarConverter, sonarPublisher);
+    
 	printRegisteredConverters();
 	
     }

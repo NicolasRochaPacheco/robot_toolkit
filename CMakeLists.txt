@@ -13,6 +13,7 @@ set(
     src/audio_tools/mic/mic_event.cpp
     
     src/audio_tools/mic/mic_localization_event.cpp
+    src/misc_tools/sonar/sonar_converter.cpp
   )
 set(
   TOOLS_SRC
@@ -27,8 +28,11 @@ set(
     src/navigation_tools/tf/tf_publisher.cpp
     
     src/vision_tools/camera_publisher.cpp
+    
     src/audio_tools/mic/mic_publisher.cpp
     src/audio_tools/mic/mic_localization_publisher.cpp
+    
+    src/misc_tools/sonar/sonar_publisher.cpp
   )
 
 set(

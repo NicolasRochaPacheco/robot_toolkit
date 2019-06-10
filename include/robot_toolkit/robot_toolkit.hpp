@@ -73,6 +73,8 @@
 #include "robot_toolkit/motion_tools/set_angles_subscriber.hpp"
 
 #include "robot_toolkit/misc_tools/leds_subscriber.hpp"
+#include "robot_toolkit/misc_tools/sonar/sonar_converter.hpp"
+#include "robot_toolkit/misc_tools/sonar/sonar_publisher.hpp"
 
 
 
