@@ -166,7 +166,7 @@ namespace Sinfonia
     
     void RobotToolkit::startInitialTopics()
     {
-	// Poner aqui el schedule de los topicos que deben inciar desde el inicio  
+	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
     }
@@ -679,6 +679,8 @@ namespace Sinfonia
 		    int converterIndex = getConverterIndex(request.data.camera_name);
 		    if( converterIndex != -1 )
 		    {
+			if(request.data.camera_name == "depth_camera")
+			    request.data.camera_parameters.compress = false;
 			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setParameters(toVector(request.data.camera_parameters)));  
 			responseMessage = "Setting Parameters of " + request.data.camera_name;
 			std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -750,6 +752,8 @@ namespace Sinfonia
 	result.fps = params[16];
 	result.average_luminance = params[17];
 	result.auto_focus = params[18];
+	result.compress = params[19];
+	result.compression_factor = params[20];
 	return result;
     }
 
@@ -775,6 +779,11 @@ namespace Sinfonia
 	result.push_back(params.fps);
 	result.push_back(params.average_luminance);
 	result.push_back(params.auto_focus);
+	if(params.compress)
+	    result.push_back(1);
+	else
+	    result.push_back(0);
+	result.push_back(params.compression_factor);
 	return result;
     }
 

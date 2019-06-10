@@ -42,6 +42,10 @@
 
 #include "robot_toolkit_msgs/camera_parameters_msg.h"
 
+#include <sensor_msgs/CompressedImage.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/highgui/highgui.hpp>
+
 namespace Sinfonia
 {
     namespace Converter
@@ -76,23 +80,29 @@ namespace Sinfonia
 		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
 
 		qi::AnyObject _pVideo;
-		int _cameraSource;
+		
+		bool _compress;
+		
+		int _cvMatType;
 		int _resolution;
 		int _colorSpace;
+		int _cameraSource;
+		int _compressionFactor;
+		
 		std::string _handle;
-
-		std::string _msgColorspace;
-		int _cvMatType;
-		
 		std::string _msgFrameid;
-		sensor_msgs::CameraInfoPtr _cameraInfo;
-		sensor_msgs::ImagePtr _imageMsg;
+		std::string _msgColorspace;
 		
-		void callCamera();
+		sensor_msgs::ImagePtr _imageMsg;
+		sensor_msgs::CameraInfoPtr _cameraInfo;
 		sensor_msgs::CameraInfoPtr loadCameraInfo();
+		
 		const sensor_msgs::CameraInfoPtr getEmptyInfo();
 		
 		Helpers::VisionHelpers::NaoqiImage fromAnyValueToNaoqiImage(qi::AnyValue& value);
+		
+		void callCamera();
+		void compressImage();
 		
 		
 	};

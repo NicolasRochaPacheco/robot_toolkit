@@ -21,8 +21,13 @@
 #ifndef CAMERA_PUBLISHER_HPP
 #define CAMERA_PUBLISHER_HPP
 
+#include <sensor_msgs/CompressedImage.h>
+#include <sensor_msgs/image_encodings.h>
+#include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include "robot_toolkit/helpers/vision_helpers.hpp"
+#include <opencv2/highgui/highgui.hpp>
+
 
 namespace Sinfonia
 {
@@ -44,14 +49,17 @@ namespace Sinfonia
 		virtual void shutdown();
 		
 		void setCameraSource(int cameraSource);
+		
 
 	    private:
 		
 		int _cameraSource;
 		
 		image_transport::CameraPublisher _publisher;
+		ros::Publisher _compressedPublisher;
 
 		std::string _topicName;
+		std::string _compressedTopic;
 
 		bool _isInitialized;
 

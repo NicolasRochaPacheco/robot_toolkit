@@ -18,7 +18,7 @@
 //======================================================================//
 
 #include "robot_toolkit/vision_tools/camera_publisher.hpp"
-
+namespace enc = sensor_msgs::image_encodings;
 namespace Sinfonia
 {
     namespace Publisher
@@ -38,37 +38,17 @@ namespace Sinfonia
 	{
 	    return _isInitialized;
 	}
-
+	
 	void CameraPublisher::publish(const sensor_msgs::ImagePtr img, const sensor_msgs::CameraInfoPtr cameraInfo)
 	{
 	    _publisher.publish(*img, *cameraInfo);
+	    
 	}
 	
 	void CameraPublisher::reset(ros::NodeHandle& nodeHandle)
 	{
 	    image_transport::ImageTransport it( nodeHandle );
 	    _publisher = it.advertiseCamera( _topicName, 1 );
-
-	    if ( _cameraSource != Helpers::VisionHelpers::kDepthCamera)
-	    {
-		std::string nodeName = ros::this_node::getName();
-		XmlRpc::XmlRpcValue args, result, payload;
-		args[0] = nodeName;
-		args[1] = nodeName;
-		ros::master::execute("lookupNode", args, result, payload, false);
-		args[2] = result[2];
-		
-		std::vector<std::string> topicList;
-		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth"));
-		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth/parameter_updates"));
-		topicList.push_back(std::string("/") + nodeName + "/" + _topicName + std::string("/compressedDepth/parameter_descriptions"));
-
-		for(std::vector<std::string>::const_iterator topic = topicList.begin(); topic != topicList.end(); ++topic)
-		{
-		    args[1] = *topic;
-		    ros::master::execute("unregisterPublisher", args, result, payload, false);
-		}
-	    }
 	    _isInitialized = true;
 	}
 

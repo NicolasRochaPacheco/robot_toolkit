@@ -21,7 +21,7 @@
 #include "robot_toolkit/vision_tools/camera_converter.hpp"
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
-
+namespace enc = sensor_msgs::image_encodings;
 namespace Sinfonia
 {
     namespace Converter
@@ -35,6 +35,8 @@ namespace Sinfonia
 	    configs.push_back((float)resolution);
 	    configs.push_back((float)frequency);
 	    configs.push_back((float)colorSpace);
+	    _compress = false;
+	    _compressionFactor = 97;
 	    setConfig(configs);
 	}
 	
@@ -97,13 +99,23 @@ namespace Sinfonia
 	    }
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraSetDefaultParamsID, parameters[11]);
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoFocusID, parameters[18]);
-	    
+	    if(parameters[19] == 0)
+	    {
+		_compress = false;
+	    }
+	    else
+	    {
+		_compress = true;
+	    }
+	    _compressionFactor = parameters[20];
 	    return getParameters();
 	}
 	
 	std::vector<float> CameraConverter::setAllParametersToDefault()
 	{
 	    _pVideo.call<bool>("setAllParametersToDefault", _cameraSource);
+	    _compress = false;
+	    _compressionFactor = 97;
 	    return getParameters();
 	}
 
@@ -129,6 +141,8 @@ namespace Sinfonia
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraFrameRateID));
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAverageLuminanceID));
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraAutoFocusID));
+	    result.push_back((int)_compress);
+	    result.push_back((int)_compressionFactor);
 	    return result;
 	}
 	
@@ -151,8 +165,64 @@ namespace Sinfonia
 
 	    _imageMsg->header.stamp = ros::Time::now();
 	    _cameraInfo->header.stamp = _imageMsg->header.stamp;
+	    if(_compress)
+		compressImage();
 	}
 	
+	void CameraConverter::compressImage()
+	{
+	    sensor_msgs::CompressedImage compressedImage;
+	    compressedImage.header = _imageMsg->header;
+	    compressedImage.format = _imageMsg->encoding;
+	    std::vector<int> params;
+	    params.resize(3, 0);
+	    int bitDepth = enc::bitDepth(_imageMsg->encoding);
+	    int numChannels = enc::numChannels(_imageMsg->encoding);
+	    params[0] = CV_IMWRITE_JPEG_QUALITY;
+	    params[1] = _compressionFactor;
+	    
+	    compressedImage.format += "; jpeg compressed";
+	    if ((bitDepth == 8) || (bitDepth == 16))
+	    {
+		std::string targetFormat;
+		if (enc::isColor(_imageMsg->encoding))
+		{
+		    targetFormat = "bgr8";
+		    compressedImage.format += targetFormat;
+		}
+
+		try
+		{
+		    boost::shared_ptr<CameraConverter> trackedObject;
+		    cv_bridge::CvImageConstPtr cvPtr = cv_bridge::toCvShare(*_imageMsg, trackedObject, targetFormat);
+		
+		    if (cv::imencode(".jpg", cvPtr->image, compressedImage.data, params))
+		    {
+			//float cRatio =  (float)compressedImage.data.size() / (float)(_imageMsg->data.size());
+			//std::cout << "original size: " << _imageMsg->data.size() << " compressed size: " <<  compressedImage.data.size() << " compression factor: " << params[1] << std::endl;
+		    }
+		    else
+		    {
+			ROS_ERROR("cv::imencode (jpeg) failed on input image");
+		    }
+		}
+		catch (cv_bridge::Exception& e)
+		{
+		    ROS_ERROR("%s", e.what());
+		}
+		catch (cv::Exception& e)
+		{
+		    ROS_ERROR("%s", e.what());
+		}
+		_imageMsg->data = compressedImage.data;
+		_imageMsg->encoding = "compressed bgr8";
+	    }
+	    else
+	    {
+		ROS_ERROR("Compressed Image Transport - JPEG compression requires 8/16-bit color format (input format is: %s)", _imageMsg->encoding.c_str());
+	    }
+	}
+
 	const sensor_msgs::CameraInfoPtr CameraConverter::getEmptyInfo()
 	{
 	    static const boost::shared_ptr<sensor_msgs::CameraInfo> camInfoMsg = boost::make_shared<sensor_msgs::CameraInfo>();
@@ -265,15 +335,6 @@ namespace Sinfonia
 	    cameraInfoMessage->P[9] = config.get<double>(resolutionName + ".P.9", 0);
 	    cameraInfoMessage->P[10] = config.get<double>(resolutionName + ".P.10", 0);
 	    cameraInfoMessage->P[11] = config.get<double>(resolutionName + ".P.11", 0);
-	    /*
-	    cameraInfoMessage->binning_x = config.get<int>(resolutionName + ".binning_x", 0);
-	    cameraInfoMessage->binning_y = config.get<int>(resolutionName + ".binning_y", 0);
-	    
-	    cameraInfoMessage->roi.x_offset = config.get<int>(resolutionName + ".roi.x_offset", 0);
-	    cameraInfoMessage->roi.y_offset = config.get<int>(resolutionName + ".roi.y_offset", 0);
-	    cameraInfoMessage->roi.height = config.get<int>(resolutionName + ".roi.height", 0);
-	    cameraInfoMessage->roi.width = config.get<int>(resolutionName + ".roi.width", 0);
-	    cameraInfoMessage->roi.do_rectify = config.get<bool>(resolutionName + ".roi.do_rectify", 0);*/
 	    
 	    return cameraInfoMessage;
 	}
