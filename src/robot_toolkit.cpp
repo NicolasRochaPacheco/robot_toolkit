@@ -266,6 +266,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::MoveToSubscriber>("moveto", "/move_base_simple/goal", _sessionPtr, _tf2Buffer));
 	registerSubscriber(boost::make_shared<Subscriber::AnimationSubscriber>("animation", "/animations", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SetAnglesSubscriber>("set_angles", "/set_angles", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::LedsSubscriber>("leds", "/leds", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -383,6 +384,7 @@ namespace Sinfonia
 	_visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
 	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
 	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
+	_miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
     }
     
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -1030,6 +1032,59 @@ namespace Sinfonia
 	return result;
     }
 
+    bool RobotToolkit::miscToolsCallback(robot_toolkit_msgs::misc_tools_srv::Request& request, robot_toolkit_msgs::misc_tools_srv::Response& response)
+    {
+	std::string responseMessage;
+	
+	std::string startedFunctionalities = "Functionalities started:";
+	std::string stoppedFunctionalities = " Functionalities stopped:";
+	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
+	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom") 
+	{
+	    responseMessage = "ERROR: unknown command: " + request.data.command +  " possible values are: enable_all, disable_all, custom";
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else
+	{
+		if( request.data.command == "enable_all") 
+		{
+		    startSubscriber("leds");
+		    responseMessage = "Starting leds";
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		    
+		}
+		
+		if( request.data.command == "disable_all")
+		{
+		    stopSubscriber("leds");
+		    responseMessage = "Stopping leds";
+		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+		}
+		
+		else
+		{
+		    if(request.data.leds == "enable")
+		    {
+			startSubscriber("leds");
+			startedFunctionalities += " leds, ";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting leds" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    else if(request.data.leds == "disable")
+		    {
+			stopSubscriber("leds");
+			stoppedFunctionalities += " leds, ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping leds" << RESETCOLOR  << std::endl;		    
+		    }		    
+		    responseMessage = startedFunctionalities + stoppedFunctionalities;
+		}
+		
+	}
+	
+	response.result = responseMessage;
+	return true;
+    }
 
+    
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

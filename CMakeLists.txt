@@ -40,6 +40,8 @@ set(
         
     src/motion_tools/animation_subscriber.cpp
     src/motion_tools/set_angles_subscriber.cpp
+    
+    src/misc_tools/leds_subscriber.cpp
   )
 
 set(

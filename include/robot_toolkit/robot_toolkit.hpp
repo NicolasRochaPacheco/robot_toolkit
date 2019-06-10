@@ -41,6 +41,8 @@
 #include "robot_toolkit_msgs/speech_parameters_msg.h"
 #include "robot_toolkit_msgs/motion_tools_msg.h"
 #include "robot_toolkit_msgs/motion_tools_srv.h"
+#include "robot_toolkit_msgs/misc_tools_srv.h"
+#include "robot_toolkit_msgs/misc_tools_msg.h"
 
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
@@ -69,6 +71,8 @@
 
 #include "robot_toolkit/motion_tools/animation_subscriber.hpp"
 #include "robot_toolkit/motion_tools/set_angles_subscriber.hpp"
+
+#include "robot_toolkit/misc_tools/leds_subscriber.hpp"
 
 
 
@@ -99,6 +103,7 @@ namespace Sinfonia
 	    bool visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
 	    bool audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response );
 	    bool motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response);
+	    bool miscToolsCallback(robot_toolkit_msgs::misc_tools_srv::Request& request, robot_toolkit_msgs::misc_tools_srv::Response& response);
 	    
 	private:
 	    
@@ -131,6 +136,7 @@ namespace Sinfonia
 	    ros::ServiceServer _visionToolsService;
 	    ros::ServiceServer _audioToolsService;
 	    ros::ServiceServer _motionToolsService;
+	    ros::ServiceServer _miscToolsService;
 	    
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
