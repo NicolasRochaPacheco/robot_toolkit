@@ -167,7 +167,6 @@ namespace Sinfonia
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
-	scheduleConverter("sonar", 50.0f);
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
     }
@@ -228,8 +227,8 @@ namespace Sinfonia
 	insertEventConverter("miclocalization", micLocalizationEvent);
 	
 	std::vector<std::string> sonarTopics;
-	sonarTopics.push_back("sonar/front");
-	sonarTopics.push_back("sonar/back");
+	sonarTopics.push_back("/sonar/front");
+	sonarTopics.push_back("/sonar/back");
 	
 	boost::shared_ptr<Publisher::SonarPublisher> sonarPublisher = boost::make_shared<Publisher::SonarPublisher>(sonarTopics);
 	boost::shared_ptr<Converter::SonarConverter> sonarConverter = boost::make_shared<Converter::SonarConverter>( "sonar", 10, _sessionPtr);
@@ -1060,7 +1059,8 @@ namespace Sinfonia
 		if( request.data.command == "enable_all") 
 		{
 		    startSubscriber("leds");
-		    responseMessage = "Starting leds";
+		    scheduleConverter("sonar", 50.0f);
+		    responseMessage = "Starting leds and sonars";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		    
 		}
@@ -1068,7 +1068,8 @@ namespace Sinfonia
 		if( request.data.command == "disable_all")
 		{
 		    stopSubscriber("leds");
-		    responseMessage = "Stopping leds";
+		    unscheduleConverter("sonar");
+		    responseMessage = "Stopping leds and sonars";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
 		
@@ -1087,6 +1088,21 @@ namespace Sinfonia
 			stoppedFunctionalities += " leds, ";
 			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping leds" << RESETCOLOR  << std::endl;		    
 		    }		    
+		    
+		    if(request.data.sonars == "enable")
+		    {
+			scheduleConverter("sonar", 50.0f);
+			startedFunctionalities += " sonars, ";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting sonars" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    else if(request.data.sonars == "disable")
+		    {
+			unscheduleConverter("sonar");
+			stoppedFunctionalities += " sonars, ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping sonars" << RESETCOLOR  << std::endl;		    
+		    }
+		    
 		    responseMessage = startedFunctionalities + stoppedFunctionalities;
 		}
 		
