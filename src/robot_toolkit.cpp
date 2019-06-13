@@ -44,7 +44,6 @@ namespace Sinfonia
 	}
 	_sessionPtr = session;
 	_isRosLoopEnabled = true;
-	
     }
 
     RobotToolkit::~RobotToolkit()
@@ -169,14 +168,19 @@ namespace Sinfonia
 	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
+	std::cout << "Va por aqui" << std::endl;
+	_faceDetectorTopCamera->reset(*_nodeHandlerPtr);
+	std::cout << "Salio de lo feo " << std::endl;
     }
 
 
     void RobotToolkit::stopService()
     {
 	stopRosLoop();
+	_faceDetectorTopCamera.reset();
+	_faceDetectorBottomCamera.reset();
 	_converters.clear();
-	_subscribers.clear();
+	_subscribers.clear();	
     }
 
     void RobotToolkit::registerDefaultConverter()
@@ -206,19 +210,25 @@ namespace Sinfonia
 	registerGroup( depthToLaserConverter, depthToLaserPublisher);
 	
 	boost::shared_ptr<Publisher::CameraPublisher> frontCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/front/image_raw");
-	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>( "front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>("front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	frontCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, frontCameraPublisher, _1, _2) );
 	registerGroup( frontCameraConverter, frontCameraPublisher);
 	
 	boost::shared_ptr<Publisher::CameraPublisher> bottomCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/bottom/image_raw");
-	boost::shared_ptr<Converter::CameraConverter> bottomCameraConverter = boost::make_shared<Converter::CameraConverter>( "bottom_camera", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	boost::shared_ptr<Converter::CameraConverter> bottomCameraConverter = boost::make_shared<Converter::CameraConverter>("bottom_camera", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	bottomCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, bottomCameraPublisher, _1, _2) );
 	registerGroup( bottomCameraConverter, bottomCameraPublisher);
 	
 	boost::shared_ptr<Publisher::CameraPublisher> depthCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/depth/image_raw");
-	boost::shared_ptr<Converter::CameraConverter> depthCameraConverter = boost::make_shared<Converter::CameraConverter>( "depth_camera", 10, _sessionPtr, Helpers::VisionHelpers::kDepthCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRawDepthColorSpace);
+	boost::shared_ptr<Converter::CameraConverter> depthCameraConverter = boost::make_shared<Converter::CameraConverter>("depth_camera", 10, _sessionPtr, Helpers::VisionHelpers::kDepthCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRawDepthColorSpace);
 	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
 	registerGroup( depthCameraConverter, depthCameraPublisher);
+
+	_basicAwareness = boost::make_shared<Sinfonia::BasicAwareness>(_sessionPtr);
+	
+	_faceDetectorTopCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("front_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	_faceDetectorBottomCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("bottom_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	
 	
 	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<Sinfonia::MicEventRegister>("mic", 0, _sessionPtr);
 	insertEventConverter("mic", audioEventRegister);

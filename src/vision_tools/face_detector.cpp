@@ -18,7 +18,7 @@
 //======================================================================//
 
 
-#include "robot_toolkit/vision_tools/camera_converter.hpp"
+#include "robot_toolkit/vision_tools/face_detector.hpp"
 #include <boost/foreach.hpp>
 #define for_each BOOST_FOREACH
 namespace enc = sensor_msgs::image_encodings;
@@ -26,7 +26,7 @@ namespace Sinfonia
 {
     namespace Converter
     {
-	CameraConverter::CameraConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session, int cameraSource, int resolution, int colorSpace): 
+	FaceDetector::FaceDetector(const std::string& name, const float& frequency, const qi::SessionPtr& session, int cameraSource, int resolution, int colorSpace): 
 	  BaseConverter(name, frequency, session)
 	{	    
 	    _pVideo = session->service("ALVideoDevice");
@@ -42,37 +42,38 @@ namespace Sinfonia
 	    _serviceId = 0;
 	    
 	    
+	    std::ostringstream cameraSourceString;
+	    cameraSourceString << _cameraSource;
+	    _publisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/camera_" + cameraSourceString.str());
 	}
 	
-	CameraConverter::~CameraConverter()
+	FaceDetector::~FaceDetector()
 	{
+	    std::cout << "destructor " << std::endl;
+	    std::cout << "[Destructor] we got a handle: " << _handle << std::endl;
+	    if(_serviceId)
+	    {
+		std::cout << "Matando  " << _serviceId << std::endl;
+		_session->unregisterService(_serviceId);
+		_serviceId = 0;
+		std::cout << "saliendo del matando" << std::endl;
+	    }
 	    if (!_handle.empty())
 	    {
+		std::cout << "[Destructor] we got in with handle: " << _handle << std::endl;
 		_pVideo.call<qi::AnyValue>("unsubscribe", _handle);
 		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "Unsubscribe camera handle: " << _handle << std::endl;
 		_handle.clear();
 	    }
+	    
 	}
 
-	void CameraConverter::registerCallback(MessageAction::MessageAction action, Converter::CameraConverter::CallbackT callback)
+	void FaceDetector::registerCallback(MessageAction::MessageAction action, Converter::FaceDetector::CallbackT callback)
 	{
 	    _callbacks[action] = callback;
 	}
-	void CameraConverter::callAll(const std::vector< MessageAction::MessageAction >& actions)
-	{
-	    if (_handle.empty() )
-	    {
-		std::cerr << _name << "Camera Handle is empty - cannot retrieve image" << std::endl;
-		std::cerr << _name << "Might be a NAOqi problem. Try to restart the ALVideoDevice." << std::endl;
-		return;
-	    }
-	    callCamera();
-	    for_each(MessageAction::MessageAction action, actions)
-	    {
-		_callbacks[action](_imageMsg, _cameraInfo);
-	    }
-	}
-	void CameraConverter::reset()
+	
+	void FaceDetector::reset(ros::NodeHandle& nodeHandle)
 	{
 	    if (!_handle.empty())
 	    {
@@ -80,9 +81,12 @@ namespace Sinfonia
 		_handle.clear();
 	    }
 	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);  
+	    std::cout << "we got a handle: " << _handle << std::endl;
+	    _publisher->reset(nodeHandle);
+	    activateFaceDetection();
 	}
 	
-	std::vector<float> CameraConverter::setParameters(std::vector<float> parameters)
+	std::vector<float> FaceDetector::setParameters(std::vector<float> parameters)
 	{
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID, parameters[0]);
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraContrastID, parameters[1]);
@@ -115,7 +119,7 @@ namespace Sinfonia
 	    return getParameters();
 	}
 	
-	std::vector<float> CameraConverter::setAllParametersToDefault()
+	std::vector<float> FaceDetector::setAllParametersToDefault()
 	{
 	    _pVideo.call<bool>("setAllParametersToDefault", _cameraSource);
 	    _compress = false;
@@ -123,7 +127,7 @@ namespace Sinfonia
 	    return getParameters();
 	}
 
-	std::vector<float> CameraConverter::getParameters()
+	std::vector<float> FaceDetector::getParameters()
 	{
 	    std::vector<float> result;
 	    result.push_back(_pVideo.call<int>("getCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID));
@@ -150,13 +154,14 @@ namespace Sinfonia
 	    return result;
 	}
 	
-	void CameraConverter::callCamera()
+	void FaceDetector::callCamera()
 	{
 	    qi::AnyValue imageAnyValue = _pVideo.call<qi::AnyValue>("getImageRemote", _handle);
 	    Helpers::VisionHelpers::NaoqiImage image;
 	    try
 	    {
 		image = fromAnyValueToNaoqiImage(imageAnyValue);	
+		_lastImage = image;
 	    }
 	    catch(std::runtime_error& e)
 	    {
@@ -174,7 +179,7 @@ namespace Sinfonia
 		compressImage();
 	}
 	
-	void CameraConverter::compressImage()
+	void FaceDetector::compressImage()
 	{
 	    sensor_msgs::CompressedImage compressedImage;
 	    compressedImage.header = _imageMsg->header;
@@ -198,7 +203,7 @@ namespace Sinfonia
 
 		try
 		{
-		    boost::shared_ptr<CameraConverter> trackedObject;
+		    boost::shared_ptr<FaceDetector> trackedObject;
 		    cv_bridge::CvImageConstPtr cvPtr = cv_bridge::toCvShare(*_imageMsg, trackedObject, targetFormat);
 		
 		    if (cv::imencode(".jpg", cvPtr->image, compressedImage.data, params))
@@ -228,13 +233,13 @@ namespace Sinfonia
 	    }
 	}
 
-	const sensor_msgs::CameraInfoPtr CameraConverter::getEmptyInfo()
+	const sensor_msgs::CameraInfoPtr FaceDetector::getEmptyInfo()
 	{
 	    static const boost::shared_ptr<sensor_msgs::CameraInfo> camInfoMsg = boost::make_shared<sensor_msgs::CameraInfo>();
 	    return camInfoMsg;
 	}
 	
-	sensor_msgs::CameraInfoPtr CameraConverter::loadCameraInfo()
+	sensor_msgs::CameraInfoPtr FaceDetector::loadCameraInfo()
 	{
 	    std::string resolutionName;
 	    if(_resolution == Helpers::VisionHelpers::kQVGA)
@@ -344,7 +349,7 @@ namespace Sinfonia
 	    return cameraInfoMessage;
 	}
 	
-	void CameraConverter::setConfig(std::vector<float> configs)
+	void FaceDetector::setConfig(std::vector<float> configs)
 	{
 	    _resolution = (int)configs[0];
 	    setFrequency((int)configs[1]);
@@ -392,7 +397,104 @@ namespace Sinfonia
 	    }
 	}
 	
-	Helpers::VisionHelpers::NaoqiImage CameraConverter::fromAnyValueToNaoqiImage(qi::AnyValue& value)
+	void FaceDetector::activateFaceDetection()
+	{
+	    std::ostringstream cameraSource;
+	    if( !_serviceId )
+	    {
+		std::string eventName = "FaceDetected";
+		cameraSource << _cameraSource;
+		std::string serviceName = std::string("ROS-Driver") + eventName + cameraSource.str();
+		_serviceId = _session->registerService(serviceName, this->shared_from_this());
+		_pMemory.call<void>("subscribeToEvent", eventName.c_str(), serviceName, "faceDetectedCallback");		
+		
+	    }	
+	}
+	
+	void FaceDetector::deactivateFaceDetection()
+	{
+
+	}
+
+
+	void FaceDetector::faceDetectedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier)
+	{
+	    std::vector<float> timeStamp = value[0].toList<float>();
+	    std::vector<qi::AnyValue> faceInfoArray =  value[1].toList<qi::AnyValue>();
+	    std::vector<float> cameraPoseInTorsoFrame = value[2].toList<float>();
+	    std::vector<float> cameraPoseInRobotFrame = value[3].toList<float>();
+	    float cameraID = value[4].toFloat();
+	    
+	    boost::shared_ptr<robot_toolkit_msgs::face_detection_msg> _faceMessage = boost::make_shared<robot_toolkit_msgs::face_detection_msg>();
+	    
+	    
+	    std::cout << "aqui toy 5, camera ID: "<< cameraID << " camera source: " << _cameraSource << std::endl;
+	    
+	    if(cameraID == _cameraSource)
+	    {
+		    qi::AnyValue imageAnyValue = _pVideo.call<qi::AnyValue>("getImageRemote", _handle);
+		    Helpers::VisionHelpers::NaoqiImage image;
+		    try
+		    {
+			image = fromAnyValueToNaoqiImage(imageAnyValue);	
+		    }
+		    catch(std::runtime_error& e)
+		    {
+			std::cout << "Cannot retrieve image" << std::endl;
+			return;
+		    }
+
+		    cv::Mat cvImage(image.height, image.width, _cvMatType, image.buffer);
+		    for(int i=0; i < faceInfoArray.size()-1; i++)
+		    {
+			std::vector<qi::AnyValue> faceInfo = faceInfoArray[i].toList<qi::AnyValue>();
+			std::vector<float> shapeInfo = faceInfo[0].toList<float>();
+			
+			std::vector<float> bboxCornerAngle;
+			bboxCornerAngle.push_back(shapeInfo[1]);
+			bboxCornerAngle.push_back(shapeInfo[2]);
+			std::vector<float>  faceDimensionsAngle;
+			faceDimensionsAngle.push_back(shapeInfo[3]);
+			faceDimensionsAngle.push_back(shapeInfo[4]);
+			
+			qi::AnyValue bboxCornerAnyValue = _pVideo.call< qi::AnyValue >("getImagePositionFromAngularPosition", _cameraSource, bboxCornerAngle);
+			qi::AnyValue faceDimensionsAnyValue = _pVideo.call< qi::AnyValue >("getImagePositionFromAngularPosition", _cameraSource, faceDimensionsAngle);
+			bboxCornerAngle.clear();
+			faceDimensionsAngle.clear();
+			
+			std::vector<float> bboxCorner;
+			std::vector<float> faceDimensions;
+			
+			
+			bboxCorner.push_back(bboxCornerAnyValue[0].as<float>());
+			bboxCorner.push_back(bboxCornerAnyValue[1].as<float>());
+			
+			faceDimensions.push_back(faceDimensionsAnyValue[0].as<float>());
+			faceDimensions.push_back(faceDimensionsAnyValue[1].as<float>());
+			
+			std::cout << "Image cols: " << cvImage.cols  << " Image rows: " << cvImage.rows << std::endl;
+			std::cout << "ShapeInfo size" << shapeInfo.size() << std::endl;
+			std::cout << "0: "<< shapeInfo[0] << " alpha: " << shapeInfo[1]  << " beta: " << shapeInfo[2] << " sizeX: " << shapeInfo[3] << " sizeY: " << shapeInfo[4] << std::endl;
+			std::cout << "bboxCorner x: "<< bboxCorner[0] << " bboxCorner y: " << bboxCorner[1]  << " faceDimensions w: " << faceDimensions[0] << " faceDimensions h: " << 
+				      faceDimensions[1] << std::endl;
+			
+			cv::Rect myROI(cvImage.cols * (  bboxCorner[0] - (faceDimensionsAngle[0]/2.0) ) , cvImage.rows * ( bboxCorner[1] - (faceDimensionsAngle[1]/2.0)) , cvImage.cols * faceDimensionsAngle[0], cvImage.rows *  faceDimensionsAngle[1] );
+			std::cout <<  "myROI x: " << myROI.x << " myROI y:" << myROI.y << " myROI width:" << myROI.width << " myROI height: " << myROI.height << std::endl;
+			
+			cv::Mat face = cvImage(myROI);
+			std::cout << "vamos por aqui 3 " << std::endl;
+			_imageMsg = cv_bridge::CvImage(std_msgs::Header(), _msgColorspace, face).toImageMsg();
+			_imageMsg->header.frame_id = _msgFrameid;
+
+			_imageMsg->header.stamp = ros::Time::now();
+			_faceMessage->faces.push_back(*_imageMsg);
+		    }
+		    _publisher->publish(_faceMessage);
+		    _faceMessage->faces.clear();
+	    }
+	}
+	
+	Helpers::VisionHelpers::NaoqiImage FaceDetector::fromAnyValueToNaoqiImage(qi::AnyValue& value)
 	{
 	    qi::AnyReferenceVector anyReference;
 	    Helpers::VisionHelpers::NaoqiImage result;

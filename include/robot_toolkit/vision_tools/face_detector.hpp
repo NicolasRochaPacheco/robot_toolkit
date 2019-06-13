@@ -18,8 +18,8 @@
 //======================================================================//
 
 
-#ifndef CAMERA_CONVERTER_HPP
-#define CAMERA_CONVERTER_HPP
+#ifndef FACE_DETECTOR_HPP
+#define FACE_DETECTOR_HPP
 
 #include <boost/foreach.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -48,27 +48,29 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <boost/enable_shared_from_this.hpp>
+
 #include <queue>
+
+#include "robot_toolkit/vision_tools/face_publisher.hpp"
 
 namespace Sinfonia
 {
     namespace Converter
     {
 
-	class CameraConverter : public BaseConverter<CameraConverter>
+	class FaceDetector : public BaseConverter<FaceDetector>, public boost::enable_shared_from_this<FaceDetector>
 	{
 
 	    typedef boost::function<void(sensor_msgs::ImagePtr, sensor_msgs::CameraInfoPtr)> CallbackT;
 
 	    public:
-		CameraConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution, int colorSpace);
-		~CameraConverter();
+		FaceDetector( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution, int colorSpace);
+		~FaceDetector();
 
 		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 
-		void callAll( const std::vector<MessageAction::MessageAction>& actions );
-
-		void reset( );
+		void reset(ros::NodeHandle& nodeHandle );
 		
 		std::vector<float> setParameters(std::vector<float> parameters);
 		std::vector<float> setAllParametersToDefault();
@@ -86,6 +88,8 @@ namespace Sinfonia
 
 		qi::AnyObject _pVideo;
 		qi::AnyObject _pMemory;
+		
+		Helpers::VisionHelpers::NaoqiImage _lastImage;
 		
 		bool _compress;
 		
@@ -112,8 +116,15 @@ namespace Sinfonia
 		
 		void callCamera();
 		void compressImage();
+		void activateFaceDetection();
+		void deactivateFaceDetection();
+		
+		boost::shared_ptr<Publisher::FacePublisher> _publisher;
+		
 		
 	};
+	
+	QI_REGISTER_OBJECT(FaceDetector, faceDetectedCallback)
 
     } 
 } 

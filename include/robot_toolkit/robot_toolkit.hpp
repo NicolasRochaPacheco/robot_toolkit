@@ -64,6 +64,9 @@
 
 #include "robot_toolkit/vision_tools/camera_converter.hpp"
 #include "robot_toolkit/vision_tools/camera_publisher.hpp"
+#include "robot_toolkit/vision_tools/face_tracker.hpp"
+#include "robot_toolkit/vision_tools/face_detector.hpp"
+
 
 #include "robot_toolkit/audio_tools/mic/mic_event.hpp"
 #include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
@@ -142,6 +145,10 @@ namespace Sinfonia
 	    
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
+	    
+	    boost::shared_ptr<Sinfonia::BasicAwareness> _basicAwareness;
+	    boost::shared_ptr<Sinfonia::Converter::FaceDetector> _faceDetectorTopCamera;
+	    boost::shared_ptr<Sinfonia::Converter::FaceDetector> _faceDetectorBottomCamera;
 	    
 	    
 	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   

@@ -52,8 +52,10 @@ namespace Sinfonia
 		    animationPath = "animations_sinfonia/animations/" + message.animation_name;
 		}
 		std::string pathToCheck = "/home/nao/.local/share/PackageManager/apps/" + animationPath;
+		std::cout << "Checking path " << pathToCheck << std::endl;
 		if( boost::filesystem::exists(pathToCheck) )
 		{
+		    std::cout << "encontro el path" << std::endl;
 		    _pBehaviour.async<void>("startBehavior", animationPath);
 		}
 		else

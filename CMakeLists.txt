@@ -9,11 +9,15 @@ set(
     src/navigation_tools/tf/tf_converter.cpp
     
     src/vision_tools/camera_converter.cpp
+    src/vision_tools/face_tracker.cpp
+    src/vision_tools/face_detector.cpp
+    
     src/audio_tools/mic/mic_converter.cpp
     src/audio_tools/mic/mic_event.cpp
     
     src/audio_tools/mic/mic_localization_event.cpp
     src/misc_tools/sonar/sonar_converter.cpp
+    
   )
 set(
   TOOLS_SRC
@@ -28,6 +32,7 @@ set(
     src/navigation_tools/tf/tf_publisher.cpp
     
     src/vision_tools/camera_publisher.cpp
+    src/vision_tools/face_publisher.cpp
     
     src/audio_tools/mic/mic_publisher.cpp
     src/audio_tools/mic/mic_localization_publisher.cpp
