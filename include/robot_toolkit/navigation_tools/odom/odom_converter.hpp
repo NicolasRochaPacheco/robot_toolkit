@@ -53,6 +53,8 @@ namespace Sinfonia
 		std::vector<float> setParameters(std::vector<float> parameters){}
 		std::vector<float> setAllParametersToDefault(){}
 		std::vector<float> getParameters(){}
+		
+		void shutdown(){}
 
 	    private:
 		qi::AnyObject _pMotion;

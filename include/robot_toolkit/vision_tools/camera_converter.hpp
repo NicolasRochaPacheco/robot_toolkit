@@ -74,6 +74,8 @@ namespace Sinfonia
 		std::vector<float> setAllParametersToDefault();
 		std::vector<float> getParameters();
 		
+		void shutdown(){}
+		
 		
 		void setConfig(std::vector<float> configs);
 		

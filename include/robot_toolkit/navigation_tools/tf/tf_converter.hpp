@@ -59,6 +59,8 @@ namespace Sinfonia
 	    std::vector<float> setParameters(std::vector<float> parameters){}
 	    std::vector<float> setAllParametersToDefault(){}
 	    std::vector<float> getParameters(){}
+	    
+	    void shutdown(){}
 
 	private:    
 	    void setTransforms(const std::map<std::string, double>& jointPositions, const ros::Time& time, const std::string& tfPrefix);

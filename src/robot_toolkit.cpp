@@ -168,19 +168,21 @@ namespace Sinfonia
 	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
-	std::cout << "Va por aqui" << std::endl;
-	_faceDetectorTopCamera->reset(*_nodeHandlerPtr);
-	std::cout << "Salio de lo feo " << std::endl;
+	
     }
 
 
     void RobotToolkit::stopService()
     {
+	int frontFaceDetectorIndex = getConverterIndex("front_camera_face_detector");
+	int bottomFaceDetectorIndex = getConverterIndex("bottom_camera_face_detector");
+	
+	_converters[frontFaceDetectorIndex].shutdown();
+	_converters[bottomFaceDetectorIndex].shutdown();
+	
 	stopRosLoop();
-	_faceDetectorTopCamera.reset();
-	_faceDetectorBottomCamera.reset();
 	_converters.clear();
-	_subscribers.clear();	
+	_subscribers.clear();		
     }
 
     void RobotToolkit::registerDefaultConverter()
@@ -226,8 +228,15 @@ namespace Sinfonia
 
 	_basicAwareness = boost::make_shared<Sinfonia::BasicAwareness>(_sessionPtr);
 	
-	_faceDetectorTopCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("front_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
-	_faceDetectorBottomCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("bottom_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	boost::shared_ptr<Publisher::FacePublisher> topCameraFaceDetectorPublisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/front_camera");
+	boost::shared_ptr<Sinfonia::Converter::FaceDetector> faceDetectorTopCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("front_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	faceDetectorTopCamera->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::FacePublisher::publish, topCameraFaceDetectorPublisher, _1) );
+	registerGroup( faceDetectorTopCamera, topCameraFaceDetectorPublisher);
+	
+	boost::shared_ptr<Publisher::FacePublisher> bottomCameraFaceDetectorPublisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/bottom_camera");
+	boost::shared_ptr<Sinfonia::Converter::FaceDetector> faceDetectorBottomCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("bottom_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
+	faceDetectorBottomCamera->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::FacePublisher::publish, bottomCameraFaceDetectorPublisher, _1) );
+	registerGroup( faceDetectorBottomCamera, bottomCameraFaceDetectorPublisher);
 	
 	
 	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<Sinfonia::MicEventRegister>("mic", 0, _sessionPtr);
@@ -565,7 +574,7 @@ namespace Sinfonia
     {
 	std::string responseMessage;
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.camera_name != "front_camera" && request.data.camera_name != "bottom_camera" && request.data.camera_name != "depth_camera" ) 
+	if( request.data.camera_name != "front_camera" && request.data.camera_name != "bottom_camera" && request.data.camera_name != "depth_camera" && request.data.camera_name != "front_camera_face_detector" && request.data.camera_name != "bottom_camera_face_detector") 
 	{
 	    responseMessage = "ERROR: unknown camera name, possible values are: front_camera, bottom_camera, depth_camera";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -578,7 +587,17 @@ namespace Sinfonia
 		if( converterIndex != -1 )
 		{
 		    std::vector<float> config;
-		    config.push_back(Helpers::VisionHelpers::kQVGA);
+		    float defaultFrequency;
+		    if(request.data.camera_name == "front_camera_face_detector" || request.data.camera_name == "bottom_camera_face_detector")
+		    {
+			defaultFrequency = 30.0f;
+			config.push_back(Helpers::VisionHelpers::kVGA);
+		    }
+		    else
+		    {
+			defaultFrequency = 10.0f;
+			config.push_back(Helpers::VisionHelpers::kQVGA);
+		    }
 		    config.push_back(10);
 		    if( request.data.camera_name == "depth_camera" )
 		    {
@@ -594,7 +613,7 @@ namespace Sinfonia
 		    {
 			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setAllParametersToDefault());
 		    }
-		    scheduleConverter(request.data.camera_name, 10.0f); 
+		    scheduleConverter(request.data.camera_name, defaultFrequency); 
 		    responseMessage = "Starting: " + request.data.camera_name + " with default parameters";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting: " << request.data.camera_name << " with default parameters" << RESETCOLOR  << std::endl;		    
 		}
@@ -612,6 +631,11 @@ namespace Sinfonia
 		    unscheduleConverter(request.data.camera_name);   
 		    responseMessage = "Shutting down: " + request.data.camera_name;
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "]" << " Shutting down: " << request.data.camera_name << RESETCOLOR  << std::endl;
+		    if(request.data.camera_name == "front_camera_face_detector" || request.data.camera_name == "bottom_camera_face_detector")
+		    {
+			int converterIndex = getConverterIndex(request.data.camera_name);
+			_converters[converterIndex].shutdown();
+		    }
 		}
 		else
 		{

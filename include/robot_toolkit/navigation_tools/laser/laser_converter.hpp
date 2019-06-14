@@ -53,6 +53,7 @@ namespace Sinfonia
 		std::vector<float> setAllParametersToDefault(){}
 		std::vector<float> getParameters(){}
 		
+		void shutdown(){}
 		
 
 	    private:

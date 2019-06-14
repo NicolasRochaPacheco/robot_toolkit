@@ -147,8 +147,7 @@ namespace Sinfonia
 	    std::map< std::string, Event::Event> _eventMap;
 	    
 	    boost::shared_ptr<Sinfonia::BasicAwareness> _basicAwareness;
-	    boost::shared_ptr<Sinfonia::Converter::FaceDetector> _faceDetectorTopCamera;
-	    boost::shared_ptr<Sinfonia::Converter::FaceDetector> _faceDetectorBottomCamera;
+	    
 	    
 	    
 	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   

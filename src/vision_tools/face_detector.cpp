@@ -41,26 +41,15 @@ namespace Sinfonia
 	    setConfig(configs);
 	    _serviceId = 0;
 	    
+	    _eventIsActive = false;
+	    _newMessage = false;
 	    
-	    std::ostringstream cameraSourceString;
-	    cameraSourceString << _cameraSource;
-	    _publisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/camera_" + cameraSourceString.str());
 	}
 	
 	FaceDetector::~FaceDetector()
 	{
-	    std::cout << "destructor " << std::endl;
-	    std::cout << "[Destructor] we got a handle: " << _handle << std::endl;
-	    if(_serviceId)
-	    {
-		std::cout << "Matando  " << _serviceId << std::endl;
-		_session->unregisterService(_serviceId);
-		_serviceId = 0;
-		std::cout << "saliendo del matando" << std::endl;
-	    }
 	    if (!_handle.empty())
 	    {
-		std::cout << "[Destructor] we got in with handle: " << _handle << std::endl;
 		_pVideo.call<qi::AnyValue>("unsubscribe", _handle);
 		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << "Unsubscribe camera handle: " << _handle << std::endl;
 		_handle.clear();
@@ -73,7 +62,25 @@ namespace Sinfonia
 	    _callbacks[action] = callback;
 	}
 	
-	void FaceDetector::reset(ros::NodeHandle& nodeHandle)
+	void FaceDetector::callAll(const std::vector< MessageAction::MessageAction >& actions)
+	{
+	    if(!_eventIsActive)
+	    {
+		activateFaceDetection();
+	    }
+	    if(_newMessage && _faceMessage->faces.size() > 0)
+	    {
+		for_each(MessageAction::MessageAction action, actions)
+		{
+		    _callbacks[action]( _faceMessage);
+		}
+		_newMessage = false;
+	    }
+	}
+	
+	
+
+	void FaceDetector::reset()
 	{
 	    if (!_handle.empty())
 	    {
@@ -82,10 +89,18 @@ namespace Sinfonia
 	    }
 	    _handle = _pVideo.call<std::string>("subscribeCamera", _name, _cameraSource, _resolution, _colorSpace, (int)_frequency);  
 	    std::cout << "we got a handle: " << _handle << std::endl;
-	    _publisher->reset(nodeHandle);
-	    activateFaceDetection();
 	}
 	
+	void FaceDetector::shutdown()
+	{
+	    if(_serviceId)
+	    {
+		_session->unregisterService(_serviceId);
+		_serviceId = 0;
+		_eventIsActive = false;
+	    }
+	}
+
 	std::vector<float> FaceDetector::setParameters(std::vector<float> parameters)
 	{
 	    _pVideo.call<bool>("setCameraParameter", _handle, Helpers::VisionHelpers::kCameraBrightnessID, parameters[0]);
@@ -399,6 +414,7 @@ namespace Sinfonia
 	
 	void FaceDetector::activateFaceDetection()
 	{
+	    std::cout << "Activando el evento de Face Detection" << std::endl;
 	    std::ostringstream cameraSource;
 	    if( !_serviceId )
 	    {
@@ -409,6 +425,7 @@ namespace Sinfonia
 		_pMemory.call<void>("subscribeToEvent", eventName.c_str(), serviceName, "faceDetectedCallback");		
 		
 	    }	
+	    _eventIsActive = true;
 	}
 	
 	void FaceDetector::deactivateFaceDetection()
@@ -425,7 +442,7 @@ namespace Sinfonia
 	    std::vector<float> cameraPoseInRobotFrame = value[3].toList<float>();
 	    float cameraID = value[4].toFloat();
 	    
-	    boost::shared_ptr<robot_toolkit_msgs::face_detection_msg> _faceMessage = boost::make_shared<robot_toolkit_msgs::face_detection_msg>();
+	     _faceMessage = boost::make_shared<robot_toolkit_msgs::face_detection_msg>();
 	    
 	    
 	    std::cout << "aqui toy 5, camera ID: "<< cameraID << " camera source: " << _cameraSource << std::endl;
@@ -443,7 +460,7 @@ namespace Sinfonia
 			std::cout << "Cannot retrieve image" << std::endl;
 			return;
 		    }
-
+		    _faceMessage->faces.clear();
 		    cv::Mat cvImage(image.height, image.width, _cvMatType, image.buffer);
 		    for(int i=0; i < faceInfoArray.size()-1; i++)
 		    {
@@ -472,25 +489,18 @@ namespace Sinfonia
 			faceDimensions.push_back(faceDimensionsAnyValue[0].as<float>());
 			faceDimensions.push_back(faceDimensionsAnyValue[1].as<float>());
 			
-			std::cout << "Image cols: " << cvImage.cols  << " Image rows: " << cvImage.rows << std::endl;
-			std::cout << "ShapeInfo size" << shapeInfo.size() << std::endl;
-			std::cout << "0: "<< shapeInfo[0] << " alpha: " << shapeInfo[1]  << " beta: " << shapeInfo[2] << " sizeX: " << shapeInfo[3] << " sizeY: " << shapeInfo[4] << std::endl;
-			std::cout << "bboxCorner x: "<< bboxCorner[0] << " bboxCorner y: " << bboxCorner[1]  << " faceDimensions w: " << faceDimensions[0] << " faceDimensions h: " << 
-				      faceDimensions[1] << std::endl;
-			
 			cv::Rect myROI(cvImage.cols * (  bboxCorner[0] - (faceDimensionsAngle[0]/2.0) ) , cvImage.rows * ( bboxCorner[1] - (faceDimensionsAngle[1]/2.0)) , cvImage.cols * faceDimensionsAngle[0], cvImage.rows *  faceDimensionsAngle[1] );
-			std::cout <<  "myROI x: " << myROI.x << " myROI y:" << myROI.y << " myROI width:" << myROI.width << " myROI height: " << myROI.height << std::endl;
 			
 			cv::Mat face = cvImage(myROI);
-			std::cout << "vamos por aqui 3 " << std::endl;
 			_imageMsg = cv_bridge::CvImage(std_msgs::Header(), _msgColorspace, face).toImageMsg();
 			_imageMsg->header.frame_id = _msgFrameid;
 
 			_imageMsg->header.stamp = ros::Time::now();
+			if(_compress)
+			    compressImage();
 			_faceMessage->faces.push_back(*_imageMsg);
 		    }
-		    _publisher->publish(_faceMessage);
-		    _faceMessage->faces.clear();
+		    _newMessage = true;
 	    }
 	}
 	

@@ -62,22 +62,25 @@ namespace Sinfonia
 	class FaceDetector : public BaseConverter<FaceDetector>, public boost::enable_shared_from_this<FaceDetector>
 	{
 
-	    typedef boost::function<void(sensor_msgs::ImagePtr, sensor_msgs::CameraInfoPtr)> CallbackT;
+	    typedef boost::function<void(robot_toolkit_msgs::face_detection_msgPtr)> CallbackT;
 
 	    public:
 		FaceDetector( const std::string& name, const float& frequency, const qi::SessionPtr& session,  int cameraSource, int resolution, int colorSpace);
 		~FaceDetector();
 
 		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
+		
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 
-		void reset(ros::NodeHandle& nodeHandle );
+		void reset();
 		
 		std::vector<float> setParameters(std::vector<float> parameters);
 		std::vector<float> setAllParametersToDefault();
 		std::vector<float> getParameters();
 		
-		
 		void setConfig(std::vector<float> configs);
+		
+		void shutdown();
 		
 		void faceDetectedCallback(std::string key,  qi::AnyValue value, std::string subscriberIdentifier);
 
@@ -92,6 +95,8 @@ namespace Sinfonia
 		Helpers::VisionHelpers::NaoqiImage _lastImage;
 		
 		bool _compress;
+		bool _eventIsActive;
+		bool _newMessage;
 		
 		int _cvMatType;
 		int _resolution;
@@ -109,6 +114,7 @@ namespace Sinfonia
 		sensor_msgs::ImagePtr _imageMsg;
 		sensor_msgs::CameraInfoPtr _cameraInfo;
 		sensor_msgs::CameraInfoPtr loadCameraInfo();
+		robot_toolkit_msgs::face_detection_msgPtr _faceMessage;
 		
 		const sensor_msgs::CameraInfoPtr getEmptyInfo();
 		
@@ -118,9 +124,6 @@ namespace Sinfonia
 		void compressImage();
 		void activateFaceDetection();
 		void deactivateFaceDetection();
-		
-		boost::shared_ptr<Publisher::FacePublisher> _publisher;
-		
 		
 	};
 	

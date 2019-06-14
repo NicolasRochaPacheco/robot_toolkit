@@ -85,6 +85,11 @@ namespace Sinfonia
 		    converterPtr->setConfig(configs);
 		}
 		
+		void shutdown()
+		{
+		    converterPtr->shutdown();
+		}
+		
 		std::vector<float> setParameters(std::vector<float> parameters)
 		{
 		    return converterPtr->setParameters(parameters);
@@ -116,6 +121,7 @@ namespace Sinfonia
 		    virtual void reset() = 0;
 		    virtual void callAll( const std::vector<Sinfonia::MessageAction::MessageAction>& actions ) = 0;
 		    virtual void setConfig(std::vector<float> configs) = 0;
+		    virtual void shutdown() = 0;
 		    virtual std::vector<float> setParameters(std::vector<float> parameters) = 0;
 		    virtual std::vector<float> setAllParametersToDefault() = 0;
 		    virtual std::vector<float> getParameters() = 0;
@@ -156,6 +162,11 @@ namespace Sinfonia
 		    void setConfig(std::vector<float> configs)
 		    {
 			converter_->setConfig(configs);
+		    }
+		    
+		    void shutdown()
+		    {
+			converter_->shutdown();
 		    }
 		    
 		    std::vector<float> setParameters(std::vector<float> parameters)

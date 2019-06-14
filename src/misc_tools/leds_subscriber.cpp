@@ -38,11 +38,15 @@ namespace Sinfonia
 	}
 	void LedsSubscriber::ledsCallback(const robot_toolkit_msgs::leds_parameters_msg message)
 	{
+	    float redColor = ((float)message.red / 255.0);
+	    float greenColor = ((float)message.green / 255.0) ;
+	    float blueColor = ((float)message.blue / 255.0);
+	    
 	    if (message.name.find("Ear") != std::string::npos) 
 	    {
 		try
 		{
-		    _pLeds.call<void>("fadeRGB", message.name, 0, 0, (message.blue / 255), message.time);  
+		    _pLeds.call<void>("fadeRGB", message.name, 0, 0, blueColor, message.time);  
 		}
 		catch( std::exception& e)
 		{
@@ -53,7 +57,7 @@ namespace Sinfonia
 	    {
 		try
 		{
-		    _pLeds.call<void>("fadeRGB", message.name, (float)(message.red / 255), (float)(message.green / 255), (float)(message.blue / 255), message.time);
+		    _pLeds.call<void>("fadeRGB", message.name, redColor, greenColor, blueColor, message.time);
 		}
 		catch( std::exception& e)
 		{
