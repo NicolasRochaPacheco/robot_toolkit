@@ -55,22 +55,34 @@ namespace Sinfonia
 	   void setParameters(std::vector<int> parameters);
 	   
 	   void processRemote(int numberOfChannels, int samplesByChannel, qi::AnyValue timestamp, qi::AnyValue buffer);
+	   void wordRecognizedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier);
 	   
 	private:
 	    
 	    void registerCallback();
 	    void unregisterCallback();
+	    void initSpeechRecognition();
+	    void stopSpeechRecognition();
 	    
 	    boost::shared_ptr<Converter::MicConverter> _converter;
 	    boost::shared_ptr<Publisher::MicPublisher> _publisher;
 	    
-
+	    std::string _speechKey;
+	    
 	    qi::SessionPtr _session;
+	    
 	    qi::AnyObject _pAudio;
 	    qi::AnyObject _pRobotModel;
+	    qi::AnyObject _pSpeechRecognition;
+	    qi::AnyObject _pMemory;
+	    
 	    qi::FutureSync<qi::AnyObject> _pAudioExtractorRequest;
+	    
 	    std::vector<uint8_t> _channelMap;
+	    std::vector<std::string> _wordList;
+	    
 	    unsigned int _serviceId;
+	    unsigned int _speechRecognitionServiceId;
 
 	    boost::mutex _subscriptionMutex;
 	    boost::mutex _processingMutex;
@@ -81,7 +93,7 @@ namespace Sinfonia
 	    int _micSampleRate;
 	    int _channels;
     };
-    QI_REGISTER_OBJECT(MicEventRegister, processRemote)
+    QI_REGISTER_OBJECT(MicEventRegister, processRemote, wordRecognizedCallback)
 }
 
 

@@ -26,8 +26,12 @@ namespace Sinfonia
     Sinfonia::MicEventRegister::MicEventRegister(const std::string& name, const float& frecuency, const qi::SessionPtr& session)
     {
 	_serviceId = 0;
+	_speechRecognitionServiceId = 0;
+	_speechKey = "WordRecognized";
 	_pAudio = session->service("ALAudioDevice");
 	_pRobotModel = session->service("ALRobotModel");
+	_pSpeechRecognition = session->service("ALSpeechRecognition");
+	_pMemory = session->service("ALMemory");
 	_session = session;
 	_isStarted = false;
 	_isPublishing = false;
@@ -51,6 +55,7 @@ namespace Sinfonia
 	_publisher = boost::make_shared<Publisher::MicPublisher>();
 	_converter = boost::make_shared<Converter::MicConverter>(name, frecuency, session);
 	_converter->registerCallback(MessageAction::PUBLISH, boost::bind(&Publisher::MicPublisher::publish, _publisher, _1) );
+	_wordList.push_back("robot");
     }
     Sinfonia::MicEventRegister::~MicEventRegister()
     {
@@ -67,9 +72,35 @@ namespace Sinfonia
 	_publisher->shutdown();
     }
     
+    void MicEventRegister::initSpeechRecognition()
+    {
+	std::cout << "Setting up speech Recognition" << std::endl;
+	if(!_speechRecognitionServiceId)
+	{
+	    _pSpeechRecognition.call<void>("setLanguage", "English");
+	    _pSpeechRecognition.call<void>("setVocabulary", _wordList, true);
+	    std::string serviceName = std::string("ROS-Driver") + _speechKey;
+	    _speechRecognitionServiceId = _session->registerService(serviceName, this->shared_from_this());
+	    _pSpeechRecognition.call<void>("subscribe","ROS-Driver-Audio"+ _speechKey);
+	    _pMemory.call<void>("subscribeToEvent", _speechKey.c_str(), serviceName, "wordRecognizedCallback");
+	    std::cout << "Speech recognition Initialized" << std::endl;
+	}
+    }
+    
+    void MicEventRegister::stopSpeechRecognition()
+    {
+	std::string serviceName = std::string("ROS-Driver") + _speechKey;
+	if(_speechRecognitionServiceId)
+	{
+	    _session->unregisterService(_speechRecognitionServiceId);
+	    _speechRecognitionServiceId = 0;
+	}
+    }
+
     void Sinfonia::MicEventRegister::startProcess()
     {
 	boost::mutex::scoped_lock start_lock(_subscriptionMutex);
+	initSpeechRecognition();
 	if (!_isStarted)
 	{
 	    if(!_serviceId)
@@ -160,6 +191,11 @@ namespace Sinfonia
 		_converter->callAll( actions, message );
 	    }
 	}
-
     }
+    
+    void MicEventRegister::wordRecognizedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier)
+    {
+	std::cout << "I heard robot!" << std::endl;
+    }
+
 }

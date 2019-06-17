@@ -438,6 +438,7 @@ namespace Sinfonia
 	    int subscriberIndex = getSubscriberIndex("cmd_vel");
 	    if( subscriberIndex != -1)
 	    {
+		std::cout << "going to set default !!!!" << std::endl;
 		_subscribers[subscriberIndex].setDefaultParameters();
 		startSubscriber("cmd_vel");
 	    }
@@ -536,6 +537,7 @@ namespace Sinfonia
 		    securityTime = request.data.security_timer;
 		}
 		parameters.push_back(securityTime);
+		parameters.push_back(request.data.collision_enable);
 		int subscriberIndex = getSubscriberIndex("cmd_vel");
 		_subscribers[subscriberIndex].setParameters(parameters);
 		startSubscriber("cmd_vel");

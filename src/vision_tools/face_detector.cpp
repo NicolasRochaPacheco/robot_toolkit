@@ -445,8 +445,6 @@ namespace Sinfonia
 	     _faceMessage = boost::make_shared<robot_toolkit_msgs::face_detection_msg>();
 	    
 	    
-	    std::cout << "aqui toy 5, camera ID: "<< cameraID << " camera source: " << _cameraSource << std::endl;
-	    
 	    if(cameraID == _cameraSource)
 	    {
 		    qi::AnyValue imageAnyValue = _pVideo.call<qi::AnyValue>("getImageRemote", _handle);
