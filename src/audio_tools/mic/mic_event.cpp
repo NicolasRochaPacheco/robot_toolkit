@@ -56,9 +56,11 @@ namespace Sinfonia
 	_converter = boost::make_shared<Converter::MicConverter>(name, frecuency, session);
 	_converter->registerCallback(MessageAction::PUBLISH, boost::bind(&Publisher::MicPublisher::publish, _publisher, _1) );
 	_wordList.push_back("robot");
+	_confidence = 0.4;
     }
     Sinfonia::MicEventRegister::~MicEventRegister()
     {
+	//stopSpeechRecognition();
 	stopProcess();
     }
 
@@ -79,9 +81,11 @@ namespace Sinfonia
 	{
 	    _pSpeechRecognition.call<void>("setLanguage", "English");
 	    _pSpeechRecognition.call<void>("setVocabulary", _wordList, true);
+	    //_pSpeechRecognition.call<void>("setAudioExpression", false);
+	    //_pSpeechRecognition.call<void>("setVisualExpression", false);
 	    std::string serviceName = std::string("ROS-Driver") + _speechKey;
 	    _speechRecognitionServiceId = _session->registerService(serviceName, this->shared_from_this());
-	    _pSpeechRecognition.call<void>("subscribe","ROS-Driver-Audio"+ _speechKey);
+	    _pSpeechRecognition.call<void>("subscribe", "ROSDriverAudio"+ _speechKey);
 	    _pMemory.call<void>("subscribeToEvent", _speechKey.c_str(), serviceName, "wordRecognizedCallback");
 	    std::cout << "Speech recognition Initialized" << std::endl;
 	}
@@ -89,18 +93,22 @@ namespace Sinfonia
     
     void MicEventRegister::stopSpeechRecognition()
     {
+	std::cout << "Matando Speech Recognition" << std::endl;
 	std::string serviceName = std::string("ROS-Driver") + _speechKey;
 	if(_speechRecognitionServiceId)
 	{
+	    std::cout << "Re matando" << std::endl;
 	    _session->unregisterService(_speechRecognitionServiceId);
 	    _speechRecognitionServiceId = 0;
 	}
+	_pSpeechRecognition.call<void>("unsubscribe", "ROSDriverAudio"+ _speechKey);
+	std::cout << "Ya se murio :)" << std::endl;
     }
 
     void Sinfonia::MicEventRegister::startProcess()
     {
 	boost::mutex::scoped_lock start_lock(_subscriptionMutex);
-	initSpeechRecognition();
+	//initSpeechRecognition();
 	if (!_isStarted)
 	{
 	    if(!_serviceId)
@@ -195,7 +203,14 @@ namespace Sinfonia
     
     void MicEventRegister::wordRecognizedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier)
     {
-	std::cout << "I heard robot!" << std::endl;
+	for(unsigned int i = 0; i < value.size() /2 ; ++i)
+	{
+	    std::cout << "word recognized: " << value[i*2].toString() << " with confidence: " << value[i*2+1].toFloat() << std::endl;
+	    if(value[i*2].toString() == "robot" && value[i*2+1].toFloat() > _confidence)
+	    {
+		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "its threshold is higher than " << _confidence << std::endl;
+	    }
+	}
     }
 
 }

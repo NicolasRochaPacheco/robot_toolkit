@@ -89,7 +89,6 @@ namespace Sinfonia
 	
 	std::vector< float > CmdVelSubscriber::setDefaultParameters()
 	{
-	    std::cout << "Setting default parameters " << std::endl;
 	    _securityTime = 0.5;
 	    _securityEnable = false;
 	    setSecurity();
@@ -98,8 +97,8 @@ namespace Sinfonia
 
 	void CmdVelSubscriber::setSecurity()
 	{		
-	    std::cout << "Turning security: " << _securityEnable << std::endl; 
 	    _pMotion.call<void>("setExternalCollisionProtectionEnabled", "Move", _securityEnable);
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Setting setExternalCollisionProtectionEnabled to -> " << _securityEnable << std::endl;
 	}
 
 	void CmdVelSubscriber::timerCallback(const ros::TimerEvent& event)

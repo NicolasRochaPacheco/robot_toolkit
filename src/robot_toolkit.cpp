@@ -165,7 +165,7 @@ namespace Sinfonia
     
     void RobotToolkit::startInitialTopics()
     {
-	// Poner aqui el schedule de los topicos que deben inciar desde el inicio 
+	// Poner aqui lo que se quiere iniciar por default
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
 	
@@ -177,6 +177,7 @@ namespace Sinfonia
 	int frontFaceDetectorIndex = getConverterIndex("front_camera_face_detector");
 	int bottomFaceDetectorIndex = getConverterIndex("bottom_camera_face_detector");
 	
+	_eventMap.clear();
 	_converters[frontFaceDetectorIndex].shutdown();
 	_converters[bottomFaceDetectorIndex].shutdown();
 	
@@ -249,11 +250,26 @@ namespace Sinfonia
 	sonarTopics.push_back("/sonar/front");
 	sonarTopics.push_back("/sonar/back");
 	
+	
 	boost::shared_ptr<Publisher::SonarPublisher> sonarPublisher = boost::make_shared<Publisher::SonarPublisher>(sonarTopics);
 	boost::shared_ptr<Converter::SonarConverter> sonarConverter = boost::make_shared<Converter::SonarConverter>( "sonar", 10, _sessionPtr);
 	sonarConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::SonarPublisher::publish, sonarPublisher, _1) );
 	registerGroup( sonarConverter, sonarPublisher);
     
+	boost::shared_ptr<Publisher::PathPublisher> pathPublisher = boost::make_shared<Publisher::PathPublisher>("/navigation/path");
+	boost::shared_ptr<Converter::PathConverter> pathConverter = boost::make_shared<Converter::PathConverter>( "navigation_path", 10, _sessionPtr);
+	pathConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::PathPublisher::publish, pathPublisher, _1) );
+	registerGroup( pathConverter, pathPublisher);
+	
+	
+	boost::shared_ptr<Publisher::RobotPosePublisher > robotPosePublisher = boost::make_shared<Publisher::RobotPosePublisher>("/navigation/robot_pose");
+	boost::shared_ptr<Converter::RobotPoseConverter> robotPoseConverter = boost::make_shared<Converter::RobotPoseConverter>( "navigation_robot_pose", 10, _sessionPtr);
+	robotPoseConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::RobotPosePublisher::publish, robotPosePublisher, _1) );
+	registerGroup( robotPoseConverter, robotPosePublisher);
+	
+	boost::shared_ptr< Sinfonia::Navigation::ResultEvent > navigationResultEvent = boost::make_shared<Sinfonia::Navigation::ResultEvent>("navigation_result", 0, _sessionPtr);
+	insertEventConverter("navigation_result", navigationResultEvent);
+	
 	printRegisteredConverters();
 	
     }
@@ -296,6 +312,8 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::AnimationSubscriber>("animation", "/animations", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SetAnglesSubscriber>("set_angles", "/set_angles", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::LedsSubscriber>("leds", "/leds", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::NavigationGoalSubscriber>("navigation_goal", "/navigation/goal", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::RobotPoseSubscriber>("navigation_robot_pose", "/navigation/robot_pose", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -425,6 +443,12 @@ namespace Sinfonia
 	    scheduleConverter("tf", 50.0f);
 	    scheduleConverter("odom", 10.0f);
 	    scheduleConverter("laser", 10.0f);
+	    startSubscriber("navigation_goal");
+	    startSubscriber("navigation_robot_pose");
+	    _eventMap.find("navigation_result")->second.startProcess();
+	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
+	    scheduleConverter("navigation_path", 10.0f);
+	    scheduleConverter("navigation_robot_pose", 10.0f);
 	    int converterIndex = getConverterIndex("depth_to_laser");
 	    if( converterIndex != -1 )
 	    {
@@ -443,7 +467,7 @@ namespace Sinfonia
 		startSubscriber("cmd_vel");
 	    }
 	    startSubscriber("moveto");
-	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to";
+	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "disable_all" )
@@ -455,7 +479,16 @@ namespace Sinfonia
 	    unscheduleConverter("depth_to_laser");
 	    stopSubscriber("cmd_vel");
 	    stopSubscriber("moveto");
-	    responseMessage = "Functionalities stopped: tf, odom, laser, depth_to_laser, cmd_vel, move_to";
+	    
+	    stopSubscriber("navigation_goal");
+	    stopSubscriber("navigation_robot_pose");
+	    _eventMap.find("navigation_result")->second.stopProcess();
+	    _eventMap.find("navigation_result")->second.shutdownPublisher();
+	    unscheduleConverter("navigation_path");
+	    unscheduleConverter("navigation_robot_pose");
+	    
+	    
+	    responseMessage = "Functionalities stopped: tf, odom, laser, depth_to_laser, cmd_vel, move_to, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "custom" )
@@ -496,7 +529,64 @@ namespace Sinfonia
 		unscheduleConverter("laser");
 		stoppedFunctionalities += "laser, ";
 	    }
-	    
+	    //////////////////////////////////////////////////////
+	    if( request.data.goal_enable )
+	    {
+		startedFunctionalities += "navigation_goal";
+		startSubscriber("navigation_goal");
+	    }
+	    else 
+	    {
+		stopSubscriber("navigation_goal");
+		stoppedFunctionalities += "navigation_goal, ";
+	    }
+	    //---------------
+	    if( request.data.robot_pose_suscriber_enable )
+	    {
+		startedFunctionalities += "navigation_robot_pose";
+		startSubscriber("navigation_robot_pose");
+	    }
+	    else 
+	    {
+		stopSubscriber("navigation_robot_pose");
+		stoppedFunctionalities += "navigation_robot_pose, ";
+	    }
+	    //-----------------------------
+	    if( request.data.path_enable )
+	    {
+		startedFunctionalities += "navigation_path" + boost::lexical_cast<std::string>(request.data.path_frequency) + "Hz, ";
+		scheduleConverter("navigation_path", request.data.path_frequency);
+	    }
+	    else 
+	    {
+		unscheduleConverter("navigation_path");
+		stoppedFunctionalities += "navigation_path, ";
+	    }
+	    //-----
+	    if( request.data.robot_pose_publisher_enable )
+	    {
+		startedFunctionalities += "navigation_robot_pose" + boost::lexical_cast<std::string>(request.data.robot_pose_publisher_frequency) + "Hz, ";
+		scheduleConverter("navigation_robot_pose", request.data.robot_pose_publisher_frequency);
+	    }
+	    else 
+	    {
+		unscheduleConverter("navigation_robot_pose");
+		stoppedFunctionalities += "navigation_robot_pose, ";
+	    }
+	    //--------
+	    if( request.data.result_enable )
+	    {
+		startedFunctionalities += "navigation_result ";
+		_eventMap.find("navigation_result")->second.startProcess();
+		_eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
+	    }
+	    else 
+	    {
+		_eventMap.find("navigation_result")->second.stopProcess();
+		_eventMap.find("navigation_result")->second.shutdownPublisher();
+		stoppedFunctionalities += "navigation_result, ";
+	    }
+	    /////////////////////////
 	    if( request.data.depth_to_laser_enable )
 	    {
 		int converterIndex = getConverterIndex("depth_to_laser");

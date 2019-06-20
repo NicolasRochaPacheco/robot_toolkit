@@ -92,6 +92,8 @@ namespace Sinfonia
 	    
 	    int _micSampleRate;
 	    int _channels;
+	    
+	    float _confidence;
     };
     QI_REGISTER_OBJECT(MicEventRegister, processRemote, wordRecognizedCallback)
 }

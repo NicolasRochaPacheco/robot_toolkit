@@ -7,6 +7,9 @@ set(
     src/navigation_tools/laser/depth_to_laser_converter.cpp
     src/navigation_tools/odom/odom_converter.cpp
     src/navigation_tools/tf/tf_converter.cpp
+    src/navigation_tools/path/path_converter.cpp
+    src/navigation_tools/robot_pose/robot_pose_converter.cpp
+    src/navigation_tools/result/result_event.cpp
     
     src/vision_tools/camera_converter.cpp
     src/vision_tools/face_tracker.cpp
@@ -30,6 +33,9 @@ set(
     src/navigation_tools/laser/laser_publisher.cpp
     src/navigation_tools/odom/odom_publisher.cpp
     src/navigation_tools/tf/tf_publisher.cpp
+    src/navigation_tools/path/path_publisher.cpp
+    src/navigation_tools/robot_pose/robot_pose_publisher.cpp
+    src/navigation_tools/result/result_publisher.cpp
     
     src/vision_tools/camera_publisher.cpp
     src/vision_tools/face_publisher.cpp
@@ -44,6 +50,8 @@ set(
   SUBSCRIBER_SRC
     src/navigation_tools/cmd_vel/cmd_vel_subscriber.cpp
     src/navigation_tools/move_to/move_to.cpp
+    src/navigation_tools/navigation_goal/navigation_goal_subscriber.cpp
+    src/navigation_tools/robot_pose/robot_pose_subscriber.cpp
     
     src/audio_tools/speech/speech_subscriber.cpp
         
@@ -98,6 +106,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV)
 find_package(orocos_kdl)
+
+#find_package(Eigen3 REQUIRED)
+#include_directories(${EIGEN3_INCLUDE_DIRS})
  
 add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 

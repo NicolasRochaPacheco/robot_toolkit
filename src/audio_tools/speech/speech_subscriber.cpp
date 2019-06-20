@@ -48,15 +48,17 @@ namespace Sinfonia
 		{
 		    _language = message.language;
 		    _pTextToSpeech.call<void>("setLanguage", message.language);
-		    
 		}
 		if ( message.animated )
 		{
 		    _pTextToSpeechAnimated.async<void>("say", message.text);
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Robot saying: " << message.text << std::endl;
 		}
 		else
 		{
 		    _pTextToSpeech.async<void>("say", message.text);
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] NAOqiPlanner/Path not available" << std::endl;
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Robot saying: " << message.text << std::endl;
 		}
 	    }
 	    else
