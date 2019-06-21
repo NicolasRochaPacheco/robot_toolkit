@@ -18,36 +18,30 @@
 //======================================================================//
 
 
-#ifndef ROBOT_POSE_CONVERTER_HPP
-#define ROBOT_POSE_CONVERTER_HPP
+#ifndef NAOQI_DEPTH2LASER_CONVERTER_HPP
+#define NAOQI_DEPTH2LASER_CONVERTER_HPP
 
 #include "robot_toolkit/tools/robot_description.hpp"
 #include "robot_toolkit/converter/converter_base.hpp"
 #include <math.h>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <Eigen/Cholesky>
-#include <Eigen/StdVector>
 
-#include "robot_toolkit_msgs/path_msg.h"
+#include <sensor_msgs/LaserScan.h>
 #include "robot_toolkit/message_actions.h"
-
-#include <geometry_msgs/Vector3.h>
-#include <robot_state_publisher/robot_state_publisher.h>
 
 namespace Sinfonia
 {
     namespace Converter
     {
-	class RobotPoseConverter : public BaseConverter<RobotPoseConverter>
+
+	class NaoqiDepth2LaserConverter : public BaseConverter<NaoqiDepth2LaserConverter>
 	{
-	    typedef boost::function<void(geometry_msgs::Vector3Ptr)> callbackT;
+	    typedef boost::function<void(sensor_msgs::LaserScanPtr)> CallbackT;
 
 
 	    public:
 		
-		RobotPoseConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
-		void registerCallback( MessageAction::MessageAction action, callbackT callback );
+		NaoqiDepth2LaserConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 		void reset( );
 		
@@ -63,11 +57,11 @@ namespace Sinfonia
 		
 		qi::AnyObject _pMemory;
 		
-		std::map<MessageAction::MessageAction, callbackT> _callbacks;
-		boost::shared_ptr<geometry_msgs::Vector3> _msgRobotPose;
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		boost::shared_ptr<sensor_msgs::LaserScan> _msg;
 
 		
-		void callRobotPose();
+		void callDepth2Laser();
 	};
 
     }

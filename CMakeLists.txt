@@ -5,6 +5,7 @@ set(
   CONVERTERS_SRC
     src/navigation_tools/laser/laser_converter.cpp
     src/navigation_tools/laser/depth_to_laser_converter.cpp
+    src/navigation_tools/laser/naoqi_depth2laser_converter.cpp
     src/navigation_tools/odom/odom_converter.cpp
     src/navigation_tools/tf/tf_converter.cpp
     src/navigation_tools/path/path_converter.cpp

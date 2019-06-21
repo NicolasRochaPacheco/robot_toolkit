@@ -166,6 +166,9 @@ namespace Sinfonia
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui lo que se quiere iniciar por default
+	scheduleConverter("tf", 50.0f);
+	scheduleConverter("depth_to_laser", 10.0f);
+	startSubscriber("cmd_vel");
 	startSubscriber("special_settings");
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
@@ -209,7 +212,8 @@ namespace Sinfonia
 	registerGroup( laserConverter, laserPublisher);
 	
 	boost::shared_ptr<Publisher::LaserPublisher> depthToLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/depth_to_laser");
-	boost::shared_ptr<Converter::DepthToLaserConverter> depthToLaserConverter = boost::make_shared<Converter::DepthToLaserConverter>( "depth_to_laser", 10, _sessionPtr, Helpers::VisionHelpers::kQVGA);
+	//boost::shared_ptr<Converter::DepthToLaserConverter> depthToLaserConverter = boost::make_shared<Converter::DepthToLaserConverter>( "depth_to_laser", 10, _sessionPtr, Helpers::VisionHelpers::kQVGA);
+	boost::shared_ptr<Converter::NaoqiDepth2LaserConverter> depthToLaserConverter = boost::make_shared<Converter::NaoqiDepth2LaserConverter>( "depth_to_laser", 10, _sessionPtr);
 	depthToLaserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, depthToLaserPublisher, _1) );
 	registerGroup( depthToLaserConverter, depthToLaserPublisher);
 	
