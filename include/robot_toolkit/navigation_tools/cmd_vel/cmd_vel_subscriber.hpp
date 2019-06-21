@@ -51,14 +51,12 @@ namespace Sinfonia
 
 	    private:
 		
-		void setSecurity();
 		std::string _cmdVelTopic;
 
 		qi::AnyObject _pMotion;
 		ros::Subscriber _subscriberCmdVel;
 		ros::Timer _timer;
 		float _securityTime;
-		bool _securityEnable;
 		void timerCallback(const ros::TimerEvent& event);
 	}; 
 

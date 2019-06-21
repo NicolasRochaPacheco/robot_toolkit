@@ -487,7 +487,27 @@ namespace Sinfonia
 			faceDimensions.push_back(faceDimensionsAnyValue[0].as<float>());
 			faceDimensions.push_back(faceDimensionsAnyValue[1].as<float>());
 			
-			cv::Rect myROI(cvImage.cols * (  bboxCorner[0] - (faceDimensionsAngle[0]/2.0) ) , cvImage.rows * ( bboxCorner[1] - (faceDimensionsAngle[1]/2.0)) , cvImage.cols * faceDimensionsAngle[0], cvImage.rows *  faceDimensionsAngle[1] );
+			float xPoint = cvImage.cols * ( bboxCorner[0] - (faceDimensionsAngle[0]/2.0));
+			float yPoint = cvImage.rows * ( bboxCorner[1] - (faceDimensionsAngle[1]/2.0));
+			float wValue = cvImage.cols * faceDimensionsAngle[0];
+			float hValue = cvImage.rows *  faceDimensionsAngle[1];
+			float cValue = 0.08;
+			
+			xPoint = xPoint - cvImage.cols*cValue;
+			yPoint = yPoint - cvImage.rows*cValue;
+			wValue = wValue + cvImage.cols*cValue;
+			hValue = hValue + cvImage.rows*cValue;
+			
+			if(xPoint < 0)
+			    xPoint = 0;
+			if(yPoint < 0)
+			    yPoint = 0;
+			if((xPoint + wValue) > cvImage.cols)
+			    wValue = cvImage.cols - xPoint;
+			if((yPoint + hValue) > cvImage.rows)
+			    hValue = cvImage.rows - yPoint;
+			
+			cv::Rect myROI(xPoint ,  yPoint, wValue,  hValue);
 			
 			cv::Mat face = cvImage(myROI);
 			_imageMsg = cv_bridge::CvImage(std_msgs::Header(), _msgColorspace, face).toImageMsg();

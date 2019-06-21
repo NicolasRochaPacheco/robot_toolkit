@@ -31,7 +31,6 @@ namespace Sinfonia
 	    _cmdVelTopic = cmdVelTopic;
 	    _pMotion = _session-> service("ALMotion");
 	    _securityTime = 0.5;
-	    _securityEnable = false;
 	}
 	
 	void CmdVelSubscriber::reset(ros::NodeHandle& nodeHandle)
@@ -75,30 +74,19 @@ namespace Sinfonia
 	{
 	    std::vector<float> result;
 	    result.push_back(_securityTime);
-	    result.push_back((float)_securityEnable);
 	    return result;
 	}
 	
 	std::vector< float > CmdVelSubscriber::setParameters(std::vector<float> parameters)
 	{
 	    _securityTime = parameters[0];
-	    _securityEnable = (bool)parameters[1];
-	    setSecurity();
 	    return getParameters();
 	}
 	
 	std::vector< float > CmdVelSubscriber::setDefaultParameters()
 	{
 	    _securityTime = 0.5;
-	    _securityEnable = false;
-	    setSecurity();
 	    return getParameters();
-	}
-
-	void CmdVelSubscriber::setSecurity()
-	{		
-	    _pMotion.call<void>("setExternalCollisionProtectionEnabled", "Move", _securityEnable);
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Setting setExternalCollisionProtectionEnabled to -> " << _securityEnable << std::endl;
 	}
 
 	void CmdVelSubscriber::timerCallback(const ros::TimerEvent& event)

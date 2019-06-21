@@ -17,27 +17,40 @@
 //                                                                      //
 //======================================================================//
 
-#include "robot_toolkit/vision_tools/face_tracker.hpp"
 
-namespace Sinfonia 
+#ifndef SPECIAL_SETTINGS_SUBSCRIBER_HPP
+#define SPECIAL_SETTINGS_SUBSCRIBER_HPP
+
+#include "robot_toolkit/subscriber/base_subscriber.hpp"
+#include <ros/ros.h>
+#include "boost/filesystem.hpp"
+#include "robot_toolkit_msgs/special_settings_msg.h"
+
+namespace Sinfonia
 {
-    BasicAwareness::BasicAwareness(const qi::SessionPtr& session)
+    namespace Subscriber
     {
-	_session = session;
-	_pAwareness = session->service("ALBasicAwareness");
-	_targetName = "Face";
-	_mode = "Head";
-    }
-    void BasicAwareness::start()
-    {
-	std::cout << "Starting Basic Awareness" << std::endl;
-	_pAwareness.call<void>("setEnabled", true);
-	std::cout << "Basic Awareness started" << std::endl;
-    }
-    
-    void BasicAwareness::stop()
-    {
-	_pAwareness.call<void>("setEnabled", true);
-    }
+	class SpecialSettingsSubscriber: public BaseSubscriber<SpecialSettingsSubscriber>
+	{
+	    public:
+		SpecialSettingsSubscriber( const std::string& name, const std::string& topic, const qi::SessionPtr& session );
+		~SpecialSettingsSubscriber(){}
 
+		void reset( ros::NodeHandle& nodeHandle );
+		void specialSettingsCallback( const robot_toolkit_msgs::special_settings_msg message );
+		void shutdown();
+		
+		std::vector<float> getParameters();
+		std::vector<float> setParameters(std::vector<float> parameters);
+		std::vector<float> setDefaultParameters();
+		
+
+	    private:
+		std::string _topic;
+		qi::AnyObject _pMotion;
+		qi::AnyObject _pBasicAwareness;
+		ros::Subscriber _subscriberSpecialSettings;
+	}; 
+    }
 }
+#endif

@@ -12,7 +12,6 @@ set(
     src/navigation_tools/result/result_event.cpp
     
     src/vision_tools/camera_converter.cpp
-    src/vision_tools/face_tracker.cpp
     src/vision_tools/face_detector.cpp
     
     src/audio_tools/mic/mic_converter.cpp
@@ -59,6 +58,7 @@ set(
     src/motion_tools/set_angles_subscriber.cpp
     
     src/misc_tools/leds_subscriber.cpp
+    src/misc_tools/special_settings/special_settings_subscriber.cpp
   )
 
 set(

@@ -166,6 +166,7 @@ namespace Sinfonia
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui lo que se quiere iniciar por default
+	startSubscriber("special_settings");
 	startRosLoop();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
 	
@@ -227,7 +228,6 @@ namespace Sinfonia
 	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
 	registerGroup( depthCameraConverter, depthCameraPublisher);
 
-	_basicAwareness = boost::make_shared<Sinfonia::BasicAwareness>(_sessionPtr);
 	
 	boost::shared_ptr<Publisher::FacePublisher> topCameraFaceDetectorPublisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/front_camera");
 	boost::shared_ptr<Sinfonia::Converter::FaceDetector> faceDetectorTopCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("front_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
@@ -249,7 +249,6 @@ namespace Sinfonia
 	std::vector<std::string> sonarTopics;
 	sonarTopics.push_back("/sonar/front");
 	sonarTopics.push_back("/sonar/back");
-	
 	
 	boost::shared_ptr<Publisher::SonarPublisher> sonarPublisher = boost::make_shared<Publisher::SonarPublisher>(sonarTopics);
 	boost::shared_ptr<Converter::SonarConverter> sonarConverter = boost::make_shared<Converter::SonarConverter>( "sonar", 10, _sessionPtr);
@@ -314,6 +313,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::LedsSubscriber>("leds", "/leds", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::NavigationGoalSubscriber>("navigation_goal", "/navigation/goal", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::RobotPoseSubscriber>("navigation_robot_pose", "/navigation/robot_pose", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::SpecialSettingsSubscriber>("special_settings", "/special_settings", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -627,7 +627,6 @@ namespace Sinfonia
 		    securityTime = request.data.security_timer;
 		}
 		parameters.push_back(securityTime);
-		parameters.push_back(request.data.collision_enable);
 		int subscriberIndex = getSubscriberIndex("cmd_vel");
 		_subscribers[subscriberIndex].setParameters(parameters);
 		startSubscriber("cmd_vel");
