@@ -43,6 +43,7 @@
 #include <qi/anyvalue.hpp>
 
 #include "robot_toolkit_msgs/camera_parameters_msg.h"
+#include <geometry_msgs/Point.h>
 
 #include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/image_encodings.h>

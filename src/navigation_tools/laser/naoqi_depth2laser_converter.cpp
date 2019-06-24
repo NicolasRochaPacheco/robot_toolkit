@@ -78,23 +78,6 @@ namespace Sinfonia
 	    {
 		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] NAOqiDepth2Laser not available" << std::endl;
 	    }
-	    /*try .header.frame_id = "CameraDepth_frame";
-	    {
-		_msgRobotPose = boost::make_shared<geometry_msgs::Vector3>();
-		qi::AnyValue value = _pMemory.call<qi::AnyValue>("getData", "NAOqiLocalizer/RobotPose");
-		std::vector<float> robotPoseFloatVector = value.toList<float>();
-		_msgRobotPose->x = robotPoseFloatVector[0];
-		_msgRobotPose->y = robotPoseFloatVector[1];
-		_msgRobotPose->z = robotPoseFloatVector[2];
-	    } 
-	    catch (qi::FutureUserException)
-	    {
-		_msgRobotPose = boost::make_shared<geometry_msgs::Vector3>();
-		_msgRobotPose->x = NAN;
-		_msgRobotPose->y = NAN;
-		_msgRobotPose->z = NAN;
-		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] NAOqiLocalizer/RobotPose not available" << std::endl;
-	    }*/
 	}
     }
 }

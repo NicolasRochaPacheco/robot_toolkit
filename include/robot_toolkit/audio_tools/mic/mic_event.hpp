@@ -53,11 +53,14 @@ namespace Sinfonia
 	   
 	   void setDefaultParameters();
 	   void setParameters(std::vector<int> parameters);
-	   
+	   void shutdownEvents();
 	   void processRemote(int numberOfChannels, int samplesByChannel, qi::AnyValue timestamp, qi::AnyValue buffer);
 	   void wordRecognizedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier);
+	   void soundDetectionCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier);
 	   
 	private:
+	   
+	    void timerCallback(const ros::TimerEvent& event);
 	    
 	    void registerCallback();
 	    void unregisterCallback();
@@ -68,12 +71,17 @@ namespace Sinfonia
 	    boost::shared_ptr<Publisher::MicPublisher> _publisher;
 	    
 	    std::string _speechKey;
+	    std::string _soundKey;
+	    
 	    
 	    qi::SessionPtr _session;
+	    
+	    boost::mutex _mutex;
 	    
 	    qi::AnyObject _pAudio;
 	    qi::AnyObject _pRobotModel;
 	    qi::AnyObject _pSpeechRecognition;
+	    qi::AnyObject _pSoundDetection;
 	    qi::AnyObject _pMemory;
 	    
 	    qi::FutureSync<qi::AnyObject> _pAudioExtractorRequest;
@@ -81,11 +89,20 @@ namespace Sinfonia
 	    std::vector<uint8_t> _channelMap;
 	    std::vector<std::string> _wordList;
 	    
+	    std::string _speechServiceName;
+	    std::string _soundServiceName;
+	    
 	    unsigned int _serviceId;
 	    unsigned int _speechRecognitionServiceId;
+	    unsigned int _soundDetectionServiceId;
 
 	    boost::mutex _subscriptionMutex;
 	    boost::mutex _processingMutex;
+	    
+	    
+	    ros::Timer _timer;
+	    
+	    int _counter;
 
 	    bool _isStarted;
 	    bool _isPublishing;
@@ -95,7 +112,7 @@ namespace Sinfonia
 	    
 	    float _confidence;
     };
-    QI_REGISTER_OBJECT(MicEventRegister, processRemote, wordRecognizedCallback)
+    QI_REGISTER_OBJECT(MicEventRegister, processRemote, wordRecognizedCallback, soundDetectionCallback)
 }
 
 

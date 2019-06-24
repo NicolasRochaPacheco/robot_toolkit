@@ -19,26 +19,25 @@
 
 
 
-#ifndef SONAR_PUBLISHER_HPP
-#define SONAR_PUBLISHER_HPP
+#ifndef TOUCH_PUBLISHER_HPP
+#define TOUCH_PUBLISHER_HPP
 
 #include <string>
+#include "robot_toolkit_msgs/touch_msg.h"
 
-#include <sensor_msgs/Range.h>
 #include <ros/ros.h>
-
 
 namespace Sinfonia
 {
     namespace Publisher
     {
 
-	class SonarPublisher
+	class TouchPublisher
 	{
 
 	    public:
-		SonarPublisher(std::vector<std::string> topicNames);
-		virtual ~SonarPublisher() {}
+		TouchPublisher(std::string topicName);
+		virtual ~TouchPublisher() {}
 		std::string getTopicName();
 
 
@@ -46,7 +45,7 @@ namespace Sinfonia
 
 		bool isSubscribed() const;
 
-		void publish( const std::vector<sensor_msgs::Range>& message );
+		void publish( const robot_toolkit_msgs::touch_msg& message );
 
 		void reset( ros::NodeHandle& nodeHandle );
 		
@@ -54,8 +53,8 @@ namespace Sinfonia
 
 	    protected:
 		bool _isInitialized;
-		std::vector<ros::Publisher> _publishers;
-		std::vector<std::string> _topicNames;
+		ros::Publisher _publisher;
+		std::string _topicName;
 	};
     } 
 } 

@@ -18,44 +18,53 @@
 //======================================================================//
 
 
+#ifndef LASER_MERGED_CONVERTER_HPP
+#define LASER_MERGED_CONVERTER_HPP
 
-#ifndef SONAR_PUBLISHER_HPP
-#define SONAR_PUBLISHER_HPP
+#include <boost/foreach.hpp>
 
-#include <string>
+#include "robot_toolkit/converter/converter_base.hpp"
+#include "robot_toolkit/message_actions.h"
 
-#include <sensor_msgs/Range.h>
-#include <ros/ros.h>
 
+#include <sensor_msgs/LaserScan.h>
 
 namespace Sinfonia
 {
-    namespace Publisher
+    namespace Converter
     {
-
-	class SonarPublisher
+	class LaserMergedConverter : public BaseConverter<LaserMergedConverter>
 	{
 
+	    typedef boost::function<void(sensor_msgs::LaserScanPtr)> CallbackT;
+
 	    public:
-		SonarPublisher(std::vector<std::string> topicNames);
-		virtual ~SonarPublisher() {}
-		std::string getTopicName();
+		LaserMergedConverter( const std::string& name, const float& frequency, const qi::SessionPtr& session );
 
+		void registerCallback( MessageAction::MessageAction action, CallbackT callback );
 
-		bool isInitialized() const;
+		void callAll( const std::vector<MessageAction::MessageAction>& actions );
 
-		bool isSubscribed() const;
-
-		void publish( const std::vector<sensor_msgs::Range>& message );
-
-		void reset( ros::NodeHandle& nodeHandle );
+		void reset( );
 		
-		void shutdown();
+		void setConfig(std::vector<float> configs){}
+		
+		std::vector<float> setParameters(std::vector<float> parameters){}
+		std::vector<float> setAllParametersToDefault(){}
+		std::vector<float> getParameters(){}
+		
+		void shutdown(){}
+		
 
-	    protected:
-		bool _isInitialized;
-		std::vector<ros::Publisher> _publishers;
-		std::vector<std::string> _topicNames;
+	    private:
+		
+		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
+		qi::AnyObject _pMemory;
+		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
+		boost::shared_ptr<sensor_msgs::LaserScan> _laserMessage;
+		void callLaser();
+		
+		
 	};
     } 
 } 

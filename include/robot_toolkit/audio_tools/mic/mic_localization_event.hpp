@@ -53,7 +53,7 @@ namespace Sinfonia
 	    
 	    void setDefaultParameters(){}
 	    void setParameters(std::vector<int> parameters){}
-
+	    void shutdownEvents(){}
 	    void soundLocatedCallback(std::string key,  qi::AnyValue value, std::string subscriberIdentifier);
 	    
 	private: 

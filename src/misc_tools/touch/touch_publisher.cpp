@@ -17,47 +17,46 @@
 //                                                                      //
 //======================================================================//
 
-
-
-#ifndef SONAR_PUBLISHER_HPP
-#define SONAR_PUBLISHER_HPP
-
-#include <string>
-
-#include <sensor_msgs/Range.h>
-#include <ros/ros.h>
-
-
+#include "robot_toolkit/misc_tools/touch/touch_publisher.hpp"
 namespace Sinfonia
 {
     namespace Publisher
     {
-
-	class SonarPublisher
+	TouchPublisher::TouchPublisher(std::string topicName)
 	{
+	    _topicName = topicName;
+	}
 
-	    public:
-		SonarPublisher(std::vector<std::string> topicNames);
-		virtual ~SonarPublisher() {}
-		std::string getTopicName();
-
-
-		bool isInitialized() const;
-
-		bool isSubscribed() const;
-
-		void publish( const std::vector<sensor_msgs::Range>& message );
-
-		void reset( ros::NodeHandle& nodeHandle );
-		
-		void shutdown();
-
-	    protected:
-		bool _isInitialized;
-		std::vector<ros::Publisher> _publishers;
-		std::vector<std::string> _topicNames;
-	};
-    } 
-} 
-
-#endif
+	std::string TouchPublisher::getTopicName()
+	{
+	      return _topicName;
+	}
+	
+	bool TouchPublisher::isInitialized() const
+	{
+	    return _isInitialized;
+	}
+	
+	bool TouchPublisher::isSubscribed() const
+	{
+	    if (!_isInitialized) 
+		return false;
+	    return _publisher.getNumSubscribers() > 0;
+	}
+	void TouchPublisher::publish( const robot_toolkit_msgs::touch_msg& message )
+	{
+	    _publisher.publish(message);
+	}
+	
+	void TouchPublisher::reset(ros::NodeHandle& nodeHandle)
+	{
+	    _publisher = nodeHandle.advertise<robot_toolkit_msgs::touch_msg>( _topicName, 10 );
+	    _isInitialized = true;
+	}
+	
+	void TouchPublisher::shutdown()
+	{
+	    _publisher.shutdown();
+	}
+    }
+}

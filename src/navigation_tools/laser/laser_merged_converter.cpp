@@ -17,7 +17,7 @@
 //                                                                      //
 //======================================================================//
 
-#include "robot_toolkit/navigation_tools/laser/laser_converter.hpp"
+#include "robot_toolkit/navigation_tools/laser/laser_merged_converter.hpp"
 
 #define for_each BOOST_FOREACH
 
@@ -121,19 +121,19 @@ namespace Sinfonia
 					    "Device/SubDeviceList/Platform/LaserSensor/Left/Horizontal/Seg15/Y/Sensor/Value",
 							};
 							
-	LaserConverter::LaserConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session):
+	LaserMergedConverter::LaserMergedConverter(const std::string& name, const float& frequency, const qi::SessionPtr& session):
 	    BaseConverter( name, frequency, session )
 	{
 	    _pMemory = _session->service("ALMemory");
 	    _laserMessage = boost::make_shared<sensor_msgs::LaserScan>();	    
 	}
 	
-	void LaserConverter::registerCallback(MessageAction::MessageAction action, LaserConverter::CallbackT callback)
+	void LaserMergedConverter::registerCallback(MessageAction::MessageAction action, LaserMergedConverter::CallbackT callback)
 	{
 	    _callbacks[action] = callback;
 	}
 
-	void LaserConverter::callAll(const std::vector<MessageAction::MessageAction>& actions)
+	void LaserMergedConverter::callAll(const std::vector<MessageAction::MessageAction>& actions)
 	{
 	    double init = ros::Time::now().toSec();
 	    callLaser();
@@ -146,9 +146,20 @@ namespace Sinfonia
 	
 	
 
-	void LaserConverter::callLaser()
+	void LaserMergedConverter::callLaser()
 	{
-	    _laserMessage = boost::make_shared<sensor_msgs::LaserScan>();
+	    
+	    
+	    float alphaMin = -2.0944;
+	    float alphaMax = 2.0944;
+	    int rangesLaserSize = 61;
+	    float alpha = (2*alphaMax) / rangesLaserSize;
+	    float rangeLaserMin = 0.1;
+	    float rangeLaserMax = 8.0;
+	    
+	    std::vector<float> rangesLaser;
+	    rangesLaser.resize((int)rangesLaserSize);
+	    
 	    static const std::vector<std::string> laserKeysValue(_laserMemoryKeys, _laserMemoryKeys+90);
 	    std::vector<float> resultValue;
 	    try
@@ -161,15 +172,17 @@ namespace Sinfonia
 		std::cerr << "Exception caught in LaserConverter: " << e.what() << std::endl;
 		return;
 	    }
-	    _laserMessage->header.stamp = ros::Time::now();
+	    
+	    
+	    /*_laserMessage->header.stamp = ros::Time::now();
 	    _laserMessage->header.frame_id = "base_footprint";
 	    _laserMessage->angle_min = -2.0944;
 	    _laserMessage->angle_max = 2.0944;   
 	    _laserMessage->angle_increment = (2*2.0944) / (15+15+15+8+8); 
 	    _laserMessage->range_min = 0.1;
-	    _laserMessage->range_max = 1.5;
+	    _laserMessage->range_max = 8.0;
 	    _laserMessage->ranges.resize(61);
-	    _laserMessage->ranges = std::vector<float>(61, -1.0f);
+	    _laserMessage->ranges = std::vector<float>(61, -1.0f);*/
 	    size_t pos = 0;
 
 	    for( size_t i=0; i<30; i=i+2, ++pos)
@@ -179,7 +192,7 @@ namespace Sinfonia
 		float bx = lx*std::cos(-1.757) - ly*std::sin(-1.757) - 0.018;
 		float by = lx*std::sin(-1.757) + ly*std::cos(-1.757) - 0.090;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_laserMessage->ranges[pos] = dist;
+		rangesLaser[pos] = dist;
 	    }
 
 	    pos = pos+8;
@@ -191,7 +204,7 @@ namespace Sinfonia
 		float bx = lx + 0.056 ;
 		float by = ly;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_laserMessage->ranges[pos] = dist;
+		rangesLaser[pos] = dist;
 	    }
 
 	    pos = pos+8;
@@ -203,12 +216,118 @@ namespace Sinfonia
 		float bx = lx*std::cos(1.757) - ly*std::sin(1.757) - 0.018;
 		float by = lx*std::sin(1.757) + ly*std::cos(1.757) + 0.090;
 		float dist = std::sqrt( std::pow(bx,2) + std::pow(by,2) );
-		_laserMessage->ranges[pos] = dist;
+		rangesLaser[pos] = dist;
+	    }
+	    
+	    
+	    try
+	    {
+		std::vector<float> rangesDepth;
+		qi::AnyValue rangesReadings = _pMemory.call<qi::AnyValue>("getData", "NAOqiDepth2Laser/Ranges");
+		qi::AnyValue minAngleReading = _pMemory.call<qi::AnyValue>("getData", "NAOqiDepth2Laser/MinAngle");
+		qi::AnyValue maxAngleReading = _pMemory.call<qi::AnyValue>("getData", "NAOqiDepth2Laser/MaxAngle");
+		qi::AnyValue numRangesReading = _pMemory.call<qi::AnyValue>("getData", "NAOqiDepth2Laser/NumRanges");
+		qi::AnyValue maxRangeReading = _pMemory.call<qi::AnyValue>("getData", "NAOqiDepth2Laser/MaxRange");
+		
+		rangesDepth = rangesReadings.toList<float>();
+		
+		float betaMin = minAngleReading.toFloat();
+		float betaMax = maxAngleReading.toFloat();
+		float rangesDepthSize = numRangesReading.toFloat();
+		float beta = (betaMax - betaMin)/rangesDepthSize;
+		float rangeLaserMin = 0.1;
+		float rangeLaserMax = maxRangeReading.toFloat(); 
+		
+		int N = 512;
+		float psi = (2*alphaMax)/((float)N);
+		
+		_laserMessage = boost::make_shared<sensor_msgs::LaserScan>();
+		_laserMessage->header.stamp = ros::Time::now();
+		_laserMessage->header.frame_id = "base_footprint";
+		_laserMessage->angle_min = alphaMin;
+		_laserMessage->angle_max = alphaMax;
+		_laserMessage->angle_increment = psi;
+		_laserMessage->range_min = 0.1;
+		_laserMessage->range_max = rangeLaserMax;
+		_laserMessage->ranges.resize(N);
+		_laserMessage->scan_time = 0.01;
+		_laserMessage->time_increment =  0.01/rangesDepthSize;
+		
+		
+		
+		int A = (int)((betaMin - alphaMin)/psi);
+		float betaP = betaMax/(((float)N/2)- (float)A);
+		
+		for(int i=0; i<N; i++)
+		{
+		    _laserMessage->ranges[i] = 80.0f;
+		}
+		
+		for(int i=0; i<(int)rangesDepthSize; i++)
+		{
+		    int iP = (int)round((((float)i*(beta))/betaP)) + A;
+		    if(iP < N)
+			_laserMessage->ranges[iP] = rangesDepth[i];
+		}
+		
+		int depthLowerLimit = A;
+		int depthHighLimit = (int)round((((float)(rangesDepthSize - 1)*(beta))/betaP)) + A;
+		int leftLaserLimit = (int)((float)(14)*(float(N-1.0)/float(rangesLaserSize)));
+		int rigthLaserLimit = (int)((float)(47)*(float(N-1.0)/float(rangesLaserSize)));
+		
+		std::vector<float> leftLaserIndexs;
+		std::vector<float> rightLaserIdexs;
+		
+		for(int i = 0; i<rangesLaser.size(); i++)
+		{
+		    if(rangesLaser[i] > 1.0) 
+		    {
+			rangesLaser[i] = 80.0;
+		    }
+		}
+		
+		for(int i=0; i<rangesLaserSize; i++)
+		{
+		    int ip = (int)((float)(i)*(float(N-1.0)/float(rangesLaserSize)));
+		    if((i > 38) || (i < 23))
+		    {
+			_laserMessage->ranges[ip] = rangesLaser[i];
+			if(i<=14)
+			    leftLaserIndexs.push_back(ip);
+			else
+			    rightLaserIdexs.push_back(ip);
+		    }
+		}
+		
+		
+		
+		for(int i=leftLaserLimit+1; i<depthLowerLimit; i++)
+		{
+		    _laserMessage->ranges[i] = -1.0f;
+		}
+		for(int i=depthHighLimit+1; i<rigthLaserLimit; i++)
+		{
+		    _laserMessage->ranges[i] = -1.0f;
+		}
+		
+		// Interpolation :)
+		for(int i=0; i<leftLaserIndexs.size()-1; i++)
+		{
+		    _laserMessage->ranges[(int)((leftLaserIndexs[i] + leftLaserIndexs[i+1])/2.0)] = (_laserMessage->ranges[leftLaserIndexs[i]] + _laserMessage->ranges[leftLaserIndexs[i+1]])/2.0;
+		}
+		for(int i=0; i<rightLaserIdexs.size()-1; i++)
+		{
+		    _laserMessage->ranges[(int)((rightLaserIdexs[i] + rightLaserIdexs[i+1])/2.0)] = (_laserMessage->ranges[rightLaserIdexs[i]] + _laserMessage->ranges[rightLaserIdexs[i+1]])/2.0;
+		}
+	    }
+	    catch (qi::FutureUserException)
+	    {
+		std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] NAOqiDepth2Laser not available" << std::endl;
 	    }
 	}
 	
 	
-	void LaserConverter::reset()
+	void LaserMergedConverter::reset()
 	{
 	    _laserMessage->header.frame_id = "base_footprint";
 	    _laserMessage->angle_min = -2.0944;
@@ -219,7 +338,7 @@ namespace Sinfonia
 	    _laserMessage->ranges = std::vector<float>(61, -1.0f);
 	}
 
-	std::vector< float > LaserConverter::fromAnyValueToFloatVector(qi::AnyValue& value, std::vector< float >& result)
+	std::vector< float > LaserMergedConverter::fromAnyValueToFloatVector(qi::AnyValue& value, std::vector< float >& result)
 	{
 	    qi::AnyReferenceVector anyrefs = value.asListValuePtr();
 	    for(int i=0; i<anyrefs.size();i++)

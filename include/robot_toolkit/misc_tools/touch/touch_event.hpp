@@ -18,31 +18,23 @@
 //======================================================================//
 
 
-#ifndef RESULT_EVENT_HPP
-#define RESULT_EVENT_HPP
-
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#ifndef TOUCH_EVENT_REGISTER_HPP
+#define TOUCH_EVENT_REGISTER_HPP
 
 #include <qi/session.hpp>
 
-#include <ros/ros.h>
-
-#include "robot_toolkit_msgs/audio_localization_msg.h"
-#include <std_msgs/String.h>
-#include "robot_toolkit/navigation_tools/result/result_publisher.hpp"
+#include "robot_toolkit/misc_tools/touch/touch_publisher.hpp"
+#include <boost/enable_shared_from_this.hpp>
 
 namespace Sinfonia
 {
-    namespace Navigation
+   namespace MiscToolsEvents
     {
-	class ResultEvent: public boost::enable_shared_from_this<ResultEvent>
+	class TouchEvent: public boost::enable_shared_from_this<TouchEvent>
 	{
 	    public:
-		ResultEvent(std::string name, const float& frecuency, const qi::SessionPtr& session);
-		~ResultEvent(){}
+		TouchEvent(std::string name, const float& frecuency, const qi::SessionPtr& session);
+		~TouchEvent(){}
 		
 		void resetPublisher(ros::NodeHandle& nodeHandle);
 		void shutdownPublisher();
@@ -56,13 +48,42 @@ namespace Sinfonia
 		void setDefaultParameters(){}
 		void setParameters(std::vector<int> parameters){}
 		void shutdownEvents(){}
-		void onResultCallback(std::string key,  qi::AnyValue value, std::string subscriberIdentifier);
+		
+		
+		
+		void touchCallback(std::string key,  qi::AnyValue value, std::string subscriberIdentifier);
 		
 	    private: 
 		std::string _name;
-		std::string _key;
+		std::string _keyRightBumperPressed;
+		std::string _keyLeftBumperPressed;
+		std::string _keyBackBumperPressed;
+		std::string _keyFrontTactilTouched;
+		std::string _keyMiddleTactilTouched;
+		std::string _keyRearTactilTouched;
+		std::string _keyHandRightBackTouched;
+		std::string _keyHandRightLeftTouched;
+		std::string _keyHandRightRightTouched;
+		std::string _keyHandLeftBackTouched;
+		std::string _keyHandLeftLeftTouched;
+		std::string _keyHandLeftRightTouched;
 		
-		unsigned int _serviceId;
+		unsigned int _serviceId; 
+		
+		unsigned int _serviceIdRightBumper;
+		unsigned int _serviceIdLeftBumperPressed;
+		unsigned int _serviceIdBackBumperPressed;
+		unsigned int _serviceIdFrontTactil;
+		unsigned int _serviceIdMiddleTactil;
+		unsigned int _serviceIdRearTactil;
+		unsigned int _serviceIdHandRightBack;
+		unsigned int _serviceIdHandRightLeft;
+		unsigned int _serviceIdHandRightRight;
+		unsigned int  _serviceIdHandLeftBack;
+		unsigned int _serviceIdHandLeftLeft;
+		unsigned int  _serviceIdHandLeftRight;
+		
+		
 		
 		boost::mutex _mutex;
 		
@@ -72,10 +93,10 @@ namespace Sinfonia
 		bool _isStarted;
 		bool _isPublishing;
 		
-		boost::shared_ptr<Publisher::ResultPublisher > _publisher;
+		boost::shared_ptr<Publisher::TouchPublisher> _publisher;
 	};
-	
-	QI_REGISTER_OBJECT(ResultEvent, onResultCallback)
+    
+    QI_REGISTER_OBJECT(TouchEvent, touchCallback)
     }
 }
 

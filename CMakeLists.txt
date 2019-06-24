@@ -6,6 +6,7 @@ set(
     src/navigation_tools/laser/laser_converter.cpp
     src/navigation_tools/laser/depth_to_laser_converter.cpp
     src/navigation_tools/laser/naoqi_depth2laser_converter.cpp
+    src/navigation_tools/laser/laser_merged_converter.cpp
     src/navigation_tools/odom/odom_converter.cpp
     src/navigation_tools/tf/tf_converter.cpp
     src/navigation_tools/path/path_converter.cpp
@@ -19,7 +20,10 @@ set(
     src/audio_tools/mic/mic_event.cpp
     
     src/audio_tools/mic/mic_localization_event.cpp
+    
     src/misc_tools/sonar/sonar_converter.cpp
+    src/misc_tools/touch/touch_event.cpp
+    src/misc_tools/touch/touch_publisher.cpp
     
   )
 set(
@@ -107,6 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV)
 find_package(orocos_kdl)
+
 
 #find_package(Eigen3 REQUIRED)
 #include_directories(${EIGEN3_INCLUDE_DIRS})

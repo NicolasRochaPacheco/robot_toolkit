@@ -57,11 +57,14 @@ namespace Sinfonia
 		
 
 	    private:
+		
 		std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
 		qi::AnyObject _pMemory;
 		std::map<MessageAction::MessageAction, CallbackT> _callbacks;
 		boost::shared_ptr<sensor_msgs::LaserScan> _laserMessage;
 		void callLaser();
+		
+		
 	};
     } 
 } 

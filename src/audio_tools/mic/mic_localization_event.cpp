@@ -58,6 +58,7 @@ namespace Sinfonia
 		_session->unregisterService(_serviceId);
 		_serviceId = 0;
 	    }
+	    _isStarted = false;
 	}
     }
     

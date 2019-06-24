@@ -52,8 +52,13 @@ namespace Sinfonia
 		{
 		    _eventPtr->shutdownPublisher();
 		}
+		
+		void shutdownEvents()
+		{
+		    _eventPtr->shutdownEvents();
+		}
 
-		void startProcess( )
+		void startProcess()
 		{
 		    _eventPtr->startProcess();
 		}
@@ -97,6 +102,8 @@ namespace Sinfonia
 		    virtual void setDefaultParameters() = 0;
 		    virtual void setParameters(std::vector<int> parameters) = 0;
 		    virtual void isPublishing(bool state) = 0;
+		    virtual void shutdownEvents() = 0;
+		    
 		};
 
 		template<typename T>
@@ -136,6 +143,11 @@ namespace Sinfonia
 		    void setDefaultParameters()
 		    {
 			_converter->setDefaultParameters();
+		    }
+		    
+		    void shutdownEvents()
+		    {
+			_converter->shutdownEvents();
 		    }
 		    
 		    void setParameters(std::vector<int> parameters)

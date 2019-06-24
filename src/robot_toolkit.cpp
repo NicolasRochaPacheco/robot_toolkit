@@ -166,11 +166,19 @@ namespace Sinfonia
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui lo que se quiere iniciar por default
-	scheduleConverter("tf", 50.0f);
-	scheduleConverter("depth_to_laser", 10.0f);
-	startSubscriber("cmd_vel");
+	/*scheduleConverter("tf", 50.0f);
+	scheduleConverter("depth_to_laser", 20.0f);
+	scheduleConverter("odom", 10.0f);
+	scheduleConverter("laser", 20.0f);
+	scheduleConverter("merged_laser", 20.0f);
+	startSubscriber("cmd_vel");*/
 	startSubscriber("special_settings");
 	startRosLoop();
+	openSharedMemory();
+	
+	
+	
+	    
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
 	
     }
@@ -178,16 +186,44 @@ namespace Sinfonia
 
     void RobotToolkit::stopService()
     {
+	sendSharedMemory("PepperHeadSharedMemory", 0);
+	/*
+	if(_shmfdPepperHead > 0)
+	    shm_unlink("PepperHeadSharedMemory");
+	*/
+	
+	sendSharedMemory("Depth2LaserSharedMemory", 0);
+	/*
+	 * if(_shmfdDepth2Laser > 0)
+	    shm_unlink("Depth2LaserSharedMemory");
+	 */
+	
+	sendSharedMemory("PepperLocalizerSharedMemory", 0);
+	/*
+	 * if(_shmfdPepperLocalizer > 0)
+	    shm_unlink("PepperLocalizerSharedMemory");
+	    */
+	
+	sendSharedMemory("PepperPlannerSharedMemory", 0);
+	/*
+	 * if(_shmfdPepperPlanner > 0)
+	    shm_unlink("PepperPlannerSharedMemory");
+	*/
+	
+	
 	int frontFaceDetectorIndex = getConverterIndex("front_camera_face_detector");
 	int bottomFaceDetectorIndex = getConverterIndex("bottom_camera_face_detector");
 	
-	_eventMap.clear();
+	_eventMap.find("mic")->second.shutdownEvents();
 	_converters[frontFaceDetectorIndex].shutdown();
 	_converters[bottomFaceDetectorIndex].shutdown();
 	
 	stopRosLoop();
+	_eventMap.clear();
 	_converters.clear();
-	_subscribers.clear();		
+	_subscribers.clear();	
+	
+	
     }
 
     void RobotToolkit::registerDefaultConverter()
@@ -210,6 +246,11 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
+	
+	boost::shared_ptr<Publisher::LaserPublisher> mergedLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/merged_laser");
+	boost::shared_ptr<Converter::LaserMergedConverter> mergedLaserConverter = boost::make_shared<Converter::LaserMergedConverter>( "merged_laser", 10, _sessionPtr );
+	mergedLaserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, mergedLaserPublisher, _1) );
+	registerGroup( mergedLaserConverter, mergedLaserPublisher);
 	
 	boost::shared_ptr<Publisher::LaserPublisher> depthToLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/depth_to_laser");
 	//boost::shared_ptr<Converter::DepthToLaserConverter> depthToLaserConverter = boost::make_shared<Converter::DepthToLaserConverter>( "depth_to_laser", 10, _sessionPtr, Helpers::VisionHelpers::kQVGA);
@@ -250,6 +291,9 @@ namespace Sinfonia
 	boost::shared_ptr< Sinfonia::MicLocalizationEvent > micLocalizationEvent = boost::make_shared<Sinfonia::MicLocalizationEvent>("miclocalization", 0, _sessionPtr);
 	insertEventConverter("miclocalization", micLocalizationEvent);
 	
+	boost::shared_ptr< Sinfonia::MiscToolsEvents::TouchEvent > touchEvent = boost::make_shared<Sinfonia::MiscToolsEvents::TouchEvent>("touch", 0, _sessionPtr);
+	insertEventConverter("touch", touchEvent);
+	
 	std::vector<std::string> sonarTopics;
 	sonarTopics.push_back("/sonar/front");
 	sonarTopics.push_back("/sonar/back");
@@ -269,6 +313,8 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::RobotPoseConverter> robotPoseConverter = boost::make_shared<Converter::RobotPoseConverter>( "navigation_robot_pose", 10, _sessionPtr);
 	robotPoseConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::RobotPosePublisher::publish, robotPosePublisher, _1) );
 	registerGroup( robotPoseConverter, robotPosePublisher);
+	
+	
 	
 	boost::shared_ptr< Sinfonia::Navigation::ResultEvent > navigationResultEvent = boost::make_shared<Sinfonia::Navigation::ResultEvent>("navigation_result", 0, _sessionPtr);
 	insertEventConverter("navigation_result", navigationResultEvent);
@@ -441,29 +487,58 @@ namespace Sinfonia
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
     {
 	std::string responseMessage;
-	if( request.data.command == "enable_all" )
+	if( request.data.command == "enable_navigate" )
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting Navigation Tools " << RESETCOLOR  << std::endl;
-	    scheduleConverter("tf", 50.0f);
-	    scheduleConverter("odom", 10.0f);
-	    scheduleConverter("laser", 10.0f);
+	    //std::cout << "Entramos aqui " << std::endl;
+	    
+	    sendSharedMemory("PepperHeadSharedMemory", 1);
+	    sendSharedMemory("Depth2LaserSharedMemory", 1);
+	    sendSharedMemory("PepperLocalizerSharedMemory", 1);   
+	    sendSharedMemory("PepperPlannerSharedMemory", 1);
+	    
 	    startSubscriber("navigation_goal");
 	    startSubscriber("navigation_robot_pose");
 	    _eventMap.find("navigation_result")->second.startProcess();
 	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
 	    scheduleConverter("navigation_path", 10.0f);
 	    scheduleConverter("navigation_robot_pose", 10.0f);
-	    int converterIndex = getConverterIndex("depth_to_laser");
-	    if( converterIndex != -1 )
-	    {
-		std::vector<float> config;
-		config.push_back(Helpers::VisionHelpers::kQVGA);
-		_converters[converterIndex].setConfig(config);
-		_converters[converterIndex].setAllParametersToDefault();
-		_converters[converterIndex].reset();
-		scheduleConverter("depth_to_laser", 10.0f);
-	    }
+	}
+	else if( request.data.command == "disable_navigate" )
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping navigation "   << std::endl;
+	    sendSharedMemory("PepperHeadSharedMemory", 0);
+	    sendSharedMemory("Depth2LaserSharedMemory", 0);
+	    sendSharedMemory("PepperLocalizerSharedMemory", 0);   
+	    sendSharedMemory("PepperPlannerSharedMemory", 0);
+	    
+	    stopSubscriber("navigation_goal");
+	    stopSubscriber("navigation_robot_pose");
+	    _eventMap.find("navigation_result")->second.stopProcess();
+	    _eventMap.find("navigation_result")->second.shutdownPublisher();
+	    unscheduleConverter("navigation_path");
+	    unscheduleConverter("navigation_robot_pose");
+	}
+	else if( request.data.command == "enable_all" )
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting Navigation Tools " << RESETCOLOR  << std::endl;
+	    scheduleConverter("tf", 50.0f);
+	    scheduleConverter("odom", 10.0f);
+	    
+	    scheduleConverter("laser", 10.0f);
+	    
+	    startSubscriber("navigation_goal");
+	    startSubscriber("navigation_robot_pose");
+	    _eventMap.find("navigation_result")->second.startProcess();
+	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
+	    scheduleConverter("navigation_path", 10.0f);
+	    scheduleConverter("navigation_robot_pose", 10.0f);
+	    
+	    scheduleConverter("depth_to_laser", 10.0f);
+	    sendSharedMemory("Depth2LaserSharedMemory", 1);
+	    
+	    
 	    int subscriberIndex = getSubscriberIndex("cmd_vel");
+	    
 	    if( subscriberIndex != -1)
 	    {
 		std::cout << "going to set default !!!!" << std::endl;
@@ -483,7 +558,7 @@ namespace Sinfonia
 	    unscheduleConverter("depth_to_laser");
 	    stopSubscriber("cmd_vel");
 	    stopSubscriber("moveto");
-	    
+	    sendSharedMemory("Depth2LaserSharedMemory", 0);
 	    stopSubscriber("navigation_goal");
 	    stopSubscriber("navigation_robot_pose");
 	    _eventMap.find("navigation_result")->second.stopProcess();
@@ -608,6 +683,7 @@ namespace Sinfonia
 		    _converters[converterIndex].setParameters(parameters);
 		    _converters[converterIndex].reset();
 		    scheduleConverter("depth_to_laser", 10.0f);
+		    sendSharedMemory("Depth2LaserSharedMemory", 1);
 		}
 		startedFunctionalities += "depth_to_laser@10Hz";
 		
@@ -616,6 +692,7 @@ namespace Sinfonia
 	    {
 		unscheduleConverter("depth_to_laser");
 		stoppedFunctionalities += "depth_to_laser, ";
+		sendSharedMemory("Depth2LaserSharedMemory", 0);
 	    }
 	    
 	    if( request.data.cmd_vel_enable )
@@ -1178,7 +1255,7 @@ namespace Sinfonia
 	std::string startedFunctionalities = "Functionalities started:";
 	std::string stoppedFunctionalities = " Functionalities stopped:";
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom") 
+	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom" && request.data.command != "touch") 
 	{
 	    responseMessage = "ERROR: unknown command: " + request.data.command +  " possible values are: enable_all, disable_all, custom";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -1189,7 +1266,9 @@ namespace Sinfonia
 		{
 		    startSubscriber("leds");
 		    scheduleConverter("sonar", 50.0f);
-		    responseMessage = "Starting leds and sonars";
+		    _eventMap.find("touch")->second.startProcess();
+		    _eventMap.find("touch")->second.resetPublisher(*_nodeHandlerPtr);
+		    responseMessage = "Starting leds, touch and sonars";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		    
 		}
@@ -1198,6 +1277,8 @@ namespace Sinfonia
 		{
 		    stopSubscriber("leds");
 		    unscheduleConverter("sonar");
+		    _eventMap.find("touch")->second.stopProcess();
+		    _eventMap.find("touch")->second.shutdownPublisher();
 		    responseMessage = "Stopping leds and sonars";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
@@ -1232,6 +1313,22 @@ namespace Sinfonia
 			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping sonars" << RESETCOLOR  << std::endl;		    
 		    }
 		    
+		    if(request.data.touch == "enable")
+		    {
+			_eventMap.find("touch")->second.startProcess();
+			_eventMap.find("touch")->second.resetPublisher(*_nodeHandlerPtr);
+			startedFunctionalities += " touch, ";
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting touch" << RESETCOLOR  << std::endl;		    
+		    }
+		    
+		    else if(request.data.touch == "disable")
+		    {
+			_eventMap.find("touch")->second.stopProcess();
+			_eventMap.find("touch")->second.shutdownPublisher();
+			stoppedFunctionalities += " touch, ";
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping touch" << RESETCOLOR  << std::endl;		    
+		    }		
+		    
 		    responseMessage = startedFunctionalities + stoppedFunctionalities;
 		}
 		
@@ -1239,6 +1336,82 @@ namespace Sinfonia
 	
 	response.result = responseMessage;
 	return true;
+    }
+
+    void RobotToolkit::openSharedMemory()
+    {
+	const int SIZE = 1;
+	_shmfdPepperHead = shm_open("PepperHeadSharedMemory", O_RDWR, 0666);
+	if(_shmfdPepperHead < 0)
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper head shared memory" << RESETCOLOR  << std::endl;		    
+	}
+	else
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Pepper head shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    _pepperHeadPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperHead, 0);
+	}
+	
+	_shmfdDepth2Laser = shm_open("Depth2LaserSharedMemory", O_RDWR, 0666);
+	if(_shmfdDepth2Laser < 0)
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize depth2Laser" << RESETCOLOR  << std::endl;		    
+	}
+	else
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] depth to laser shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    _depth2LaserPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdDepth2Laser, 0);
+	}
+	
+	_shmfdPepperLocalizer = shm_open("PepperLocalizerSharedMemory", O_RDWR, 0666);
+	if(_shmfdPepperLocalizer < 0)
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper localizer" << RESETCOLOR  << std::endl;		    
+	}
+	else
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper localizer shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    _pepperLocalizerPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperLocalizer, 0);
+	}
+	
+	_shmfdPepperPlanner = shm_open("PepperPlannerSharedMemory", O_RDWR, 0666);
+	if(_shmfdPepperPlanner < 0)
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper planer" << RESETCOLOR  << std::endl;		    
+	}
+	else
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper planner shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    _pepperPlannerPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperPlanner, 0);
+	}
+	
+    }
+
+    void RobotToolkit::sendSharedMemory(std::string name, char value)
+    {
+	if(name == "PepperHeadSharedMemory")
+	{
+	    if(_shmfdPepperHead > 0)
+		memcpy(_pepperHeadPtr, &value, sizeof(char));
+	}
+	
+	else if(name == "Depth2LaserSharedMemory")
+	{
+	    if(_shmfdDepth2Laser > 0)
+		memcpy(_depth2LaserPtr , &value, sizeof(char));
+	}
+	
+	else if(name == "PepperLocalizerSharedMemory")
+	{
+	    if(_shmfdPepperLocalizer > 0)
+		memcpy(_pepperLocalizerPtr , &value, sizeof(char));
+	}
+	
+	else if(name == "PepperPlannerSharedMemory")
+	{
+	    if(_shmfdPepperPlanner > 0)
+		memcpy(_pepperPlannerPtr, &value, sizeof(char));
+	}
     }
 
     

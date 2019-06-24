@@ -487,16 +487,19 @@ namespace Sinfonia
 			faceDimensions.push_back(faceDimensionsAnyValue[0].as<float>());
 			faceDimensions.push_back(faceDimensionsAnyValue[1].as<float>());
 			
-			float xPoint = cvImage.cols * ( bboxCorner[0] - (faceDimensionsAngle[0]/2.0));
+			float xPoint = cvImage.cols * ( bboxCorner[0]  - (faceDimensionsAngle[0]/2.0));
 			float yPoint = cvImage.rows * ( bboxCorner[1] - (faceDimensionsAngle[1]/2.0));
 			float wValue = cvImage.cols * faceDimensionsAngle[0];
-			float hValue = cvImage.rows *  faceDimensionsAngle[1];
-			float cValue = 0.08;
+			float hValue = cvImage.rows * faceDimensionsAngle[1];
+			float cValue = 0.09;
 			
 			xPoint = xPoint - cvImage.cols*cValue;
 			yPoint = yPoint - cvImage.rows*cValue;
-			wValue = wValue + cvImage.cols*cValue;
-			hValue = hValue + cvImage.rows*cValue;
+			wValue = wValue + 2.0*cvImage.cols*cValue;
+			hValue = hValue + 2.0*cvImage.rows*cValue;
+			
+			geometry_msgs::Point facePoint;
+		
 			
 			if(xPoint < 0)
 			    xPoint = 0;
@@ -516,7 +519,11 @@ namespace Sinfonia
 			_imageMsg->header.stamp = ros::Time::now();
 			if(_compress)
 			    compressImage();
+			facePoint.x = xPoint;
+			facePoint.y = yPoint;
+			facePoint.z = -1;
 			_faceMessage->faces.push_back(*_imageMsg);
+			_faceMessage->points.push_back(facePoint);
 		    }
 		    _newMessage = true;
 	    }

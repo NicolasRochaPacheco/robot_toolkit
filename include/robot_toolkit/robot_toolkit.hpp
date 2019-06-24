@@ -26,6 +26,11 @@
 
 #include <queue>
 
+#include <sys/types.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <tf2_ros/buffer.h>
 
 #include "ros/ros.h"
@@ -69,6 +74,7 @@
 #include "robot_toolkit/navigation_tools/robot_pose/robot_pose_publisher.hpp"
 #include "robot_toolkit/navigation_tools/robot_pose/robot_pose_converter.hpp"
 #include "robot_toolkit/navigation_tools/result/result_event.hpp"
+#include "robot_toolkit/navigation_tools/laser/laser_merged_converter.hpp"
 
 #include "robot_toolkit/vision_tools/camera_converter.hpp"
 #include "robot_toolkit/vision_tools/camera_publisher.hpp"
@@ -86,6 +92,8 @@
 #include "robot_toolkit/misc_tools/sonar/sonar_converter.hpp"
 #include "robot_toolkit/misc_tools/sonar/sonar_publisher.hpp"
 #include "robot_toolkit/misc_tools/special_settings/special_settings_subscriber.hpp"
+#include "robot_toolkit/misc_tools/touch/touch_publisher.hpp"
+#include "robot_toolkit/misc_tools/touch/touch_event.hpp"
 
 
 
@@ -127,6 +135,19 @@ namespace Sinfonia
 	    bool _publishEnabled;
 	    bool _isRosLoopEnabled;
 	    
+	    void *_pepperHeadPtr;
+	    int _shmfdPepperHead;
+	    
+	    void *_depth2LaserPtr;
+	    int _shmfdDepth2Laser;
+	    
+	    void *_pepperLocalizerPtr;
+	    int _shmfdPepperLocalizer;
+	    
+	    void *_pepperPlannerPtr;
+	    int _shmfdPepperPlanner;
+	    
+	    
 	    
 	    boost::shared_ptr<tf2_ros::Buffer> _tf2Buffer;
 	    
@@ -155,8 +176,6 @@ namespace Sinfonia
 	    std::map< std::string, Event::Event> _eventMap;
 	    
 	    
-	    
-	    
 	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   
 	    
 	    void rosLoop();
@@ -180,6 +199,8 @@ namespace Sinfonia
 	    std::vector<float> toVector(robot_toolkit_msgs::camera_parameters_msg params);
 	    int getSubscriberIndex(std::string name);
 	    robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);
+	    void openSharedMemory();
+	    void sendSharedMemory(std::string name, char value);
     };
 }
 
