@@ -56,7 +56,7 @@ set(
     src/navigation_tools/move_to/move_to.cpp
     src/navigation_tools/navigation_goal/navigation_goal_subscriber.cpp
     src/navigation_tools/robot_pose/robot_pose_subscriber.cpp
-    
+    src/navigation_tools/free_zone/free_zone_subscriber.cpp
     src/audio_tools/speech/speech_subscriber.cpp
         
     src/motion_tools/animation_subscriber.cpp
@@ -64,6 +64,8 @@ set(
     
     src/misc_tools/leds_subscriber.cpp
     src/misc_tools/special_settings/special_settings_subscriber.cpp
+    
+    
   )
 
 set(
@@ -112,9 +114,11 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV)
 find_package(orocos_kdl)
 
+#find_package(qibuild)
 
-#find_package(Eigen3 REQUIRED)
-#include_directories(${EIGEN3_INCLUDE_DIRS})
+#qi_use_lib(ALMATH)
+#find_package(almath REQUIRED)
+#include_directories(${ALMATH_INCLUDE_DIRS})
  
 add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 

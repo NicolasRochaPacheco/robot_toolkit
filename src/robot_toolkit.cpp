@@ -174,11 +174,7 @@ namespace Sinfonia
 	startSubscriber("cmd_vel");*/
 	startSubscriber("special_settings");
 	startRosLoop();
-	openSharedMemory();
-	
-	
-	
-	    
+	openSharedMemory();    
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
 	
     }
@@ -364,6 +360,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::NavigationGoalSubscriber>("navigation_goal", "/navigation/goal", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::RobotPoseSubscriber>("navigation_robot_pose", "/navigation/robot_pose", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SpecialSettingsSubscriber>("special_settings", "/special_settings", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::FreeZoneSubscriber>("free_zone", "/free_zone", _sessionPtr));
     }
     
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
@@ -498,10 +495,14 @@ namespace Sinfonia
 	    
 	    startSubscriber("navigation_goal");
 	    startSubscriber("navigation_robot_pose");
+	    startSubscriber("free_zone");
 	    _eventMap.find("navigation_result")->second.startProcess();
 	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
 	    scheduleConverter("navigation_path", 10.0f);
 	    scheduleConverter("navigation_robot_pose", 10.0f);
+	    
+	    responseMessage = "Functionalities started: pepper_head, localizer, planner, navigation_result ,depth_to_laser@10Hz, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose, free_zone";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "disable_navigate" )
 	{
@@ -513,10 +514,14 @@ namespace Sinfonia
 	    
 	    stopSubscriber("navigation_goal");
 	    stopSubscriber("navigation_robot_pose");
+	    stopSubscriber("free_zone");
 	    _eventMap.find("navigation_result")->second.stopProcess();
 	    _eventMap.find("navigation_result")->second.shutdownPublisher();
 	    unscheduleConverter("navigation_path");
 	    unscheduleConverter("navigation_robot_pose");
+	    
+	    responseMessage = "Functionalities stopped: pepper_head, localizer, planner, navigation_result ,depth_to_laser@10Hz, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose, free_zone";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "enable_all" )
 	{
@@ -528,25 +533,25 @@ namespace Sinfonia
 	    
 	    startSubscriber("navigation_goal");
 	    startSubscriber("navigation_robot_pose");
+	    startSubscriber("free_zone");
 	    _eventMap.find("navigation_result")->second.startProcess();
 	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
 	    scheduleConverter("navigation_path", 10.0f);
 	    scheduleConverter("navigation_robot_pose", 10.0f);
-	    
 	    scheduleConverter("depth_to_laser", 10.0f);
 	    sendSharedMemory("Depth2LaserSharedMemory", 1);
+	    
 	    
 	    
 	    int subscriberIndex = getSubscriberIndex("cmd_vel");
 	    
 	    if( subscriberIndex != -1)
 	    {
-		std::cout << "going to set default !!!!" << std::endl;
 		_subscribers[subscriberIndex].setDefaultParameters();
 		startSubscriber("cmd_vel");
 	    }
 	    startSubscriber("moveto");
-	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose";
+	    responseMessage = "Functionalities started: tf@50Hz, odom@10Hz, laser@10Hz, depth_to_laser@10Hz, cmd_vel, move_to, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose, free_zone";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else if( request.data.command == "disable_all" )
@@ -561,6 +566,7 @@ namespace Sinfonia
 	    sendSharedMemory("Depth2LaserSharedMemory", 0);
 	    stopSubscriber("navigation_goal");
 	    stopSubscriber("navigation_robot_pose");
+	    stopSubscriber("free_zone");
 	    _eventMap.find("navigation_result")->second.stopProcess();
 	    _eventMap.find("navigation_result")->second.shutdownPublisher();
 	    unscheduleConverter("navigation_path");
@@ -728,6 +734,16 @@ namespace Sinfonia
 	    {
 		stopSubscriber("moveto");
 		stoppedFunctionalities += "move_to ";
+	    }
+	    if( request.data.free_zone_enable )
+	    {
+		startSubscriber("free_zone");
+		startedFunctionalities += "free_zone ";
+	    }
+	    else
+	    {
+		stopSubscriber("free_zone");
+		stoppedFunctionalities += "free_zone ";
 	    }
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << startedFunctionalities << RESETCOLOR  << std::endl;
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << stoppedFunctionalities << RESETCOLOR  << std::endl;
@@ -1355,7 +1371,7 @@ namespace Sinfonia
 	_shmfdDepth2Laser = shm_open("Depth2LaserSharedMemory", O_RDWR, 0666);
 	if(_shmfdDepth2Laser < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize depth2Laser" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize depth2Laser shared memory" << RESETCOLOR  << std::endl;		    
 	}
 	else
 	{
@@ -1366,7 +1382,7 @@ namespace Sinfonia
 	_shmfdPepperLocalizer = shm_open("PepperLocalizerSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperLocalizer < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper localizer" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper localizer shared memory" << RESETCOLOR  << std::endl;		    
 	}
 	else
 	{
@@ -1377,7 +1393,7 @@ namespace Sinfonia
 	_shmfdPepperPlanner = shm_open("PepperPlannerSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperPlanner < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper planer" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper planer shared memory" << RESETCOLOR  << std::endl;		    
 	}
 	else
 	{

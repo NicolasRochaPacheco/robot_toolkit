@@ -64,7 +64,6 @@
 #include "robot_toolkit/navigation_tools/tf/tf_converter.hpp"
 #include "robot_toolkit/navigation_tools/odom/odom_converter.hpp"
 #include "robot_toolkit//navigation_tools/laser/laser_converter.hpp"
-//#include "robot_toolkit//navigation_tools/laser/depth_to_laser_converter.hpp"
 #include "robot_toolkit//navigation_tools/laser/naoqi_depth2laser_converter.hpp"
 #include "robot_toolkit/navigation_tools/cmd_vel/cmd_vel_subscriber.hpp"
 #include "robot_toolkit/navigation_tools/navigation_goal/navigation_goal_subscriber.hpp"
@@ -75,6 +74,8 @@
 #include "robot_toolkit/navigation_tools/robot_pose/robot_pose_converter.hpp"
 #include "robot_toolkit/navigation_tools/result/result_event.hpp"
 #include "robot_toolkit/navigation_tools/laser/laser_merged_converter.hpp"
+#include "robot_toolkit/navigation_tools/free_zone/free_zone_subscriber.hpp"
+
 
 #include "robot_toolkit/vision_tools/camera_converter.hpp"
 #include "robot_toolkit/vision_tools/camera_publisher.hpp"
