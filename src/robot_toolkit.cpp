@@ -305,7 +305,7 @@ namespace Sinfonia
 	registerGroup( pathConverter, pathPublisher);
 	
 	
-	boost::shared_ptr<Publisher::RobotPosePublisher > robotPosePublisher = boost::make_shared<Publisher::RobotPosePublisher>("/navigation/robot_pose");
+	boost::shared_ptr<Publisher::RobotPosePublisher > robotPosePublisher = boost::make_shared<Publisher::RobotPosePublisher>("/navigation/robot_pose_publisher");
 	boost::shared_ptr<Converter::RobotPoseConverter> robotPoseConverter = boost::make_shared<Converter::RobotPoseConverter>( "navigation_robot_pose", 10, _sessionPtr);
 	robotPoseConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::RobotPosePublisher::publish, robotPosePublisher, _1) );
 	registerGroup( robotPoseConverter, robotPosePublisher);
@@ -358,7 +358,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::SetAnglesSubscriber>("set_angles", "/set_angles", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::LedsSubscriber>("leds", "/leds", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::NavigationGoalSubscriber>("navigation_goal", "/navigation/goal", _sessionPtr));
-	registerSubscriber(boost::make_shared<Subscriber::RobotPoseSubscriber>("navigation_robot_pose", "/navigation/robot_pose", _sessionPtr));
+	registerSubscriber(boost::make_shared<Subscriber::RobotPoseSubscriber>("navigation_robot_pose", "/navigation/robot_pose_subscriber", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::SpecialSettingsSubscriber>("special_settings", "/special_settings", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::FreeZoneSubscriber>("free_zone", "/free_zone", _sessionPtr));
     }
