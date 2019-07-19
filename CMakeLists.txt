@@ -12,19 +12,19 @@ set(
     src/navigation_tools/path/path_converter.cpp
     src/navigation_tools/robot_pose/robot_pose_converter.cpp
     src/navigation_tools/result/result_event.cpp
-    
+
     src/vision_tools/camera_converter.cpp
     src/vision_tools/face_detector.cpp
-    
+
     src/audio_tools/mic/mic_converter.cpp
     src/audio_tools/mic/mic_event.cpp
-    
+
     src/audio_tools/mic/mic_localization_event.cpp
-    
+
     src/misc_tools/sonar/sonar_converter.cpp
     src/misc_tools/touch/touch_event.cpp
     src/misc_tools/touch/touch_publisher.cpp
-    
+
   )
 set(
   TOOLS_SRC
@@ -33,20 +33,21 @@ set(
 
 set(
   PUBLISHER_SRC
-  
+
     src/navigation_tools/laser/laser_publisher.cpp
     src/navigation_tools/odom/odom_publisher.cpp
     src/navigation_tools/tf/tf_publisher.cpp
     src/navigation_tools/path/path_publisher.cpp
     src/navigation_tools/robot_pose/robot_pose_publisher.cpp
     src/navigation_tools/result/result_publisher.cpp
-    
+
     src/vision_tools/camera_publisher.cpp
     src/vision_tools/face_publisher.cpp
-    
+
     src/audio_tools/mic/mic_publisher.cpp
     src/audio_tools/mic/mic_localization_publisher.cpp
-    
+    src/audio_tools/speech_recognition/speech_recognition_event.cpp
+
     src/misc_tools/sonar/sonar_publisher.cpp
   )
 
@@ -58,19 +59,19 @@ set(
     src/navigation_tools/robot_pose/robot_pose_subscriber.cpp
     src/navigation_tools/free_zone/free_zone_subscriber.cpp
     src/audio_tools/speech/speech_subscriber.cpp
-        
+
     src/motion_tools/animation_subscriber.cpp
     src/motion_tools/set_angles_subscriber.cpp
-    
+
     src/misc_tools/leds_subscriber.cpp
     src/misc_tools/special_settings/special_settings_subscriber.cpp
-    
-    
+
+
   )
 
 set(
   SERVICES_SRC
-  
+
   )
 
 set(
@@ -82,13 +83,13 @@ set(
   src/robot_toolkit.cpp
   src/helpers/toolkit_helpers.cpp
   )
-  
+
 
 
 add_definitions( -DCATKIN_BUILD )
 
 # CMake file that uses catkin
-find_package(catkin REQUIRED COMPONENTS	
+find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   diagnostic_msgs
   diagnostic_updater
@@ -119,11 +120,11 @@ find_package(orocos_kdl)
 #qi_use_lib(ALMATH)
 #find_package(almath REQUIRED)
 #include_directories(${ALMATH_INCLUDE_DIRS})
- 
+
 add_definitions(-DLIBQI_VERSION=${naoqi_libqi_VERSION_MAJOR}${naoqi_libqi_VERSION_MINOR})
 
 catkin_package(LIBRARIES robot_toolkit_module robot_toolkit)
-catkin_package(CATKIN_DEPENDS message_runtime ) 
+catkin_package(CATKIN_DEPENDS message_runtime )
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=deprecated-declarations")
@@ -185,6 +186,3 @@ install(DIRECTORY launch DESTINATION "${CATKIN_PACKAGE_SHARE_DESTINATION}")
 # make sure there is a file describing a naoqi module
 file(WRITE ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/robot_toolkit_module.mod "cpp")
 install(FILES ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/robot_toolkit_module.mod DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/qi/module/)
-
-
-

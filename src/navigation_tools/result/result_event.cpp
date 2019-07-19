@@ -53,7 +53,7 @@ namespace Sinfonia
 		{
 		    std::string serviceName = std::string("ROS-Driver") + _key;
 		    _serviceId = _session->registerService(serviceName, this->shared_from_this());
-		    _pMemory.call<void>("subscribeToEvent",_key.c_str(), serviceName, "onResultCallback");		
+		    _pMemory.call<void>("subscribeToEvent", _key.c_str(), serviceName, "onResultCallback");		
 		}
 		_isStarted = true;
 	    }
@@ -62,14 +62,16 @@ namespace Sinfonia
 	void ResultEvent::stopProcess()
 	{
 	    boost::mutex::scoped_lock stopLock(_mutex);
+	    std::string serviceName = std::string("ROS-Driver") + _key;
 	    if(_isStarted)
 	    {
-		std::string serviceName = std::string("ROS-Driver") + _key;
+		_pMemory.call<void>("unsubscribeToEvent", _key.c_str(), serviceName);
 		if(_serviceId)
 		{
 		    _session->unregisterService(_serviceId);
 		    _serviceId = 0;
 		}
+		_isStarted = false;
 	    }
 	}
 	

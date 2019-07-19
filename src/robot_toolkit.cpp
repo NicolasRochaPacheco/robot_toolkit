@@ -44,6 +44,7 @@ namespace Sinfonia
 	}
 	_sessionPtr = session;
 	_isRosLoopEnabled = true;
+  _speechRecognition  = boost::make_shared<Sinfonia::SpeechRecognitionEvent>("speech_recognition", 10.0f, _sessionPtr);
     }
 
     RobotToolkit::~RobotToolkit()
@@ -55,19 +56,19 @@ namespace Sinfonia
 	    ros::shutdown();
 	}
     }
-    
+
     std::string RobotToolkit::_whoWillWin()
     {
 	return "SinfonIA SSPL Robocup Team";
     }
-    
+
     void RobotToolkit::init()
     {
 	ros::Time::init();
 	registerDefaultConverter();
 	registerDefaultSubscriber();
     }
-    
+
     void RobotToolkit::rosLoop()
     {
 	static std::vector<MessageAction::MessageAction> actions;
@@ -86,23 +87,23 @@ namespace Sinfonia
 		    {
 			actions.push_back(MessageAction::PUBLISH);
 		    }
-		    
+
 		    if ( actions.size()>0 )
 		    {
 			converter.callAll( actions );
 		    }
-		    
+
 		    ros::Duration d( schedule - ros::Time::now() );
 		    if ( d > ros::Duration(0))
 		    {
 			d.sleep();
 		    }
-		    
+
 		    _convertersQueue.pop();
 		    if ( converter.getFrequency() != 0 )
 		    {
 			_convertersQueue.push(Helpers::ScheduledConverter(schedule + ros::Duration(1.0f / converter.getFrequency()), converterIndex));
-		    }	
+		    }
 		}
 		else
 		{
@@ -115,7 +116,7 @@ namespace Sinfonia
 	    }
 	}
     }
-    
+
     void RobotToolkit::startRosLoop()
     {
 	if (_mainThread.get_id() ==  boost::thread::id())
@@ -129,7 +130,7 @@ namespace Sinfonia
 	if (_mainThread.get_id() !=  boost::thread::id())
 	    _mainThread.join();
     }
-    
+
     void RobotToolkit::setMasterURINet(const std::string& uri, const std::string& networkInterface)
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
@@ -150,33 +151,34 @@ namespace Sinfonia
 	else
 	{
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "NOT going to re-register the converters" << std::endl;
-	    typedef std::map< std::string, Publisher::Publisher > publisherMap; 	    
+	    typedef std::map< std::string, Publisher::Publisher > publisherMap;
 	    resetService(* _nodeHandlerPtr);
 	}
 	startPublishing();
-	
+
     }
-    
+
 
     void RobotToolkit::startPublishing()
     {
 	_publishEnabled = true;
     }
-    
+
     void RobotToolkit::startInitialTopics()
     {
 	// Poner aqui lo que se quiere iniciar por default
 	/*scheduleConverter("tf", 50.0f);
 	scheduleConverter("depth_to_laser", 20.0f);
 	scheduleConverter("odom", 10.0f);
-	scheduleConverter("laser", 20.0f);
 	scheduleConverter("merged_laser", 20.0f);
+	scheduleConverter("laser", 20.0f);
+
 	startSubscriber("cmd_vel");*/
 	startSubscriber("special_settings");
 	startRosLoop();
-	openSharedMemory();    
+	openSharedMemory();
 	std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Robot Toolkit Ready !!!" << std::endl;
-	
+
     }
 
 
@@ -187,39 +189,39 @@ namespace Sinfonia
 	if(_shmfdPepperHead > 0)
 	    shm_unlink("PepperHeadSharedMemory");
 	*/
-	
+
 	sendSharedMemory("Depth2LaserSharedMemory", 0);
 	/*
 	 * if(_shmfdDepth2Laser > 0)
 	    shm_unlink("Depth2LaserSharedMemory");
 	 */
-	
+
 	sendSharedMemory("PepperLocalizerSharedMemory", 0);
 	/*
 	 * if(_shmfdPepperLocalizer > 0)
 	    shm_unlink("PepperLocalizerSharedMemory");
 	    */
-	
+
 	sendSharedMemory("PepperPlannerSharedMemory", 0);
 	/*
 	 * if(_shmfdPepperPlanner > 0)
 	    shm_unlink("PepperPlannerSharedMemory");
 	*/
-	
-	
+
+
 	int frontFaceDetectorIndex = getConverterIndex("front_camera_face_detector");
 	int bottomFaceDetectorIndex = getConverterIndex("bottom_camera_face_detector");
-	
+
 	_eventMap.find("mic")->second.shutdownEvents();
 	_converters[frontFaceDetectorIndex].shutdown();
 	_converters[bottomFaceDetectorIndex].shutdown();
-	
+
 	stopRosLoop();
 	_eventMap.clear();
 	_converters.clear();
-	_subscribers.clear();	
-	
-	
+	_subscribers.clear();
+
+
     }
 
     void RobotToolkit::registerDefaultConverter()
@@ -231,92 +233,92 @@ namespace Sinfonia
 	boost::shared_ptr<Converter::TfConverter> tfConverter = boost::make_shared<Converter::TfConverter>( "tf", 50, _tf2Buffer, _sessionPtr );
 	tfConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::TfPublisher::publish, tfPublisher, _1) );
 	registerGroup( tfConverter, tfPublisher);
-	
-	
+
+
 	boost::shared_ptr<Publisher::OdomPublisher > odomPublisher = boost::make_shared<Publisher::OdomPublisher>("/odom");
 	boost::shared_ptr<Converter::OdomConverter> odomConverter = boost::make_shared<Converter::OdomConverter>("odom", 10, _sessionPtr );
 	odomConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::OdomPublisher::publish, odomPublisher, _1) );
 	registerGroup( odomConverter, odomPublisher);
-	
+
 	boost::shared_ptr<Publisher::LaserPublisher> laserPublisher = boost::make_shared<Publisher::LaserPublisher>("/laser");
 	boost::shared_ptr<Converter::LaserConverter> laserConverter = boost::make_shared<Converter::LaserConverter>( "laser", 10, _sessionPtr );
 	laserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, laserPublisher, _1) );
 	registerGroup( laserConverter, laserPublisher);
-	
+
 	boost::shared_ptr<Publisher::LaserPublisher> mergedLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/merged_laser");
 	boost::shared_ptr<Converter::LaserMergedConverter> mergedLaserConverter = boost::make_shared<Converter::LaserMergedConverter>( "merged_laser", 10, _sessionPtr );
 	mergedLaserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, mergedLaserPublisher, _1) );
 	registerGroup( mergedLaserConverter, mergedLaserPublisher);
-	
+
 	boost::shared_ptr<Publisher::LaserPublisher> depthToLaserPublisher = boost::make_shared<Publisher::LaserPublisher>("/depth_to_laser");
 	//boost::shared_ptr<Converter::DepthToLaserConverter> depthToLaserConverter = boost::make_shared<Converter::DepthToLaserConverter>( "depth_to_laser", 10, _sessionPtr, Helpers::VisionHelpers::kQVGA);
 	boost::shared_ptr<Converter::NaoqiDepth2LaserConverter> depthToLaserConverter = boost::make_shared<Converter::NaoqiDepth2LaserConverter>( "depth_to_laser", 10, _sessionPtr);
 	depthToLaserConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::LaserPublisher::publish, depthToLaserPublisher, _1) );
 	registerGroup( depthToLaserConverter, depthToLaserPublisher);
-	
+
 	boost::shared_ptr<Publisher::CameraPublisher> frontCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/front/image_raw");
 	boost::shared_ptr<Converter::CameraConverter> frontCameraConverter = boost::make_shared<Converter::CameraConverter>("front_camera", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	frontCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, frontCameraPublisher, _1, _2) );
 	registerGroup( frontCameraConverter, frontCameraPublisher);
-	
+
 	boost::shared_ptr<Publisher::CameraPublisher> bottomCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/bottom/image_raw");
 	boost::shared_ptr<Converter::CameraConverter> bottomCameraConverter = boost::make_shared<Converter::CameraConverter>("bottom_camera", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	bottomCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, bottomCameraPublisher, _1, _2) );
 	registerGroup( bottomCameraConverter, bottomCameraPublisher);
-	
+
 	boost::shared_ptr<Publisher::CameraPublisher> depthCameraPublisher = boost::make_shared<Publisher::CameraPublisher>("camera/depth/image_raw");
 	boost::shared_ptr<Converter::CameraConverter> depthCameraConverter = boost::make_shared<Converter::CameraConverter>("depth_camera", 10, _sessionPtr, Helpers::VisionHelpers::kDepthCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRawDepthColorSpace);
 	depthCameraConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::CameraPublisher::publish, depthCameraPublisher, _1, _2) );
 	registerGroup( depthCameraConverter, depthCameraPublisher);
 
-	
+
 	boost::shared_ptr<Publisher::FacePublisher> topCameraFaceDetectorPublisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/front_camera");
 	boost::shared_ptr<Sinfonia::Converter::FaceDetector> faceDetectorTopCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("front_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kTopCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	faceDetectorTopCamera->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::FacePublisher::publish, topCameraFaceDetectorPublisher, _1) );
 	registerGroup( faceDetectorTopCamera, topCameraFaceDetectorPublisher);
-	
+
 	boost::shared_ptr<Publisher::FacePublisher> bottomCameraFaceDetectorPublisher = boost::make_shared<Publisher::FacePublisher>("/face_publisher/bottom_camera");
 	boost::shared_ptr<Sinfonia::Converter::FaceDetector> faceDetectorBottomCamera = boost::make_shared<Sinfonia::Converter::FaceDetector>("bottom_camera_face_detector", 10, _sessionPtr, Helpers::VisionHelpers::kBottomCamera, Helpers::VisionHelpers::kQVGA, Helpers::VisionHelpers::kRGBColorSpace);
 	faceDetectorBottomCamera->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::FacePublisher::publish, bottomCameraFaceDetectorPublisher, _1) );
 	registerGroup( faceDetectorBottomCamera, bottomCameraFaceDetectorPublisher);
-	
-	
+
+
 	boost::shared_ptr< Sinfonia::MicEventRegister > audioEventRegister = boost::make_shared<Sinfonia::MicEventRegister>("mic", 0, _sessionPtr);
 	insertEventConverter("mic", audioEventRegister);
-	
+
 	boost::shared_ptr< Sinfonia::MicLocalizationEvent > micLocalizationEvent = boost::make_shared<Sinfonia::MicLocalizationEvent>("miclocalization", 0, _sessionPtr);
 	insertEventConverter("miclocalization", micLocalizationEvent);
-	
+
 	boost::shared_ptr< Sinfonia::MiscToolsEvents::TouchEvent > touchEvent = boost::make_shared<Sinfonia::MiscToolsEvents::TouchEvent>("touch", 0, _sessionPtr);
 	insertEventConverter("touch", touchEvent);
-	
+
 	std::vector<std::string> sonarTopics;
 	sonarTopics.push_back("/sonar/front");
 	sonarTopics.push_back("/sonar/back");
-	
+
 	boost::shared_ptr<Publisher::SonarPublisher> sonarPublisher = boost::make_shared<Publisher::SonarPublisher>(sonarTopics);
 	boost::shared_ptr<Converter::SonarConverter> sonarConverter = boost::make_shared<Converter::SonarConverter>( "sonar", 10, _sessionPtr);
 	sonarConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::SonarPublisher::publish, sonarPublisher, _1) );
 	registerGroup( sonarConverter, sonarPublisher);
-    
+
 	boost::shared_ptr<Publisher::PathPublisher> pathPublisher = boost::make_shared<Publisher::PathPublisher>("/navigation/path");
 	boost::shared_ptr<Converter::PathConverter> pathConverter = boost::make_shared<Converter::PathConverter>( "navigation_path", 10, _sessionPtr);
 	pathConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::PathPublisher::publish, pathPublisher, _1) );
 	registerGroup( pathConverter, pathPublisher);
-	
-	
+
+
 	boost::shared_ptr<Publisher::RobotPosePublisher > robotPosePublisher = boost::make_shared<Publisher::RobotPosePublisher>("/navigation/robot_pose_publisher");
 	boost::shared_ptr<Converter::RobotPoseConverter> robotPoseConverter = boost::make_shared<Converter::RobotPoseConverter>( "navigation_robot_pose", 10, _sessionPtr);
 	robotPoseConverter->registerCallback( MessageAction::PUBLISH, boost::bind(&Publisher::RobotPosePublisher::publish, robotPosePublisher, _1) );
 	registerGroup( robotPoseConverter, robotPosePublisher);
-	
-	
-	
+
+
+
 	boost::shared_ptr< Sinfonia::Navigation::ResultEvent > navigationResultEvent = boost::make_shared<Sinfonia::Navigation::ResultEvent>("navigation_result", 0, _sessionPtr);
 	insertEventConverter("navigation_result", navigationResultEvent);
-	
+
 	printRegisteredConverters();
-	
+
     }
 
     void RobotToolkit::registerGroup(Converter::Converter converter, Publisher::Publisher publisher)
@@ -324,21 +326,21 @@ namespace Sinfonia
 	registerConverter(converter);
 	registerPublisher(converter.name(), publisher);
     }
-    
+
     void RobotToolkit::registerConverter(Converter::Converter& converter)
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
 	int convIndex = _converters.size();
 	_converters.push_back( converter );
 	converter.reset();
-	
+
     }
 
     void RobotToolkit::registerPublisher(const std::string& converterName, Publisher::Publisher& publisher)
     {
 	_publisherMap.insert( std::map<std::string, Publisher::Publisher>::value_type(converterName, publisher) );
     }
-    
+
     void RobotToolkit::printRegisteredConverters()
     {
 	for( int i=0; i<_converters.size(); i++ )
@@ -362,7 +364,7 @@ namespace Sinfonia
 	registerSubscriber(boost::make_shared<Subscriber::SpecialSettingsSubscriber>("special_settings", "/special_settings", _sessionPtr));
 	registerSubscriber(boost::make_shared<Subscriber::FreeZoneSubscriber>("free_zone", "/free_zone", _sessionPtr));
     }
-    
+
     void RobotToolkit::registerSubscriber(Subscriber::Subscriber subscriber)
     {
 	std::vector<Subscriber::Subscriber>::iterator it;
@@ -381,7 +383,7 @@ namespace Sinfonia
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "re-initialized existing subscriber:\t" << it->name() << std::endl;
 	}
     }
-    
+
     void RobotToolkit::scheduleConverter(std::string converterName, float converterFrequency)
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
@@ -397,7 +399,7 @@ namespace Sinfonia
 		break;
 	    }
 	    auxiliarQueue.pop();
-	    
+
 	}
 	if (!exist)
 	{
@@ -417,9 +419,9 @@ namespace Sinfonia
 		    pub.second.reset(*_nodeHandlerPtr);
 		}
 	    }
-	}	
+	}
     }
-  
+
     void RobotToolkit::unscheduleConverter(std::string converterName)
     {
 	boost::mutex::scoped_lock lock( _mutexConvertersQueue );
@@ -460,7 +462,7 @@ namespace Sinfonia
 	    }
 	}
     }
-    
+
     void RobotToolkit::stopSubscriber(std::string subscriberName)
     {
 	for_each( Subscriber::Subscriber& sub, _subscribers )
@@ -471,7 +473,7 @@ namespace Sinfonia
 	    }
 	}
     }
-    
+
     void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
     {
 	_navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
@@ -479,20 +481,58 @@ namespace Sinfonia
 	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
 	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
 	_miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
+  _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
     }
-    
+
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
     {
 	std::string responseMessage;
-	if( request.data.command == "enable_navigate" )
+
+	if( request.data.command == "enable_mapper" )
+	{
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting navigation "   << std::endl;
+	    scheduleConverter("tf", 50.0f);
+	    scheduleConverter("laser", 10.0f);
+	    scheduleConverter("depth_to_laser", 10.0f);
+            scheduleConverter("odom", 10.0f);
+	    scheduleConverter("merged_laser", 10.0f);
+
+	    startSubscriber("cmd_vel");
+
+	    sendSharedMemory("Depth2LaserSharedMemory", 1);
+            sendSharedMemory("PepperHeadSharedMemory", 1);
+
+
+	    responseMessage = "Functionalities started: tf, laser, depth to laser, odom, merged_laser, Depth2LaserSharedMemory, PepperHeadSharedMemory";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+	else if( request.data.command == "disable_mapper" )
+	{
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping navigation "   << std::endl;
+	    unscheduleConverter("tf");
+	    unscheduleConverter("laser");
+	    unscheduleConverter("depth_to_laser");
+            unscheduleConverter("odom");
+	    unscheduleConverter("merged_laser");
+	    stopSubscriber("cmd_vel");
+
+	    sendSharedMemory("Depth2LaserSharedMemory", 0);
+            sendSharedMemory("PepperHeadSharedMemory", 0);
+
+
+	    responseMessage = "Functionalities stopped: tf, laser, depth to laser, odom, merged_laser, Depth2LaserSharedMemory, PepperHeadSharedMemory";
+	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
+	}
+
+	else if( request.data.command == "enable_navigate" )
 	{
 	    //std::cout << "Entramos aqui " << std::endl;
-	    
+
 	    sendSharedMemory("PepperHeadSharedMemory", 1);
 	    sendSharedMemory("Depth2LaserSharedMemory", 1);
-	    sendSharedMemory("PepperLocalizerSharedMemory", 1);   
+	    sendSharedMemory("PepperLocalizerSharedMemory", 1);
 	    sendSharedMemory("PepperPlannerSharedMemory", 1);
-	    
+
 	    startSubscriber("navigation_goal");
 	    startSubscriber("navigation_robot_pose");
 	    startSubscriber("free_zone");
@@ -500,18 +540,19 @@ namespace Sinfonia
 	    _eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
 	    scheduleConverter("navigation_path", 10.0f);
 	    scheduleConverter("navigation_robot_pose", 10.0f);
-	    
+
 	    responseMessage = "Functionalities started: pepper_head, localizer, planner, navigation_result ,depth_to_laser@10Hz, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose, free_zone";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
+
 	else if( request.data.command == "disable_navigate" )
 	{
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping navigation "   << std::endl;
 	    sendSharedMemory("PepperHeadSharedMemory", 0);
 	    sendSharedMemory("Depth2LaserSharedMemory", 0);
-	    sendSharedMemory("PepperLocalizerSharedMemory", 0);   
+	    sendSharedMemory("PepperLocalizerSharedMemory", 0);
 	    sendSharedMemory("PepperPlannerSharedMemory", 0);
-	    
+
 	    stopSubscriber("navigation_goal");
 	    stopSubscriber("navigation_robot_pose");
 	    stopSubscriber("free_zone");
@@ -519,7 +560,7 @@ namespace Sinfonia
 	    _eventMap.find("navigation_result")->second.shutdownPublisher();
 	    unscheduleConverter("navigation_path");
 	    unscheduleConverter("navigation_robot_pose");
-	    
+
 	    responseMessage = "Functionalities stopped: pepper_head, localizer, planner, navigation_result ,depth_to_laser@10Hz, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose, free_zone";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
@@ -528,9 +569,9 @@ namespace Sinfonia
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting Navigation Tools " << RESETCOLOR  << std::endl;
 	    scheduleConverter("tf", 50.0f);
 	    scheduleConverter("odom", 10.0f);
-	    
+
 	    scheduleConverter("laser", 10.0f);
-	    
+
 	    startSubscriber("navigation_goal");
 	    startSubscriber("navigation_robot_pose");
 	    startSubscriber("free_zone");
@@ -540,11 +581,11 @@ namespace Sinfonia
 	    scheduleConverter("navigation_robot_pose", 10.0f);
 	    scheduleConverter("depth_to_laser", 10.0f);
 	    sendSharedMemory("Depth2LaserSharedMemory", 1);
-	    
-	    
-	    
+
+
+
 	    int subscriberIndex = getSubscriberIndex("cmd_vel");
-	    
+
 	    if( subscriberIndex != -1)
 	    {
 		_subscribers[subscriberIndex].setDefaultParameters();
@@ -571,8 +612,8 @@ namespace Sinfonia
 	    _eventMap.find("navigation_result")->second.shutdownPublisher();
 	    unscheduleConverter("navigation_path");
 	    unscheduleConverter("navigation_robot_pose");
-	    
-	    
+
+
 	    responseMessage = "Functionalities stopped: tf, odom, laser, depth_to_laser, cmd_vel, move_to, navigation_goal, navigation_robot_pose, navigation_result, navigation_path, navigation_robot_pose";
 	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
@@ -587,12 +628,12 @@ namespace Sinfonia
 		scheduleConverter("tf", request.data.tf_frequency);
 		startedFunctionalities += "tf@" + boost::lexical_cast<std::string>(request.data.tf_frequency) + "Hz, ";
 	    }
-	    else 
+	    else
 	    {
 		unscheduleConverter("tf");
 		stoppedFunctionalities += "tf, ";
 	    }
-	    
+
 	    if( request.data.odom_enable )
 	    {
 		startedFunctionalities += "odom@" + boost::lexical_cast<std::string>(request.data.odom_frequency) + "Hz, ";
@@ -603,13 +644,13 @@ namespace Sinfonia
 		unscheduleConverter("odom");
 		stoppedFunctionalities += "odom, ";
 	    }
-	    
+
 	    if( request.data.laser_enable )
 	    {
 		startedFunctionalities += "laser@" + boost::lexical_cast<std::string>(request.data.laser_frequency) + "Hz, ";
 		scheduleConverter("laser", request.data.laser_frequency);
 	    }
-	    else 
+	    else
 	    {
 		unscheduleConverter("laser");
 		stoppedFunctionalities += "laser, ";
@@ -620,7 +661,7 @@ namespace Sinfonia
 		startedFunctionalities += "navigation_goal";
 		startSubscriber("navigation_goal");
 	    }
-	    else 
+	    else
 	    {
 		stopSubscriber("navigation_goal");
 		stoppedFunctionalities += "navigation_goal, ";
@@ -631,7 +672,7 @@ namespace Sinfonia
 		startedFunctionalities += "navigation_robot_pose";
 		startSubscriber("navigation_robot_pose");
 	    }
-	    else 
+	    else
 	    {
 		stopSubscriber("navigation_robot_pose");
 		stoppedFunctionalities += "navigation_robot_pose, ";
@@ -642,7 +683,7 @@ namespace Sinfonia
 		startedFunctionalities += "navigation_path" + boost::lexical_cast<std::string>(request.data.path_frequency) + "Hz, ";
 		scheduleConverter("navigation_path", request.data.path_frequency);
 	    }
-	    else 
+	    else
 	    {
 		unscheduleConverter("navigation_path");
 		stoppedFunctionalities += "navigation_path, ";
@@ -653,7 +694,7 @@ namespace Sinfonia
 		startedFunctionalities += "navigation_robot_pose" + boost::lexical_cast<std::string>(request.data.robot_pose_publisher_frequency) + "Hz, ";
 		scheduleConverter("navigation_robot_pose", request.data.robot_pose_publisher_frequency);
 	    }
-	    else 
+	    else
 	    {
 		unscheduleConverter("navigation_robot_pose");
 		stoppedFunctionalities += "navigation_robot_pose, ";
@@ -665,7 +706,7 @@ namespace Sinfonia
 		_eventMap.find("navigation_result")->second.startProcess();
 		_eventMap.find("navigation_result")->second.resetPublisher(*_nodeHandlerPtr);
 	    }
-	    else 
+	    else
 	    {
 		_eventMap.find("navigation_result")->second.stopProcess();
 		_eventMap.find("navigation_result")->second.shutdownPublisher();
@@ -684,7 +725,7 @@ namespace Sinfonia
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_min);
 		    parameters.push_back(request.data.depth_to_laser_parameters.range_max);
 		    parameters.push_back(request.data.depth_to_laser_parameters.scan_height);
-		    		    
+
 		    _converters[converterIndex].setConfig(config);
 		    _converters[converterIndex].setParameters(parameters);
 		    _converters[converterIndex].reset();
@@ -692,7 +733,7 @@ namespace Sinfonia
 		    sendSharedMemory("Depth2LaserSharedMemory", 1);
 		}
 		startedFunctionalities += "depth_to_laser@10Hz";
-		
+
 	    }
 	    else
 	    {
@@ -700,7 +741,7 @@ namespace Sinfonia
 		stoppedFunctionalities += "depth_to_laser, ";
 		sendSharedMemory("Depth2LaserSharedMemory", 0);
 	    }
-	    
+
 	    if( request.data.cmd_vel_enable )
 	    {
 		int securityTime;
@@ -724,7 +765,7 @@ namespace Sinfonia
 		stopSubscriber("cmd_vel");
 		stoppedFunctionalities += "cmd_vel, ";
 	    }
-	    
+
 	    if( request.data.move_base_enable )
 	    {
 		startSubscriber("moveto");
@@ -757,12 +798,12 @@ namespace Sinfonia
 	response.result =  responseMessage;
 	return true;
     }
-    
+
     bool RobotToolkit::visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response)
     {
 	std::string responseMessage;
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.camera_name != "front_camera" && request.data.camera_name != "bottom_camera" && request.data.camera_name != "depth_camera" && request.data.camera_name != "front_camera_face_detector" && request.data.camera_name != "bottom_camera_face_detector") 
+	if( request.data.camera_name != "front_camera" && request.data.camera_name != "bottom_camera" && request.data.camera_name != "depth_camera" && request.data.camera_name != "front_camera_face_detector" && request.data.camera_name != "bottom_camera_face_detector")
 	{
 	    responseMessage = "ERROR: unknown camera name, possible values are: front_camera, bottom_camera, depth_camera";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
@@ -801,22 +842,22 @@ namespace Sinfonia
 		    {
 			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setAllParametersToDefault());
 		    }
-		    scheduleConverter(request.data.camera_name, defaultFrequency); 
+		    scheduleConverter(request.data.camera_name, defaultFrequency);
 		    responseMessage = "Starting: " + request.data.camera_name + " with default parameters";
-		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting: " << request.data.camera_name << " with default parameters" << RESETCOLOR  << std::endl;		    
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << " Starting: " << request.data.camera_name << " with default parameters" << RESETCOLOR  << std::endl;
 		}
 		else
 		{
 		    responseMessage = "ERROR: converter missing ";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
-	    }   
+	    }
 	    else if( request.data.command == "disable" )
 	    {
 		int converterIndex = getConverterIndex(request.data.camera_name);
 		if( converterIndex != -1 )
-		{	    
-		    unscheduleConverter(request.data.camera_name);   
+		{
+		    unscheduleConverter(request.data.camera_name);
 		    responseMessage = "Shutting down: " + request.data.camera_name;
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "]" << " Shutting down: " << request.data.camera_name << RESETCOLOR  << std::endl;
 		    if(request.data.camera_name == "front_camera_face_detector" || request.data.camera_name == "bottom_camera_face_detector")
@@ -829,9 +870,9 @@ namespace Sinfonia
 		{
 		    responseMessage = "ERROR: converter missing ";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
-		    
+
 		}
-	    }   
+	    }
 	    else if( request.data.command == "custom" )
 	    {
 		int converterIndex = getConverterIndex(request.data.camera_name);
@@ -847,7 +888,7 @@ namespace Sinfonia
 			    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 			    configOk = false;
 			}
-			else if( request.data.frame_rate < 1 || request.data.frame_rate > 30 || ((request.data.resolution == Helpers::VisionHelpers::k4VGA) && (request.data.frame_rate != 1)) || 
+			else if( request.data.frame_rate < 1 || request.data.frame_rate > 30 || ((request.data.resolution == Helpers::VisionHelpers::k4VGA) && (request.data.frame_rate != 1)) ||
 			    ((request.data.resolution == Helpers::VisionHelpers::k16VGA) && (request.data.frame_rate != 1)))
 			{
 			    responseMessage = "ERROR: Bad frame rate configuration for camera: " + request.data.camera_name;
@@ -861,7 +902,7 @@ namespace Sinfonia
 			    configOk = false;
 			}
 		    }
-		    else 
+		    else
 		    {
 			if(!(request.data.resolution <= Helpers::VisionHelpers::kQVGA || request.data.resolution == Helpers::VisionHelpers::kQQQVGA || request.data.resolution == Helpers::VisionHelpers::kQQQQVGA ))
 			{
@@ -898,16 +939,16 @@ namespace Sinfonia
 			scheduleConverter(request.data.camera_name, request.data.frame_rate);
 			responseMessage = " Starting: " + request.data.camera_name + " with custom configuration and parameters";
 			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "]" << responseMessage << RESETCOLOR  << std::endl;
-			
+
 		    }
 		}
 		else
 		{
 		    responseMessage = "ERROR: converter missing ";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
-		    
+
 		}
-	    }   
+	    }
 	    else if( request.data.command == "set_parameters" && request.data.camera_name != "depth_camera")
 	    {
 		    int converterIndex = getConverterIndex(request.data.camera_name);
@@ -915,7 +956,7 @@ namespace Sinfonia
 		    {
 			if(request.data.camera_name == "depth_camera")
 			    request.data.camera_parameters.compress = false;
-			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setParameters(toVector(request.data.camera_parameters)));  
+			currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].setParameters(toVector(request.data.camera_parameters)));
 			responseMessage = "Setting Parameters of " + request.data.camera_name;
 			std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		    }
@@ -923,7 +964,7 @@ namespace Sinfonia
 		    {
 			responseMessage = "ERROR: converter missing ";
 			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
-			
+
 		    }
 	    }
 	    else if( request.data.command == "get_parameters" && request.data.camera_name != "depth_camera")
@@ -931,7 +972,7 @@ namespace Sinfonia
 		int converterIndex = getConverterIndex(request.data.camera_name);
 		if( converterIndex != -1 )
 		{
-		    currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].getParameters());  
+		    currentParamsMessage = toCameraParametersMsg(_converters[converterIndex].getParameters());
 		    responseMessage = "Getting Parameters of " + request.data.camera_name;
 		    std::cout << BOLDMAGENTA << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
@@ -963,7 +1004,7 @@ namespace Sinfonia
 	}
 	return -1;
     }
-    
+
     robot_toolkit_msgs::camera_parameters_msg RobotToolkit::toCameraParametersMsg(std::vector< float > params)
     {
 	robot_toolkit_msgs::camera_parameters_msg result;
@@ -993,7 +1034,7 @@ namespace Sinfonia
 
     std::vector< float > RobotToolkit::toVector(robot_toolkit_msgs::camera_parameters_msg params)
     {
-	std::vector<float>  result; 
+	std::vector<float>  result;
 	result.push_back(params.brightness);
 	result.push_back(params.contrast);
 	result.push_back(params.saturation);
@@ -1035,14 +1076,14 @@ namespace Sinfonia
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
 	if( request.data.command != "enable" && request.data.command != "disable" && request.data.command != "custom" && request.data.command != "enable_mic" && request.data.command != "disable_mic" &&
 	    request.data.command != "enable_tts" && request.data.command != "disable_tts" && request.data.command != "get_speech_params" && request.data.command != "set_speech_params" && request.data.command != "reset_speech_params" &&
-	    request.data.command != "enable_localization" && request.data.command != "disable_localization" ) 
+	    request.data.command != "enable_localization" && request.data.command != "disable_localization" )
 	{
 	    responseMessage = "ERROR: unknown command, possible values are: enable, disable, custom, enable_mic, disable_mic, enable_tts, disable_tts, get_speech_params, set_speech_params, reset_speech_params";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-		if( request.data.command == "enable" || request.data.command == "enable_mic") 
+		if( request.data.command == "enable" || request.data.command == "enable_mic")
 		{
 		    _eventMap.find("mic")->second.setDefaultParameters();
 		    _eventMap.find("mic")->second.startProcess();
@@ -1050,7 +1091,7 @@ namespace Sinfonia
 		    startedFunctionalities += " mic stream";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting mic stream" << RESETCOLOR  << std::endl;
 		}
-		
+
 		if( request.data.command == "disable" || request.data.command == "disable_mic")
 		{
 		    _eventMap.find("mic")->second.stopProcess();
@@ -1058,7 +1099,7 @@ namespace Sinfonia
 		    stoppedFunctionalities += " mic stream";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Stopping mic stream" << RESETCOLOR  << std::endl;
 		}
-		
+
 		if( request.data.command == "custom" )
 		{
 		    if( (request.data.frequency == 48000 || request.data.frequency == 16000) && ( request.data.channels >= 0 && request.data.channels <= 4) )
@@ -1085,32 +1126,32 @@ namespace Sinfonia
 			return true;
 		    }
 		}
-		
-		if( request.data.command == "enable" || request.data.command == "enable_tts") 
+
+		if( request.data.command == "enable" || request.data.command == "enable_tts")
 		{
 		    startSubscriber("speech");
 		    startedFunctionalities += " tts";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting tts" << RESETCOLOR  << std::endl;
 		    int subscriberIndex = getSubscriberIndex("speech");
 		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
-		    
+
 		}
-		
+
 		if( request.data.command == "disable" || request.data.command == "disable_tts")
 		{
 		    stopSubscriber("speech");
 		    stoppedFunctionalities += " tts";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Stopping tts" << RESETCOLOR  << std::endl;
 		}
-		
-		if( request.data.command == "enable" || request.data.command == "enable_localization") 
+
+		if( request.data.command == "enable" || request.data.command == "enable_localization")
 		{
 		    _eventMap.find("miclocalization")->second.startProcess();
 		    _eventMap.find("miclocalization")->second.resetPublisher(*_nodeHandlerPtr);
 		    startedFunctionalities += " audio_localization";
-		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting audio_localization" << RESETCOLOR  << std::endl;		    
+		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting audio_localization" << RESETCOLOR  << std::endl;
 		}
-		
+
 		if( request.data.command == "disable" || request.data.command == "disable_localization")
 		{
 		    _eventMap.find("miclocalization")->second.stopProcess();
@@ -1118,21 +1159,21 @@ namespace Sinfonia
 		    stoppedFunctionalities += " audio_localization";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping audio_localization" << RESETCOLOR  << std::endl;
 		}
-		
-		if( request.data.command == "get_speech_params") 
+
+		if( request.data.command == "get_speech_params")
 		{
 		    int subscriberIndex = getSubscriberIndex("speech");
 		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Getting tts parameters" << RESETCOLOR  << std::endl;
 		}
-		
-		if( request.data.command == "set_speech_params") 
+
+		if( request.data.command == "set_speech_params")
 		{
 		    int subscriberIndex = getSubscriberIndex("speech");
 		    std::vector<float> speechParameters;
-		    if( ( (request.data.speech_parameters.pitch_shift >= 1.0 && request.data.speech_parameters.pitch_shift <=4.0) || (request.data.speech_parameters.pitch_shift == 0.0) ) && 
+		    if( ( (request.data.speech_parameters.pitch_shift >= 1.0 && request.data.speech_parameters.pitch_shift <=4.0) || (request.data.speech_parameters.pitch_shift == 0.0) ) &&
 			( (request.data.speech_parameters.double_voice >= 1.0 && request.data.speech_parameters.double_voice <=4.0) || (request.data.speech_parameters.double_voice == 0.0) )  &&
-			  (request.data.speech_parameters.double_voice_level >= 0.0 && request.data.speech_parameters.double_voice_level <=4.0) && 
+			  (request.data.speech_parameters.double_voice_level >= 0.0 && request.data.speech_parameters.double_voice_level <=4.0) &&
 			  (request.data.speech_parameters.double_voice_time_shift >= 0.0 && request.data.speech_parameters.double_voice_time_shift <=0.5) &&
 			  (request.data.speech_parameters.speed >= 50.0 && request.data.speech_parameters.speed <=400.0) )
 		    {
@@ -1153,45 +1194,45 @@ namespace Sinfonia
 			return true;
 		    }
 		}
-		
-		if( request.data.command == "reset_speech_params") 
+
+		if( request.data.command == "reset_speech_params")
 		{
 		    int subscriberIndex = getSubscriberIndex("speech");
 		    _subscribers[subscriberIndex].setDefaultParameters();
 		    currentSpeechParams = toSpeechParameters(_subscribers[subscriberIndex].getParameters());
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Resseting tts parameters" << RESETCOLOR  << std::endl;
 		}
-		
+
 		responseMessage = startedFunctionalities + stoppedFunctionalities;
 	}
-	
+
 	response.result = responseMessage;
 	response.speech_parameters = currentSpeechParams;
 	return true;
     }
-    
+
     bool RobotToolkit::motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response)
     {
 	std::string responseMessage;
 	std::string startedFunctionalities = "Functionalities started:";
 	std::string stoppedFunctionalities = " Functionalities stopped:";
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom") 
+	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom")
 	{
 	    responseMessage = "ERROR: unknown command: " + request.data.command +  " possible values are: enable_all, disable_all, custom";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-		if( request.data.command == "enable_all") 
+		if( request.data.command == "enable_all")
 		{
 		    startSubscriber("animation");
 		    startSubscriber("set_angles");
 		    responseMessage = "Starting Animations and Set Angles";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
-		    
+
 		}
-		
+
 		if( request.data.command == "disable_all")
 		{
 		    stopSubscriber("animation");
@@ -1199,47 +1240,47 @@ namespace Sinfonia
 		    responseMessage = "Stopping Animations and Set Angles";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
-		
+
 		else
 		{
 		    if(request.data.animation == "enable")
 		    {
 			startSubscriber("animation");
 			startedFunctionalities += " Animation, ";
-			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting animations" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting animations" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    else if(request.data.animation == "disable")
 		    {
 			stopSubscriber("animation");
 			stoppedFunctionalities += " Animation, ";
-			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping animations" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping animations" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    if(request.data.set_angles == "enable")
 		    {
 			startSubscriber("set_angles");
 			startedFunctionalities += " Set Angles, ";
-			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting set angles" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting set angles" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    else if(request.data.set_angles == "disable")
 		    {
 			stopSubscriber("set_angles");
 			stoppedFunctionalities += " Set Angles, ";
-			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping set angles" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping set angles" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    responseMessage = startedFunctionalities + stoppedFunctionalities;
 		}
-		
+
 	}
-	
+
 	response.result = responseMessage;
 	return true;
     }
 
-    
+
     int RobotToolkit::getSubscriberIndex(std::string name)
     {
 	for(int i=0; i<_subscribers.size(); i++)
@@ -1254,31 +1295,45 @@ namespace Sinfonia
     robot_toolkit_msgs::speech_parameters_msg RobotToolkit::toSpeechParameters(std::vector< float > params)
     {
 	robot_toolkit_msgs::speech_parameters_msg result;
-	
+
 	result.pitch_shift = params[0];
 	result.double_voice = params[1];
 	result.double_voice_level = params[2];
 	result.double_voice_time_shift = params[3];
 	result.speed = params[4];
-	
+
 	return result;
+    }
+
+    bool RobotToolkit::speechRecognitionCallback(robot_toolkit_msgs::speech_recognition_srv::Request& request, robot_toolkit_msgs::speech_recognition_srv::Response& response)
+    {
+      //SpeechRecognitionEvent *speechRecognition = new SpeechRecognitionEvent("speech_recognition", 10.0f, _sessionPtr);
+      std::vector<std::string> wordList;
+      for(int i=0; i<request.words.size(); i++)
+      {
+        wordList.push_back(request.words[i]);
+      }
+
+      std::string wordRecognized  = _speechRecognition->startProcess(wordList, request.threshold);
+      response.result = wordRecognized;
+      return true;
     }
 
     bool RobotToolkit::miscToolsCallback(robot_toolkit_msgs::misc_tools_srv::Request& request, robot_toolkit_msgs::misc_tools_srv::Response& response)
     {
 	std::string responseMessage;
-	
+
 	std::string startedFunctionalities = "Functionalities started:";
 	std::string stoppedFunctionalities = " Functionalities stopped:";
 	robot_toolkit_msgs::camera_parameters_msg currentParamsMessage;
-	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom" && request.data.command != "touch") 
+	if( request.data.command != "enable_all" && request.data.command != "disable_all" && request.data.command != "custom" && request.data.command != "touch")
 	{
 	    responseMessage = "ERROR: unknown command: " + request.data.command +  " possible values are: enable_all, disable_all, custom";
 	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-		if( request.data.command == "enable_all") 
+		if( request.data.command == "enable_all")
 		{
 		    startSubscriber("leds");
 		    scheduleConverter("sonar", 50.0f);
@@ -1286,9 +1341,9 @@ namespace Sinfonia
 		    _eventMap.find("touch")->second.resetPublisher(*_nodeHandlerPtr);
 		    responseMessage = "Starting leds, touch and sonars";
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
-		    
+
 		}
-		
+
 		if( request.data.command == "disable_all")
 		{
 		    stopSubscriber("leds");
@@ -1298,58 +1353,58 @@ namespace Sinfonia
 		    responseMessage = "Stopping leds and sonars";
 		    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR  << std::endl;
 		}
-		
+
 		else
 		{
 		    if(request.data.leds == "enable")
 		    {
 			startSubscriber("leds");
 			startedFunctionalities += " leds, ";
-			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting leds" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting leds" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    else if(request.data.leds == "disable")
 		    {
 			stopSubscriber("leds");
 			stoppedFunctionalities += " leds, ";
-			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping leds" << RESETCOLOR  << std::endl;		    
-		    }		    
-		    
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping leds" << RESETCOLOR  << std::endl;
+		    }
+
 		    if(request.data.sonars == "enable")
 		    {
 			scheduleConverter("sonar", 50.0f);
 			startedFunctionalities += " sonars, ";
-			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting sonars" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting sonars" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    else if(request.data.sonars == "disable")
 		    {
 			unscheduleConverter("sonar");
 			stoppedFunctionalities += " sonars, ";
-			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping sonars" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping sonars" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    if(request.data.touch == "enable")
 		    {
 			_eventMap.find("touch")->second.startProcess();
 			_eventMap.find("touch")->second.resetPublisher(*_nodeHandlerPtr);
 			startedFunctionalities += " touch, ";
-			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting touch" << RESETCOLOR  << std::endl;		    
+			std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Starting touch" << RESETCOLOR  << std::endl;
 		    }
-		    
+
 		    else if(request.data.touch == "disable")
 		    {
 			_eventMap.find("touch")->second.stopProcess();
 			_eventMap.find("touch")->second.shutdownPublisher();
 			stoppedFunctionalities += " touch, ";
-			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping touch" << RESETCOLOR  << std::endl;		    
-		    }		
-		    
+			std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Stopping touch" << RESETCOLOR  << std::endl;
+		    }
+
 		    responseMessage = startedFunctionalities + stoppedFunctionalities;
 		}
-		
+
 	}
-	
+
 	response.result = responseMessage;
 	return true;
     }
@@ -1360,47 +1415,47 @@ namespace Sinfonia
 	_shmfdPepperHead = shm_open("PepperHeadSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperHead < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper head shared memory" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper head shared memory" << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Pepper head shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] Pepper head shared memory initialized" << RESETCOLOR  << std::endl;
 	    _pepperHeadPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperHead, 0);
 	}
-	
+
 	_shmfdDepth2Laser = shm_open("Depth2LaserSharedMemory", O_RDWR, 0666);
 	if(_shmfdDepth2Laser < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize depth2Laser shared memory" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize depth2Laser shared memory" << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] depth to laser shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] depth to laser shared memory initialized" << RESETCOLOR  << std::endl;
 	    _depth2LaserPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdDepth2Laser, 0);
 	}
-	
+
 	_shmfdPepperLocalizer = shm_open("PepperLocalizerSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperLocalizer < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper localizer shared memory" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper localizer shared memory" << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper localizer shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper localizer shared memory initialized" << RESETCOLOR  << std::endl;
 	    _pepperLocalizerPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperLocalizer, 0);
 	}
-	
+
 	_shmfdPepperPlanner = shm_open("PepperPlannerSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperPlanner < 0)
 	{
-	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper planer shared memory" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] Could not initialize pepper planer shared memory" << RESETCOLOR  << std::endl;
 	}
 	else
 	{
-	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper planner shared memory initialized" << RESETCOLOR  << std::endl;		    
+	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper planner shared memory initialized" << RESETCOLOR  << std::endl;
 	    _pepperPlannerPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperPlanner, 0);
 	}
-	
+
     }
 
     void RobotToolkit::sendSharedMemory(std::string name, char value)
@@ -1410,19 +1465,19 @@ namespace Sinfonia
 	    if(_shmfdPepperHead > 0)
 		memcpy(_pepperHeadPtr, &value, sizeof(char));
 	}
-	
+
 	else if(name == "Depth2LaserSharedMemory")
 	{
 	    if(_shmfdDepth2Laser > 0)
 		memcpy(_depth2LaserPtr , &value, sizeof(char));
 	}
-	
+
 	else if(name == "PepperLocalizerSharedMemory")
 	{
 	    if(_shmfdPepperLocalizer > 0)
 		memcpy(_pepperLocalizerPtr , &value, sizeof(char));
 	}
-	
+
 	else if(name == "PepperPlannerSharedMemory")
 	{
 	    if(_shmfdPepperPlanner > 0)
@@ -1430,6 +1485,6 @@ namespace Sinfonia
 	}
     }
 
-    
+
     QI_REGISTER_OBJECT( RobotToolkit, _whoWillWin, setMasterURINet, startPublishing);
 }

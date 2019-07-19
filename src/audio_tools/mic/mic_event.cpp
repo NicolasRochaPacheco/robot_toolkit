@@ -71,7 +71,7 @@ namespace Sinfonia
     void MicEventRegister::shutdownEvents()
     {
 	//std::cout << "Entra al SHUTDOWN EVENTS" << std::endl;
-	//stopSpeechRecognition();	
+	//stopSpeechRecognition();
     }
 
     void Sinfonia::MicEventRegister::resetPublisher(ros::NodeHandle& nodeHandle)
@@ -80,12 +80,12 @@ namespace Sinfonia
 	_counter = 0;
 	_publisher->reset(nodeHandle);
     }
-    
+
     void Sinfonia::MicEventRegister::shutdownPublisher()
     {
 	_publisher->shutdown();
     }
-    
+
     void MicEventRegister::timerCallback(const ros::TimerEvent& event)
     {
 	//_timer.stop();
@@ -106,21 +106,21 @@ namespace Sinfonia
 	    _speechRecognitionServiceId = _session->registerService(_speechServiceName, this->shared_from_this());
 	    _pSpeechRecognition.call<void>("subscribe", "ROSDriverAudio"+ _speechKey);
 	    _pMemory.call<void>("subscribeToEvent", _speechKey.c_str(), _speechServiceName, "wordRecognizedCallback");
-	    
-	    _soundServiceName = std::string("ROS-Driver") + _soundKey;
-	    _soundDetectionServiceId = _session->registerService(_soundServiceName, this->shared_from_this());
-	    _pSoundDetection.call<void>("setParameter", "Sensitivity", 0.3f);
-	    _pSoundDetection.call<void>("subscribe", "ROSDriverAudio"+ _soundKey);
-	    _pMemory.call<void>("subscribeToEvent", _soundKey.c_str(), _soundServiceName, "soundDetectionCallback");
-	    
-	    
+
+	    //_soundServiceName = std::string("ROS-Driver") + _soundKey;
+	    //_soundDetectionServiceId = _session->registerService(_soundServiceName, this->shared_from_this());
+	    //_pSoundDetection.call<void>("setParameter", "Sensitivity", 0.3f);
+	    //_pSoundDetection.call<void>("subscribe", "ROSDriverAudio"+ _soundKey);
+	    //_pMemory.call<void>("subscribeToEvent", _soundKey.c_str(), _soundServiceName, "soundDetectionCallback");
+
+
 	    std::cout << "Speech recognition Initialized" << std::endl;
 	}
     }
-    
+
     void MicEventRegister::stopSpeechRecognition()
     {
-	boost::mutex::scoped_lock stopLock(_mutex);	
+	boost::mutex::scoped_lock stopLock(_mutex);
 	if(_speechRecognitionServiceId)
 	{
 	    _session->unregisterService(_speechRecognitionServiceId);
@@ -128,7 +128,7 @@ namespace Sinfonia
 	}
 	_pMemory.call<void>("unsubscribeToEvent", _speechKey.c_str(), _speechServiceName);
 	_pSpeechRecognition.call<void>("unsubscribe", "ROSDriverAudio"+ _speechKey);
-	
+
 	if(_soundDetectionServiceId)
 	{
 	    _session->unregisterService(_soundDetectionServiceId);
@@ -136,7 +136,7 @@ namespace Sinfonia
 	}
 	_pMemory.call<void>("unsubscribeToEvent", _soundKey.c_str(), _soundServiceName);
 	_pSpeechRecognition.call<void>("unsubscribe", "ROSDriverAudio"+ _soundKey);
-	
+
     }
 
     void Sinfonia::MicEventRegister::startProcess()
@@ -178,7 +178,7 @@ namespace Sinfonia
 	boost::mutex::scoped_lock pub_lock(_processingMutex);
 	_isPublishing = state;
     }
-    
+
     bool Sinfonia::MicEventRegister::isStarted()
     {
 	return _isStarted;
@@ -192,7 +192,7 @@ namespace Sinfonia
     {
 
     }
-    
+
     void MicEventRegister::setDefaultParameters()
     {
 	_micSampleRate = 48000;
@@ -208,9 +208,9 @@ namespace Sinfonia
     void Sinfonia::MicEventRegister::processRemote(int numberOfChannels, int samplesByChannel, qi::AnyValue timestamp, qi::AnyValue buffer)
     {
 	//naoqi_bridge_msgs::AudioBufferPtr message = naoqi_bridge_msgs::AudioBufferPtr();
-	
+
 	static const boost::shared_ptr<naoqi_bridge_msgs::AudioBuffer> message = boost::make_shared<naoqi_bridge_msgs::AudioBuffer>();
-	
+
 	message->header.stamp = ros::Time::now();
 	message->frequency = 48000;
 	message->channelMap = _channelMap;
@@ -227,13 +227,13 @@ namespace Sinfonia
 	    float energy = _pAudio.call<float>("getFrontMicEnergy");
 	}
 	/*float currentTime  = ros::Time::now().toSec();
-	
+
 	std::cout << BOLDGREEN << "[" <<  currentTime << "] samplesByChannel-> " << samplesByChannel << "frecuency -> " << 1.0f/(currentTime - _lastTime)<< std::endl;
 	_lastTime = currentTime;*/
-	
+
 	std::vector<MessageAction::MessageAction> actions;
 	boost::mutex::scoped_lock callback_lock(_processingMutex);
-	if (_isStarted) 
+	if (_isStarted)
 	{
 	    if ( _isPublishing && _publisher->isSubscribed() )
 	    {
@@ -245,20 +245,20 @@ namespace Sinfonia
 	    }
 	}
     }
-    
+
     void MicEventRegister::wordRecognizedCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier)
     {
-	for(unsigned int i = 0; i < value.size() /2 ; ++i)
-	{
-	    std::cout << "word recognized: " << value[i*2].toString() << " with confidence: " << value[i*2+1].toFloat() << std::endl;
-	    if(value[i*2].toString() == "<...> robot <...>" && value[i*2+1].toFloat() > _confidence)
-	    {
-		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "its threshold is higher than " << _confidence << std::endl;
-	    }
-	    std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] speech recognition callback" << std::endl;
-	}
+    	for(unsigned int i = 0; i < value.size() /2 ; ++i)
+    	{
+    	    std::cout << "word recognized: " << value[i*2].toString() << " with confidence: " << value[i*2+1].toFloat() << std::endl;
+    	    if(value[i*2].toString() == "<...> robot <...>" && value[i*2+1].toFloat() > _confidence)
+    	    {
+    		      std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "its threshold is higher than " << _confidence << std::endl;
+    	    }
+    	     std::cout << BOLDYELLOW << "[" << ros::Time::now().toSec() << "] speech recognition callback" << std::endl;
+    	}
     }
-    
+
     void MicEventRegister::soundDetectionCallback(std::string key, qi::AnyValue value, std::string subscriberIdentifier)
     {
 	std::vector<qi::AnyValue> soundArray =  value.toList<qi::AnyValue>();

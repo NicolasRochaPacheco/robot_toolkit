@@ -43,6 +43,7 @@
 #include "robot_toolkit_msgs/vision_tools_srv.h"
 #include "robot_toolkit_msgs/audio_tools_msg.h"
 #include "robot_toolkit_msgs/audio_tools_srv.h"
+#include "robot_toolkit_msgs/speech_recognition_srv.h"
 #include "robot_toolkit_msgs/speech_parameters_msg.h"
 #include "robot_toolkit_msgs/motion_tools_msg.h"
 #include "robot_toolkit_msgs/motion_tools_srv.h"
@@ -83,6 +84,7 @@
 
 
 #include "robot_toolkit/audio_tools/mic/mic_event.hpp"
+#include "robot_toolkit/audio_tools/speech_recognition/speech_recognition_event.hpp"
 #include "robot_toolkit/audio_tools/speech/speech_subscriber.hpp"
 #include "robot_toolkit/audio_tools/mic/mic_localization_event.hpp"
 
@@ -111,74 +113,76 @@ namespace Sinfonia
 	public:
 	    RobotToolkit(qi::SessionPtr session, const std::string& prefix);
 	    ~RobotToolkit();
-	    
+
 	    std::string _whoWillWin();
-	    
+
 	    void init();
 	    void stopService();
 	    void setMasterURINet(const std::string& uri, const std::string& networkInterface);
 	    void startPublishing();
-	    
+
 	    void startInitialTopics();
-	    
+
 	    bool navigationToolsCallback(robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response);
 	    bool visionToolsCallback(robot_toolkit_msgs::vision_tools_srv::Request& request, robot_toolkit_msgs::vision_tools_srv::Response& response);
 	    bool audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response );
 	    bool motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response);
 	    bool miscToolsCallback(robot_toolkit_msgs::misc_tools_srv::Request& request, robot_toolkit_msgs::misc_tools_srv::Response& response);
-	    
+      bool speechRecognitionCallback(robot_toolkit_msgs::speech_recognition_srv::Request& request, robot_toolkit_msgs::speech_recognition_srv::Response& response);
+
 	private:
-	    
+
 	    boost::thread _mainThread;
-	    
+
 	    bool _logEnabled;
 	    bool _recordEnabled;
 	    bool _publishEnabled;
 	    bool _isRosLoopEnabled;
-	    
+
 	    void *_pepperHeadPtr;
 	    int _shmfdPepperHead;
-	    
+
 	    void *_depth2LaserPtr;
 	    int _shmfdDepth2Laser;
-	    
+
 	    void *_pepperLocalizerPtr;
 	    int _shmfdPepperLocalizer;
-	    
+
 	    void *_pepperPlannerPtr;
 	    int _shmfdPepperPlanner;
-	    
-	    
-	    
+
+
+      boost::shared_ptr<Sinfonia::SpeechRecognitionEvent> _speechRecognition;
 	    boost::shared_ptr<tf2_ros::Buffer> _tf2Buffer;
-	    
-	    
+
+
 	    boost::scoped_ptr<ros::NodeHandle> _nodeHandlerPtr;
-	    
-	    
+
+
 	    boost::mutex _mutexRecorders;
 	    boost::mutex _mutexConvertersQueue;
-	    
+
 	    qi::SessionPtr _sessionPtr;
-	    
-	    
+
+
 	    std::vector< Converter::Converter > _converters;
 	    std::vector< Subscriber::Subscriber > _subscribers;
-	    
+
 	    std::priority_queue<Helpers::ScheduledConverter> _convertersQueue;
-	    
+
 	    ros::ServiceServer _navigationToolsService;
 	    ros::ServiceServer _visionToolsService;
 	    ros::ServiceServer _audioToolsService;
 	    ros::ServiceServer _motionToolsService;
 	    ros::ServiceServer _miscToolsService;
-	    
+      ros::ServiceServer _speechRecognitionService;
+
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
-	    
-	    
-	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;   
-	    
+
+
+	    typedef std::map< std::string, Publisher::Publisher>::const_iterator PublisherConstIterator;
+
 	    void rosLoop();
 	    void startRosLoop();
 	    void stopRosLoop();
@@ -195,7 +199,7 @@ namespace Sinfonia
 	    void startSubscriber(std::string subscriberName);
 	    void stopSubscriber(std::string subscriberName);
 	    int getConverterIndex(std::string name);
-	    void insertEventConverter( const std::string& key, Event::Event event);	    
+	    void insertEventConverter( const std::string& key, Event::Event event);
 	    robot_toolkit_msgs::camera_parameters_msg toCameraParametersMsg(std::vector<float> params);
 	    std::vector<float> toVector(robot_toolkit_msgs::camera_parameters_msg params);
 	    int getSubscriberIndex(std::string name);

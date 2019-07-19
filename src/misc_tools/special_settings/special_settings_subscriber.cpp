@@ -53,11 +53,19 @@ namespace Sinfonia
 		    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Going to wakeUp position" << std::endl;
 		}
 	    }
+
 	    else if(message.command == "external_collision_protection_enabled")
 	    {
 		_pMotion.call<void>("setExternalCollisionProtectionEnabled", "Move", message.state);
 		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Setting ExternalCollisionProtectionEnabled to -> " << (int)message.state << std::endl;
 	    }
+
+	    else if(message.command == "set_security_distance")
+	    {
+		_pMotion.call<void>("setOrthogonalSecurityDistance", message.data);
+		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << "Setting OrthogonalSecurityDistance to -> " << (float)message.data << std::endl;
+	    }
+
 	    else if(message.command == "awareness")
 	    {
 		_pBasicAwareness.call<void>("setEnabled", message.state);
