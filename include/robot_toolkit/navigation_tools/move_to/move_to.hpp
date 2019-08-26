@@ -43,9 +43,21 @@ namespace Sinfonia
 		void reset( ros::NodeHandle& nodeHandle );
 		void callback( const geometry_msgs::PoseStampedConstPtr& poseMessage );
 		void shutdown();
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		std::vector<float> setParameters(std::vector<float> parameters)
+		{
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> setDefaultParameters()
+		{
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> getParameters()
+		{
+		    std::vector<float> result;
+		    return result;
+		}
 
 	    private:
 		qi::AnyObject _pMotion;

@@ -1290,6 +1290,7 @@ namespace Sinfonia
 		return i;
 	    }
 	}
+	return -1;
     }
 
     robot_toolkit_msgs::speech_parameters_msg RobotToolkit::toSpeechParameters(std::vector< float > params)
@@ -1411,7 +1412,7 @@ namespace Sinfonia
 
     void RobotToolkit::openSharedMemory()
     {
-	const int SIZE = 1;
+	/*const int SIZE = 1;
 	_shmfdPepperHead = shm_open("PepperHeadSharedMemory", O_RDWR, 0666);
 	if(_shmfdPepperHead < 0)
 	{
@@ -1455,12 +1456,12 @@ namespace Sinfonia
 	    std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] pepper planner shared memory initialized" << RESETCOLOR  << std::endl;
 	    _pepperPlannerPtr = mmap(0, SIZE, PROT_WRITE, MAP_SHARED, _shmfdPepperPlanner, 0);
 	}
-
+*/
     }
 
     void RobotToolkit::sendSharedMemory(std::string name, char value)
     {
-	if(name == "PepperHeadSharedMemory")
+	/*if(name == "PepperHeadSharedMemory")
 	{
 	    if(_shmfdPepperHead > 0)
 		memcpy(_pepperHeadPtr, &value, sizeof(char));
@@ -1482,7 +1483,7 @@ namespace Sinfonia
 	{
 	    if(_shmfdPepperPlanner > 0)
 		memcpy(_pepperPlannerPtr, &value, sizeof(char));
-	}
+	}*/
     }
 
 

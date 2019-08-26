@@ -53,9 +53,21 @@ namespace Sinfonia
 		
 		void setConfig(std::vector<float> configs){}
 		
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setAllParametersToDefault(){}
-		std::vector<float> getParameters(){}
+		std::vector<float> setParameters(std::vector<float> parameters)
+		{
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> setAllParametersToDefault()
+		{
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> getParameters()
+		{
+		    std::vector<float> result;
+		    return result;
+		}
 		
 	    private:
 		

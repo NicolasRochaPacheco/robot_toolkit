@@ -41,9 +41,19 @@ namespace Sinfonia
 		void freeZoneCallback( const geometry_msgs::Vector3 message );
 		void shutdown();
 		
-		std::vector<float> getParameters(){}
-		std::vector<float> setParameters(std::vector<float> parameters){}
-		std::vector<float> setDefaultParameters(){}
+		std::vector<float> getParameters(){
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> setParameters(std::vector<float> parameters){
+		    std::vector<float> result;
+		    return result;
+		}
+		std::vector<float> setDefaultParameters(){
+		    std::vector<float> result;
+		    return result;
+		}
+		
 
 	    private:
 		

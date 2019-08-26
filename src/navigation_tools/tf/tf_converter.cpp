@@ -65,11 +65,11 @@ namespace Sinfonia
 	    addChildren( tree.getRootSegment() );
 
 	    _mimic.clear();
-	    for(std::map< std::string, boost::shared_ptr< urdf::Joint > >::iterator i = model.joints_.begin(); i != model.joints_.end(); i++)
+	    for(std::map< std::string, std::shared_ptr< urdf::Joint > >::iterator i = model.joints_.begin(); i != model.joints_.end(); i++)
 	    {
 		if(i->second->mimic)
 		{
-		    _mimic.insert(make_pair(i->first, i->second->mimic));
+		    _mimic.insert(std::make_pair(i->first, i->second->mimic));
 		}
 	    }
 	    

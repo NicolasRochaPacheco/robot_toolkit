@@ -41,9 +41,9 @@ namespace Sinfonia
 		void speechCallback( const robot_toolkit_msgs::speech_msg& message );
 		void shutdown();
 		
-		std::vector<float> getParameters();
 		std::vector<float> setParameters(std::vector<float> parameters);
 		std::vector<float> setDefaultParameters();
+		std::vector<float> getParameters();
 		
 		void printSpeechParams(robot_toolkit_msgs::speech_parameters_msg parameters);
 		robot_toolkit_msgs::speech_parameters_msg toSpeechParameters(std::vector<float> params);

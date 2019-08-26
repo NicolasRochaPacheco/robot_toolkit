@@ -44,7 +44,7 @@ namespace Sinfonia
 
 	typedef boost::shared_ptr<tf2_ros::Buffer> bufferPtr;
 
-	typedef std::map<std::string, boost::shared_ptr<urdf::JointMimic> > mimicMap;
+	typedef std::map<std::string, std::shared_ptr<urdf::JointMimic> > mimicMap;
 
 	public:
 	    TfConverter( const std::string& name, const float& frequency, const bufferPtr& tf2Buffer, const qi::SessionPtr& session );
