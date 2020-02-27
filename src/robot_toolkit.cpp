@@ -44,7 +44,7 @@ namespace Sinfonia
 	}
 	_sessionPtr = session;
 	_isRosLoopEnabled = true;
-  _speechRecognition  = boost::make_shared<Sinfonia::SpeechRecognitionEvent>("speech_recognition", 10.0f, _sessionPtr);
+        _speechRecognition  = boost::make_shared<Sinfonia::SpeechRecognitionEvent>("speech_recognition", 10.0f, _sessionPtr);
     }
 
     RobotToolkit::~RobotToolkit()
@@ -481,7 +481,8 @@ namespace Sinfonia
 	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
 	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
 	_miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
-  _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
+        _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
+	_tabletToolsService = nodeHandle.advertiseService("robot_toolkit/tablet_tools_srv", &RobotToolkit::tabletToolsCallback, this);
     }
 
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -1409,6 +1410,11 @@ namespace Sinfonia
 	response.result = responseMessage;
 	return true;
     }
+
+    bool RobotToolkit::tabletToolsCallback(robot_toolkit_msgs::tablet_tools_srv::Request &request, robot_toolkit_msgs::tablet_tools_srv::Response &response){
+	std::cout << BOLDRED << "Servicio recibido" << std::endl;
+    }
+
 
     void RobotToolkit::openSharedMemory()
     {

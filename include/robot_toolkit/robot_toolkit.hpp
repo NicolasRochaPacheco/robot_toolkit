@@ -49,6 +49,8 @@
 #include "robot_toolkit_msgs/motion_tools_srv.h"
 #include "robot_toolkit_msgs/misc_tools_srv.h"
 #include "robot_toolkit_msgs/misc_tools_msg.h"
+#include "robot_toolkit_msgs/tablet_tools_msg.h"
+#include "robot_toolkit_msgs/tablet_tools_srv.h"
 
 #include "robot_toolkit/ros_environment.hpp"
 #include "robot_toolkit/converter/converter.hpp"
@@ -128,7 +130,8 @@ namespace Sinfonia
 	    bool audioToolsCallback(robot_toolkit_msgs::audio_tools_srv::Request& request, robot_toolkit_msgs::audio_tools_srv::Response& response );
 	    bool motionToolsCallback(robot_toolkit_msgs::motion_tools_srv::Request& request, robot_toolkit_msgs::motion_tools_srv::Response& response);
 	    bool miscToolsCallback(robot_toolkit_msgs::misc_tools_srv::Request& request, robot_toolkit_msgs::misc_tools_srv::Response& response);
-      bool speechRecognitionCallback(robot_toolkit_msgs::speech_recognition_srv::Request& request, robot_toolkit_msgs::speech_recognition_srv::Response& response);
+            bool speechRecognitionCallback(robot_toolkit_msgs::speech_recognition_srv::Request& request, robot_toolkit_msgs::speech_recognition_srv::Response& response);
+	    bool tabletToolsCallback(robot_toolkit_msgs::tablet_tools_srv::Request& request, robot_toolkit_msgs::tablet_tools_srv::Response& response);
 
 	private:
 
@@ -175,7 +178,8 @@ namespace Sinfonia
 	    ros::ServiceServer _audioToolsService;
 	    ros::ServiceServer _motionToolsService;
 	    ros::ServiceServer _miscToolsService;
-      ros::ServiceServer _speechRecognitionService;
+            ros::ServiceServer _speechRecognitionService;
+            ros::ServiceServer _tabletToolsService;
 
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
