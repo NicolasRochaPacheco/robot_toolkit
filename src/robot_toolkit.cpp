@@ -474,15 +474,14 @@ namespace Sinfonia
 	}
     }
 
-    void RobotToolkit::resetService(ros::NodeHandle& nodeHandle)
-    {
-	_navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
-	_visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
-	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
-	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
-	_miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
-        _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
-	_tabletToolsService = nodeHandle.advertiseService("robot_toolkit/tablet_tools_srv", &RobotToolkit::tabletToolsCallback, this);
+    void RobotToolkit::resetService(ros::NodeHandle& nodeHandle){
+	  _navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
+	  _visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
+	  _audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
+	  _motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
+	  _miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
+      _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
+	  _tabletToolsService = nodeHandle.advertiseService("/robot_toolkit/tablet_tools_srv", &RobotToolkit::tabletToolsCallback, this);
     }
 
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -1411,8 +1410,21 @@ namespace Sinfonia
 	return true;
     }
 
+    // Tablet tools services.
+    // Maintainers: Juan J. Garcia C. (jj.garcia10@uniandes.edu.co)
+    //              Nicolas Rocha P.  (n.rocha11@uniandes.edu.co)
     bool RobotToolkit::tabletToolsCallback(robot_toolkit_msgs::tablet_tools_srv::Request &request, robot_toolkit_msgs::tablet_tools_srv::Response &response){
-	std::cout << BOLDRED << "Servicio recibido" << std::endl;
+	  
+	  // Checks that message type is supported
+	  if(request.data.type != "image" && request.data.type != "web"){
+	  	responseMessage = "Unknown type " + request.data.type + ". Posible types are: image, web.";
+	  	std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "]" << responseMessage << RESETCOLOR << std::endl;
+	  } else {
+	  	// Executes the request
+
+	  }
+
+	  return true;
     }
 
 
