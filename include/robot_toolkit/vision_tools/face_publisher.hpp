@@ -27,36 +27,32 @@
 #include  "robot_toolkit_msgs/face_detection_msg.h"
 #include <ros/ros.h>
 
-namespace Sinfonia
-{
-    namespace Publisher
-    {
+namespace Sinfonia{
+  namespace Publisher{
+		class FacePublisher{
 
-	class FacePublisher
-	{
+		  public:
+				FacePublisher(std::string topicName);
+				virtual ~FacePublisher() {}
+				std::string getTopicName();
 
-	    public:
-		FacePublisher(std::string topicName);
-		virtual ~FacePublisher() {}
-		std::string getTopicName();
+				bool isInitialized() const;
 
+				bool isSubscribed() const;
 
-		bool isInitialized() const;
+				void publish( robot_toolkit_msgs::face_detection_msgPtr message );
 
-		bool isSubscribed() const;
-
-		void publish( robot_toolkit_msgs::face_detection_msgPtr message );
-
-		void reset( ros::NodeHandle& nodeHandle );
+				void reset( ros::NodeHandle& nodeHandle );
 		
-		void shutdown();
+				void shutdown();
 
-	    protected:
-		bool _isInitialized;
-		ros::Publisher _publisher;
-		std::string _topicName;
-	};
-    } 
+	  	protected:
+				bool _isInitialized;
+				ros::Publisher _publisher;
+				std::string _topicName;
+		};
+    
+  } 
 } 
 
 #endif

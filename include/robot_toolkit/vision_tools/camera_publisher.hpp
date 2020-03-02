@@ -29,43 +29,35 @@
 #include <opencv2/highgui/highgui.hpp>
 
 
-namespace Sinfonia
-{
-    namespace Publisher
-    {
-
-	class CameraPublisher
-	{
-
+namespace Sinfonia{
+  namespace Publisher{
+		class CameraPublisher{
 	    public:
-		CameraPublisher(std::string topicName);
-		std::string getTopicName();
+				CameraPublisher(std::string topicName);
+				std::string getTopicName();
 
-		bool isInitialized();
+				bool isInitialized();
 		
-		virtual void publish(const sensor_msgs::ImagePtr img, const sensor_msgs::CameraInfoPtr cameraInfo);
-		virtual void reset( ros::NodeHandle& nodeHandle );
-		virtual bool isSubscribed() const;
-		virtual void shutdown();
+				virtual void publish(const sensor_msgs::ImagePtr img, const sensor_msgs::CameraInfoPtr cameraInfo);
+				virtual void reset( ros::NodeHandle& nodeHandle );
+				virtual bool isSubscribed() const;
+				virtual void shutdown();
 		
-		void setCameraSource(int cameraSource);
-		
+				void setCameraSource(int cameraSource);
 
 	    private:
 		
-		int _cameraSource;
+				int _cameraSource;
 		
-		image_transport::CameraPublisher _publisher;
-		ros::Publisher _compressedPublisher;
+				image_transport::CameraPublisher _publisher;
+				ros::Publisher _compressedPublisher;
 
-		std::string _topicName;
-		std::string _compressedTopic;
+				std::string _topicName;
+				std::string _compressedTopic;
 
-		bool _isInitialized;
-
-	};
-
-    }
+				bool _isInitialized;
+		};
+  }
 }
 
 #endif
