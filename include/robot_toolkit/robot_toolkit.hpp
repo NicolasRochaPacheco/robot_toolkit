@@ -21,6 +21,7 @@
 #define ROBOT_TOOLKIT_HPP
 
 #include <qi/session.hpp>
+
 #include <boost/thread/mutex.hpp>
 #include <string>
 
@@ -37,7 +38,6 @@
 
 #include "robot_toolkit_msgs/navigation_tools_msg.h"
 #include "robot_toolkit_msgs/navigation_tools_srv.h"
-
 #include "robot_toolkit_msgs/camera_parameters_msg.h"
 #include "robot_toolkit_msgs/vision_tools_msg.h"
 #include "robot_toolkit_msgs/vision_tools_srv.h"
@@ -178,8 +178,8 @@ namespace Sinfonia
 	    ros::ServiceServer _audioToolsService;
 	    ros::ServiceServer _motionToolsService;
 	    ros::ServiceServer _miscToolsService;
-            ros::ServiceServer _speechRecognitionService;
-            ros::ServiceServer _tabletToolsService;
+        ros::ServiceServer _speechRecognitionService;
+        ros::ServiceServer _tabletToolsService;
 
 	    std::map< std::string, Publisher::Publisher > _publisherMap;
 	    std::map< std::string, Event::Event> _eventMap;
