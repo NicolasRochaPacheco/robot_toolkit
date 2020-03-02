@@ -31,21 +31,19 @@
 
 namespace Sinfonia
 {
-    RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix)
-    {
-	if(prefix == "")
-	{
-	    std::cout << "Error driver prefix must not be empty" << std::endl;
-	    throw new ros::Exception("Error driver prefix must not be empty");
-	}
-	else
-	{
-	    Sinfonia::RosEnvironment::setPrefix(prefix);
-	}
-	_sessionPtr = session;
-	_isRosLoopEnabled = true;
-        _speechRecognition  = boost::make_shared<Sinfonia::SpeechRecognitionEvent>("speech_recognition", 10.0f, _sessionPtr);
-    }
+  RobotToolkit::RobotToolkit(qi::SessionPtr session, const std::string& prefix){
+		if(prefix == ""){
+	   	std::cout << "Error driver prefix must not be empty" << std::endl;
+	   	throw new ros::Exception("Error driver prefix must not be empty");
+	  } else {
+	  	Sinfonia::RosEnvironment::setPrefix(prefix);
+	  }
+		
+		_sessionPtr = session;
+		_isRosLoopEnabled = true;
+    _speechRecognition  = boost::make_shared<Sinfonia::SpeechRecognitionEvent>("speech_recognition", 10.0f, _sessionPtr);
+  }
+
 
     RobotToolkit::~RobotToolkit()
     {
@@ -452,15 +450,12 @@ namespace Sinfonia
 	}
     }
 
-    void RobotToolkit::startSubscriber(std::string subscriberName)
-    {
-	for_each( Subscriber::Subscriber& sub, _subscribers )
-	{
-	    if(sub.name() == subscriberName)
-	    {
-		sub.reset( *_nodeHandlerPtr );
-	    }
-	}
+    void RobotToolkit::startSubscriber(std::string subscriberName){
+			for_each( Subscriber::Subscriber& sub, _subscribers ){
+	    	if(sub.name() == subscriberName){
+					sub.reset( *_nodeHandlerPtr );
+	    	}
+			}		
     }
 
     void RobotToolkit::stopSubscriber(std::string subscriberName)
@@ -475,13 +470,13 @@ namespace Sinfonia
     }
 
     void RobotToolkit::resetService(ros::NodeHandle& nodeHandle){
-	  _navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
-	  _visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
-	  _audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
-	  _motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
-	  _miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
-      _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
-	  _tabletToolsService = nodeHandle.advertiseService("/robot_toolkit/tablet_tools_srv", &RobotToolkit::tabletToolsCallback, this);
+	  	_navigationToolsService = nodeHandle.advertiseService("/robot_toolkit/navigation_tools_srv" , &RobotToolkit::navigationToolsCallback, this);
+	  	_visionToolsService = nodeHandle.advertiseService("/robot_toolkit/vision_tools_srv" , &RobotToolkit::visionToolsCallback, this);
+	  	_audioToolsService = nodeHandle.advertiseService("/robot_toolkit/audio_tools_srv" , &RobotToolkit::audioToolsCallback , this);
+	  	_motionToolsService = nodeHandle.advertiseService("/robot_toolkit/motion_tools_srv" , &RobotToolkit::motionToolsCallback , this);
+	  	_miscToolsService = nodeHandle.advertiseService("/robot_toolkit/misc_tools_srv" , &RobotToolkit::miscToolsCallback , this);
+	    _speechRecognitionService = nodeHandle.advertiseService("/robot_toolkit/speech_recognition_srv" , &RobotToolkit::speechRecognitionCallback , this);
+			_tabletToolsService = nodeHandle.advertiseService("/robot_toolkit/tablet_tools_srv", &RobotToolkit::tabletToolsCallback, this);
     }
 
     bool RobotToolkit::navigationToolsCallback( robot_toolkit_msgs::navigation_tools_srv::Request& request, robot_toolkit_msgs::navigation_tools_srv::Response& response )
@@ -1410,22 +1405,65 @@ namespace Sinfonia
 	return true;
     }
 
-    // Tablet tools services.
-    // Maintainers: Juan J. Garcia C. (jj.garcia10@uniandes.edu.co)
-    //              Nicolas Rocha P.  (n.rocha11@uniandes.edu.co)
-    bool RobotToolkit::tabletToolsCallback(robot_toolkit_msgs::tablet_tools_srv::Request &request, robot_toolkit_msgs::tablet_tools_srv::Response &response){
-	  
-	  // Checks that message type is supported
-	  if(request.data.type != "image" && request.data.type != "web"){
-	  	responseMessage = "Unknown type " + request.data.type + ". Posible types are: image, web.";
-	  	std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "]" << responseMessage << RESETCOLOR << std::endl;
-	  } else {
-	  	// Executes the request
+  // Tablet tools services.
+  // Maintainers: Juan J. Garcia C. (jj.garcia10@uniandes.edu.co)
+  //              Nicolas Rocha P.  (n.rocha11@uniandes.edu.co)
+  bool RobotToolkit::tabletToolsCallback(robot_toolkit_msgs::tablet_tools_srv::Request &request, robot_toolkit_msgs::tablet_tools_srv::Response &response){
+	
+    // Response message declaration
+    std::string responseMessage;
 
+ 	  // Checks that message type is supported
+	  if(request.data.type != "image" && request.data.type != "web"){
+			
+			// Outputs an error message if type is not supported
+	  	responseMessage = "Unknown type " + request.data.type + ". Posible types are: image, web.";
+	  	std::cout << BOLDRED << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR << std::endl;
+	  
+	  } else {
+	  
+	  	// Checks if type is image or web.
+	  	if(request.data.type == "image"){
+	  		// Image request execution
+	  		responseMessage = "Showing image on tablet";
+	  		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR << std::endl;
+
+	  		// Creates the qi object for tablet service
+	  		std::cout << BOLDBLUE << "Creating Table proxy" << std::endl;
+	  		qi::AnyObject _tablet = _sessionPtr->service("ALTabletService");
+
+	  		// Enables WiFi
+	  		std::cout << BOLDBLUE << "Enabling WiFi" << std::endl;
+	  		_tablet.call<void>("enableWifi");
+
+	  		// Configures connection
+	  		std::cout << BOLDBLUE << "Configure WiFi tablet" << std::endl;
+	  		bool _bool_out = _tablet.call<bool>("configureWifi", "wpa", "Opera_network", "Opera_2020");
+	  		std::cout << BOLDYELLOW << "Configure exit: " << _bool_out << std::endl;
+
+	  		// Connects to Wifi
+	  		std::cout << BOLDBLUE << "Connecting to network" << std::endl;
+	  		_bool_out = _tablet.call<bool>("connectWifi", "Opera_network");
+	  		std::cout << BOLDYELLOW << "Connect exit: " << _bool_out << std::endl;
+
+	  		// Go to Google.com
+	  		//std::cout << BOLDBLUE << "Checking connection to network" << std::endl;
+	  		//std::string _str = _tablet.call<std::string>("getWifiStatus");
+	  		//std::cout << BOLDYELLOW << "Connection status: " << _str << std::endl;
+
+	  		_tablet.call<bool>("showWebview", "https://www.google.com");
+	  		
+
+	  	} else {
+	  		// Web server request execution
+	  		responseMessage = "Showing web server on tablet";
+	  		std::cout << BOLDGREEN << "[" << ros::Time::now().toSec() << "] " << responseMessage << RESETCOLOR << std::endl;
+
+	  	}
 	  }
 
 	  return true;
-    }
+  }
 
 
     void RobotToolkit::openSharedMemory()
